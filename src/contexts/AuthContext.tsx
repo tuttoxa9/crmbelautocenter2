@@ -24,23 +24,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
       setLoading(false);
+
+      if (!user && pathname !== "/login") {
+        router.push("/login");
+      } else if (user && pathname === "/login") {
+        router.push("/leads");
+      } else if (user && pathname === "/") {
+        router.push("/leads");
+      }
     });
 
     return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (loading || !auth) return;
-
-    if (!user && pathname !== "/login") {
-      router.push("/login");
-    } else if (user && (pathname === "/login" || pathname === "/")) {
-      router.push("/leads");
-    }
-  }, [user, loading, pathname, router]);
+  }, [pathname, router]);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>
