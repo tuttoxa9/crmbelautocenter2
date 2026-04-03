@@ -1,28 +1,7 @@
 import { NextResponse } from "next/server";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client, BUCKET_NAME } from "@/lib/s3";
-import * as admin from 'firebase-admin';
-
-// Initialize firebase admin if not already
-if (!admin.apps.length) {
-  try {
-    if (process.env.FIREBASE_PRIVATE_KEY) {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        }),
-      });
-    } else {
-      admin.initializeApp({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "belauto-f2b93"
-      });
-    }
-  } catch (error) {
-    console.error('Firebase admin initialization error', error);
-  }
-}
+import { verifyFirebaseIdToken } from "@/lib/verifyToken";
 
 export async function POST(request: Request) {
   try {
@@ -33,7 +12,7 @@ export async function POST(request: Request) {
     const idToken = authHeader.split("Bearer ")[1];
 
     try {
-        await admin.auth().verifyIdToken(idToken);
+        await verifyFirebaseIdToken(idToken);
     } catch (e) {
         return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
