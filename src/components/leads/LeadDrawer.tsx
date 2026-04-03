@@ -143,6 +143,19 @@ export function LeadDrawer({ lead, trigger, onChange }: { lead: Lead; trigger: R
               </div>
             </div>
 
+            <div className="grid grid-cols-3 gap-4 border-b pb-4">
+              <div className="col-span-1 text-sm text-zinc-500">След. действие</div>
+              <div className="col-span-2 flex items-center gap-2">
+                {lead.nextActionDate ? (
+                   <span className="font-medium text-blue-600">
+                     {safeFormatDate(lead.nextActionDate)}
+                   </span>
+                ) : (
+                   <span className="text-zinc-400">Не запланировано</span>
+                )}
+              </div>
+            </div>
+
             {lead.notes && (
               <div className="grid gap-2 border-b pb-4">
                 <div className="text-sm text-zinc-500">Заметки</div>

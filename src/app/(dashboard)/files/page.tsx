@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Folder, File as FileIcon, Upload, Trash2, FolderPlus, Download, ChevronRight, CornerLeftUp, Image as ImageIcon, CheckSquare, Square, Copy, EyeOff, Eye } from "lucide-react";
+import { Folder, File as FileIcon, Upload, Trash2, FolderPlus, Download, ChevronRight, CornerLeftUp, Image as ImageIcon, CheckSquare, Square, Copy, EyeOff, Eye, Loader2, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
@@ -11,6 +11,8 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import imageCompression from "browser-image-compression";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 interface S3Object {
   name: string;
@@ -33,6 +35,7 @@ export default function FilesPage() {
 
   // Upload Drawer state
   const [isUploadDrawerOpen, setIsUploadDrawerOpen] = useState(false);
+  const [isDownloadingZip, setIsDownloadingZip] = useState(false);
   const [stagedFiles, setStagedFiles] = useState<{
     file: File;
     originalSize: number;
@@ -326,6 +329,69 @@ export default function FilesPage() {
       // Можно добавить toast
   };
 
+  const handleDownloadFile = async (key: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      const { auth } = await import('@/lib/firebase');
+      const token = await auth?.currentUser?.getIdToken();
+      if (!token) return;
+
+      const url = `/api/s3/download?key=${encodeURIComponent(key)}&token=${encodeURIComponent(token)}`;
+      window.location.href = url;
+    } catch (error) {
+      console.error("Download error:", error);
+    }
+  };
+
+  const handleDownloadSelectedZip = async () => {
+    if (selectedPaths.size === 0) return;
+    setIsDownloadingZip(true);
+    try {
+      const zip = new JSZip();
+
+      const filesToDownload = items.filter(item => selectedPaths.has(item.path) && item.type === 'file');
+
+      if (filesToDownload.length === 0) {
+         setIsDownloadingZip(false);
+         return;
+      }
+
+      const promises = filesToDownload.map(async (file) => {
+         try {
+           const { auth } = await import('@/lib/firebase');
+           const token = await auth?.currentUser?.getIdToken();
+           if (!token) return;
+
+           const res = await fetch(`/api/s3/download?path=${encodeURIComponent(file.path)}`, {
+              headers: {
+                 Authorization: `Bearer ${token}`
+              }
+           });
+
+           if (!res.ok) throw new Error("Failed to get signed url");
+           const data = await res.json();
+
+           const downloadRes = await fetch(data.url);
+           if (downloadRes.ok) {
+              const blob = await downloadRes.blob();
+              zip.file(file.name, blob);
+           }
+         } catch (e) {
+            console.error(`Error adding ${file.name} to zip:`, e);
+         }
+      });
+
+      await Promise.all(promises);
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `archive_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.zip`);
+
+    } catch (error) {
+      console.error("Error creating zip:", error);
+    } finally {
+      setIsDownloadingZip(false);
+    }
+  };
+
   const toggleFolderVisibility = async (folderPath: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
@@ -442,7 +508,7 @@ export default function FilesPage() {
                    <div className="shrink-0 flex items-center">
                       {sf.status === 'success' && <CheckSquare className="h-5 w-5 text-green-500" />}
                       {sf.status === 'error' && <span className="text-xs text-red-500">Ошибка</span>}
-                      {sf.status === 'uploading' && <span className="text-xs text-blue-500">Загрузка...</span>}
+                      {sf.status === 'uploading' && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
                       {(sf.status === 'ready' || sf.status === 'error' || sf.status === 'pending') && (
                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-red-500" onClick={() => removeStagedFile(sf.file)}>
                             <Trash2 className="h-4 w-4" />
@@ -462,7 +528,7 @@ export default function FilesPage() {
                 onClick={handleUploadAll}
                 disabled={uploading || isAnyCompressing || !isAnyReady}
              >
-                <Upload className="h-4 w-4 mr-2" />
+                {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
                 {uploading ? "Загрузка..." : isAnyCompressing ? "Идет сжатие..." : "Загрузить на сервер"}
              </Button>
           </div>
@@ -473,12 +539,11 @@ export default function FilesPage() {
       {lightboxIndex !== null && (
         <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center" onClick={closeLightbox}>
           <div className="absolute top-4 right-4 flex gap-2">
-             <a href={getPublicUrl(imagesInCurrentFolder[lightboxIndex].path)} download target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent text-sm font-medium whitespace-nowrap transition-all outline-none select-none hover:bg-white/20 size-8 text-white" title="Скачать">
+             <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={(e) => handleDownloadFile(imagesInCurrentFolder[lightboxIndex].path, e)} title="Скачать">
                <Download className="h-5 w-5" />
-             </a>
+             </Button>
              <Button variant="ghost" size="icon" className="text-white hover:bg-white/20" onClick={closeLightbox}>
-               <Trash2 className="h-5 w-5 hidden" /> {/* Just for spacing placeholder */}
-               <span className="text-xl">✕</span>
+               <span className="text-xl leading-none">✕</span>
              </Button>
           </div>
 
@@ -510,8 +575,8 @@ export default function FilesPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-900">S3 Хранилище</h2>
-          <p className="text-sm text-zinc-500 mt-1">Cloudflare R2 File Manager</p>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-900">AWS S3</h2>
+          <p className="text-sm text-zinc-500 mt-1">Файловый менеджер S3</p>
         </div>
       </div>
 
@@ -558,7 +623,6 @@ export default function FilesPage() {
               <Input
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
-                placeholder="Имя папки..."
                 className="h-9 w-32 rounded-r-none border-r-0 focus-visible:ring-0 focus-visible:border-zinc-300"
               />
               <Button onClick={handleCreateFolder} size="sm" variant="outline" className="h-9 rounded-l-none bg-zinc-50 hover:bg-zinc-100">
@@ -584,17 +648,27 @@ export default function FilesPage() {
            </label>
 
            {selectedPaths.size > 0 && (
-             <Button onClick={handleDeleteSelected} size="sm" variant="destructive" className="h-9">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Удалить ({selectedPaths.size})
-             </Button>
+             <>
+               <Button onClick={handleDownloadSelectedZip} size="sm" variant="outline" className="h-9 hidden sm:inline-flex" disabled={isDownloadingZip}>
+                  {isDownloadingZip ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Archive className="h-4 w-4 mr-2" />}
+                  ZIP ({selectedPaths.size})
+               </Button>
+               <Button onClick={handleDeleteSelected} size="sm" variant="destructive" className="h-9">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Удалить ({selectedPaths.size})</span>
+                  <span className="sm:hidden">{selectedPaths.size}</span>
+               </Button>
+             </>
            )}
         </div>
       </div>
 
       <div className="flex-1 bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
         {loading ? (
-            <div className="flex-1 flex items-center justify-center text-zinc-500">Загрузка...</div>
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 py-20">
+               <Loader2 className="h-8 w-8 animate-spin mb-4 text-blue-500" />
+               <p>Загрузка файлов...</p>
+            </div>
         ) : (
             <div className="overflow-x-auto flex-1">
               <table className="w-full text-sm text-left">
@@ -606,8 +680,8 @@ export default function FilesPage() {
                        </button>
                     </th>
                     <th className="px-4 py-3 font-medium">Имя</th>
-                    <th className="px-4 py-3 font-medium w-32">Размер</th>
-                    <th className="px-4 py-3 font-medium w-48">Изменен</th>
+                    <th className="px-4 py-3 font-medium w-32 hidden sm:table-cell">Размер</th>
+                    <th className="px-4 py-3 font-medium w-48 hidden md:table-cell">Изменен</th>
                     <th className="px-4 py-3 font-medium w-24 text-right">Действия</th>
                   </tr>
                 </thead>
@@ -619,8 +693,8 @@ export default function FilesPage() {
                            <CornerLeftUp className="h-5 w-5 text-zinc-400" />
                            <span className="font-medium text-zinc-700">..</span>
                         </td>
-                        <td className="px-4 py-3"></td>
-                        <td className="px-4 py-3"></td>
+                        <td className="px-4 py-3 hidden sm:table-cell"></td>
+                        <td className="px-4 py-3 hidden md:table-cell"></td>
                         <td className="px-4 py-3"></td>
                      </tr>
                   )}
@@ -657,14 +731,14 @@ export default function FilesPage() {
                             {item.name}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-zinc-500 whitespace-nowrap">
+                        <td className="px-4 py-3 text-zinc-500 whitespace-nowrap hidden sm:table-cell">
                            {item.type === 'file' ? formatSize(item.size) : '—'}
                         </td>
-                        <td className="px-4 py-3 text-zinc-500 whitespace-nowrap">
+                        <td className="px-4 py-3 text-zinc-500 whitespace-nowrap hidden md:table-cell">
                            {formatDate(item.lastModified)}
                         </td>
                         <td className="px-4 py-3 text-right">
-                           <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <div className="flex justify-end gap-1 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                              {item.type === 'folder' && (
                                 <Button
                                   variant="ghost"
@@ -681,9 +755,9 @@ export default function FilesPage() {
                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-blue-600" onClick={() => copyToClipboard(getPublicUrl(item.path))} title="Копировать ссылку">
                                       <Copy className="h-4 w-4" />
                                    </Button>
-                                   <a href={getPublicUrl(item.path)} download target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent text-sm font-medium whitespace-nowrap transition-all outline-none select-none hover:bg-muted aria-expanded:bg-muted dark:hover:bg-muted/50 size-8 text-zinc-400 hover:text-zinc-900" title="Скачать">
+                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900" onClick={(e) => handleDownloadFile(item.path, e)} title="Скачать">
                                       <Download className="h-4 w-4" />
-                                   </a>
+                                   </Button>
                                 </>
                              )}
                            </div>

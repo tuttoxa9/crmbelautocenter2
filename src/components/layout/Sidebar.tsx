@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { name: "Лиды", href: "/leads", icon: ClipboardList },
-  { name: "S3", href: "/files", icon: Folder },
+  { name: "AWS S3", href: "/files", icon: Folder },
   { name: "Настройки", href: "/settings", icon: Settings },
 ];
 

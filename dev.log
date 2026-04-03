@@ -1066,3 +1066,7 @@ https://nextjs.org/docs/messages/module-not-found
  GET /files 200 in 3.5s (next.js: 2.1s, application-code: 1348ms)
  GET /login 200 in 113ms (next.js: 53ms, application-code: 60ms)
 ✓ Compiled in 690ms
+✓ Compiled in 5.7s
+✓ Compiled in 365ms
+ GET /login 200 in 2.2s (next.js: 731ms, application-code: 1449ms)
+[?25h
