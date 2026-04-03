@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { name: "Лиды", href: "/leads", icon: ClipboardList },
-  { name: "Файлы", href: "/files", icon: Folder },
+  { name: "AWS S3", href: "/files", icon: Folder },
   { name: "Настройки", href: "/settings", icon: Settings },
 ];
 
@@ -24,7 +24,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"></div>
+      </div>
+    );
   }
 
   // If not logged in and not on login page, children shouldn't really render much anyway

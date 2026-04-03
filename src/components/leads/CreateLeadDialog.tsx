@@ -76,15 +76,15 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="grid gap-2">
             <Label htmlFor="name">Имя</Label>
-            <Input id="name" name="name" required placeholder="Иван Иванов" />
+            <Input id="name" name="name" required />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="phone">Телефон</Label>
-            <Input id="phone" name="phone" required placeholder="+375 (29) 123-45-67" />
+            <Input id="phone" name="phone" required />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="car">Интересующее авто (если есть)</Label>
-            <Input id="car" name="car" placeholder="BMW X5 2019" />
+            <Input id="car" name="car" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -136,7 +136,6 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
             <Textarea
               id="notes"
               name="notes"
-              placeholder="Дополнительная информация..."
               className="resize-none"
             />
           </div>

@@ -4,6 +4,9 @@ import { Lead, LeadStatus } from "@/lib/types";
 import { getStatusLabel, getStatusColor } from "@/lib/displayUtils";
 import { Badge } from "@/components/ui/badge";
 import { LeadDrawer } from "./LeadDrawer";
+import { format, isToday, isTomorrow, isPast, isFuture } from "date-fns";
+import { ru } from "date-fns/locale";
+import { CalendarClock } from "lucide-react";
 
 interface KanbanBoardProps {
   leads: Lead[];
@@ -61,6 +64,27 @@ export function KanbanBoard({ leads, onLeadChange }: KanbanBoardProps) {
                         {lead.car}
                       </div>
                     )}
+
+                    <div className={`mt-2 flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded w-fit border
+                      ${lead.nextActionDate
+                        ? (isPast(lead.nextActionDate) && !isToday(lead.nextActionDate)
+                          ? "bg-red-50 text-red-600 border-red-100"
+                          : isToday(lead.nextActionDate)
+                          ? "bg-amber-50 text-amber-600 border-amber-100"
+                          : "bg-blue-50 text-blue-600 border-blue-100")
+                        : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                      }
+                    `}>
+                      <CalendarClock className="h-3 w-3" />
+                      {lead.nextActionDate
+                        ? (isToday(lead.nextActionDate)
+                          ? "Сегодня"
+                          : isTomorrow(lead.nextActionDate)
+                          ? "Завтра"
+                          : format(lead.nextActionDate, "d MMM, HH:mm", { locale: ru }))
+                        : (lead.createdAt ? format(typeof lead.createdAt === 'object' && lead.createdAt !== null && 'seconds' in lead.createdAt ? new Date((lead.createdAt as any).seconds * 1000) : new Date(lead.createdAt), "d MMM", { locale: ru }) : "—")
+                      }
+                    </div>
                   </div>
                 }
               />
