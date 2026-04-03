@@ -30,6 +30,8 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  const [source, setSource] = useState<string>("walk_in");
+  const [status, setStatus] = useState<string>("new");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -88,9 +90,16 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="source">Источник</Label>
-              <Select name="source" defaultValue="walk_in">
+              <Select name="source" value={source} onValueChange={(val: string | null) => setSource(val || "walk_in")}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите" />
+                  <SelectValue placeholder="Выберите">
+                    {source === "site" && "Сайт"}
+                    {source === "instagram" && "Instagram"}
+                    {source === "tiktok" && "TikTok"}
+                    {source === "call" && "Звонок"}
+                    {source === "zapier" && "Zapier/Avito"}
+                    {source === "walk_in" && "С улицы"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="site">Сайт</SelectItem>
@@ -105,9 +114,13 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
 
             <div className="grid gap-2">
               <Label htmlFor="status">Статус</Label>
-              <Select name="status" defaultValue="new">
+              <Select name="status" value={status} onValueChange={(val: string | null) => setStatus(val || "new")}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите" />
+                  <SelectValue placeholder="Выберите">
+                    {status === "new" && "Новый"}
+                    {status === "in_progress" && "В работе"}
+                    {status === "success" && "Оформился/купил"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">Новый</SelectItem>
