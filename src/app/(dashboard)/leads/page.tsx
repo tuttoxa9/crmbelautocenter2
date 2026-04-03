@@ -165,7 +165,9 @@ export default function LeadsPage() {
             <div className="flex w-full sm:w-auto items-center gap-2">
               <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val || "all-status")}>
                 <SelectTrigger className="w-[160px] bg-zinc-50 border-zinc-200">
-                  <SelectValue placeholder="Статус" />
+                  <SelectValue placeholder="Статус">
+                    {statusFilter === "all-status" ? "Все статусы" : getStatusLabel(statusFilter as any)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-status">Все статусы</SelectItem>
@@ -183,7 +185,9 @@ export default function LeadsPage() {
 
               <Select value={sourceFilter} onValueChange={(val) => setSourceFilter(val || "all-source")}>
                 <SelectTrigger className="w-[160px] bg-zinc-50 border-zinc-200">
-                  <SelectValue placeholder="Источник" />
+                  <SelectValue placeholder="Источник">
+                    {sourceFilter === "all-source" ? "Все источники" : getSourceLabel(sourceFilter as any)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-source">Все источники</SelectItem>

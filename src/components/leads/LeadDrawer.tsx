@@ -103,7 +103,9 @@ export function LeadDrawer({ lead, trigger, onChange }: { lead: Lead; trigger: R
               <div className="col-span-2">
                 <Select disabled={isUpdatingStatus} value={lead.status} onValueChange={handleStatusChange}>
                   <SelectTrigger className={`w-full ${getStatusColor(lead.status)} text-white border-transparent`}>
-                    <SelectValue placeholder="Статус" />
+                    <SelectValue placeholder="Статус">
+                      {getStatusLabel(lead.status)}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="new">Новый</SelectItem>
