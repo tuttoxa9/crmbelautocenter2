@@ -25,8 +25,27 @@ import { getLeads } from "@/lib/leadService";
 import { Lead } from "@/lib/types";
 import { getStatusLabel, getStatusColor, getSourceLabel } from "@/lib/displayUtils";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
+
+const safeFormatDate = (timestamp: unknown) => {
+  if (!timestamp) return "—";
+
+  // Handle Firestore Timestamp objects if they somehow get here
+  let dateObj: Date;
+  if (
+    typeof timestamp === 'object' &&
+    timestamp !== null &&
+    'seconds' in timestamp &&
+    typeof (timestamp as { seconds: number }).seconds === 'number'
+  ) {
+    dateObj = new Date((timestamp as { seconds: number }).seconds * 1000);
+  } else {
+    dateObj = new Date(timestamp as string | number);
+  }
+
+  return isValid(dateObj) ? format(dateObj, "dd MMM yyyy, HH:mm", { locale: ru }) : "Некорректная дата";
+};
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -176,7 +195,7 @@ export default function LeadsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-zinc-600">
-                          {format(lead.createdAt, "dd MMM yyyy, HH:mm", { locale: ru })}
+                          {safeFormatDate(lead.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
