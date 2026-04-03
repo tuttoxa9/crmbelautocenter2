@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Inbox } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -18,104 +18,180 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CreateLeadDialog } from "@/components/leads/CreateLeadDialog";
+import { useEffect, useState } from "react";
+import { getLeads } from "@/lib/leadService";
+import { Lead } from "@/lib/types";
+import { getStatusLabel, getStatusColor, getSourceLabel } from "@/lib/displayUtils";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
 export default function LeadsPage() {
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchLeads = async () => {
+    try {
+      setLoading(true);
+      const data = await getLeads();
+      setLeads(data);
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeads();
+  }, []);
+
   return (
     <div className="flex flex-col h-full space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">Лиды</h2>
-          <p className="text-sm text-gray-500 mt-1">Управление заявками и контактами клиентов</p>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Лиды</h2>
+          <p className="text-sm text-zinc-500 mt-1">Управление заявками и контактами клиентов</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="mr-2 h-4 w-4" /> Добавить лид
-        </Button>
+        <CreateLeadDialog onSuccess={fetchLeads}>
+          <Button className="bg-zinc-900 hover:bg-zinc-800 text-white">
+            <Plus className="mr-2 h-4 w-4" /> Добавить клиента
+          </Button>
+        </CreateLeadDialog>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-        <div className="flex w-full sm:w-auto items-center space-x-2">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              type="text"
-              placeholder="Поиск по имени или телефону..."
-              className="pl-9 w-full"
-            />
+      <Tabs defaultValue="today" className="flex-1 flex flex-col">
+        <TabsList className="mb-4">
+          <TabsTrigger value="today">☀️ На сегодня</TabsTrigger>
+          <TabsTrigger value="all">🗂 Все лиды</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="today" className="flex-1 outline-none m-0">
+          <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex-1 flex flex-col h-full">
+            <div className="p-4 border-b border-zinc-200 bg-zinc-50">
+              <h3 className="font-semibold text-zinc-800">Задачи на сегодня</h3>
+              <p className="text-sm text-zinc-500">Свежие заявки и запланированные визиты/звонки</p>
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 p-8">
+              <Inbox className="h-10 w-10 mb-4 text-zinc-300" />
+              <p className="text-lg font-medium text-zinc-900">На сегодня задач нет</p>
+              <p className="text-sm">Все новые заявки обработаны</p>
+            </div>
           </div>
-        </div>
-        
-        <div className="flex w-full sm:w-auto items-center gap-2">
-          <Select defaultValue="all-status">
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Статус" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-status">Все статусы</SelectItem>
-              <SelectItem value="new">Новый</SelectItem>
-              <SelectItem value="contacted">Связались</SelectItem>
-              <SelectItem value="visit_planned">Визит запланирован</SelectItem>
-              <SelectItem value="arrived">Приехал</SelectItem>
-              <SelectItem value="deal">Сделка</SelectItem>
-              <SelectItem value="refusal">Отказ</SelectItem>
-            </SelectContent>
-          </Select>
+        </TabsContent>
 
-          <Select defaultValue="all-source">
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Источник" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-source">Все источники</SelectItem>
-              <SelectItem value="site">Сайт</SelectItem>
-              <SelectItem value="tiktok">TikTok</SelectItem>
-              <SelectItem value="instagram">Instagram</SelectItem>
-              <SelectItem value="call">Звонок</SelectItem>
-            </SelectContent>
-          </Select>
+        <TabsContent value="all" className="flex-1 outline-none flex flex-col space-y-4 m-0">
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-3 rounded-xl border border-zinc-200 shadow-sm">
+            <div className="flex w-full sm:w-auto items-center space-x-2">
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
+                <Input
+                  type="text"
+                  placeholder="Поиск по имени, телефону, авто..."
+                  className="pl-9 w-full bg-zinc-50 border-zinc-200 focus-visible:ring-zinc-900"
+                />
+              </div>
+            </div>
 
-          <Select defaultValue="all-dates">
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Дата" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all-dates">За всё время</SelectItem>
-              <SelectItem value="today">Сегодня</SelectItem>
-              <SelectItem value="yesterday">Вчера</SelectItem>
-              <SelectItem value="this-week">На этой неделе</SelectItem>
-              <SelectItem value="this-month">В этом месяце</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+            <div className="flex w-full sm:w-auto items-center gap-2">
+              <Select defaultValue="all-status">
+                <SelectTrigger className="w-[160px] bg-zinc-50 border-zinc-200">
+                  <SelectValue placeholder="Статус" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-status">Все статусы</SelectItem>
+                  <SelectItem value="new">Новый</SelectItem>
+                  <SelectItem value="in_progress">В работе</SelectItem>
+                  <SelectItem value="visit">Приезд</SelectItem>
+                  <SelectItem value="visited_or_refused">Приехал/отказ</SelectItem>
+                  <SelectItem value="refusal">Отказ</SelectItem>
+                  <SelectItem value="bank_refusal">Отказ банка</SelectItem>
+                  <SelectItem value="success">Оформился/купил</SelectItem>
+                  <SelectItem value="no_answer">Недозвон</SelectItem>
+                  <SelectItem value="spam">Брак/Тест</SelectItem>
+                </SelectContent>
+              </Select>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex-1 flex flex-col">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="w-[200px] font-semibold text-gray-700">Имя</TableHead>
-                <TableHead className="font-semibold text-gray-700">Телефон</TableHead>
-                <TableHead className="font-semibold text-gray-700">Источник</TableHead>
-                <TableHead className="font-semibold text-gray-700">Статус</TableHead>
-                <TableHead className="font-semibold text-gray-700">Дата визита/перезвона</TableHead>
-                <TableHead className="font-semibold text-gray-700">Дата создания</TableHead>
-                <TableHead className="text-right font-semibold text-gray-700">Действия</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow>
-                <TableCell colSpan={7} className="h-48 text-center">
-                  <div className="flex flex-col items-center justify-center text-gray-500">
-                    <Filter className="h-8 w-8 mb-2 text-gray-400" />
-                    <p className="text-lg font-medium text-gray-900">Лидов пока нет</p>
-                    <p className="text-sm">Здесь будут отображаться заявки от клиентов</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+              <Select defaultValue="all-source">
+                <SelectTrigger className="w-[160px] bg-zinc-50 border-zinc-200">
+                  <SelectValue placeholder="Источник" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-source">Все источники</SelectItem>
+                  <SelectItem value="site">Сайт</SelectItem>
+                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="tiktok">TikTok</SelectItem>
+                  <SelectItem value="call">Звонок</SelectItem>
+                  <SelectItem value="zapier">Zapier/Avito</SelectItem>
+                  <SelectItem value="walk_in">С улицы</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex-1 flex flex-col">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-zinc-50 hover:bg-zinc-50">
+                    <TableHead className="w-[250px] font-medium text-zinc-600">Клиент</TableHead>
+                    <TableHead className="font-medium text-zinc-600">Автомобиль</TableHead>
+                    <TableHead className="font-medium text-zinc-600">Источник</TableHead>
+                    <TableHead className="font-medium text-zinc-600">Статус</TableHead>
+                    <TableHead className="font-medium text-zinc-600">Создан</TableHead>
+                    <TableHead className="text-right font-medium text-zinc-600">Действия</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-48 text-center">
+                        Загрузка...
+                      </TableCell>
+                    </TableRow>
+                  ) : leads.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-48 text-center">
+                        <div className="flex flex-col items-center justify-center text-zinc-500">
+                          <Inbox className="h-8 w-8 mb-2 text-zinc-300" />
+                          <p className="text-base font-medium text-zinc-900">Список пуст</p>
+                          <p className="text-sm">Здесь будут отображаться все лиды</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    leads.map((lead) => (
+                      <TableRow key={lead.id}>
+                        <TableCell>
+                          <div className="font-medium text-zinc-900">{lead.name}</div>
+                          <div className="text-sm text-zinc-500">{lead.phone}</div>
+                        </TableCell>
+                        <TableCell className="text-zinc-600">{lead.car || "—"}</TableCell>
+                        <TableCell className="text-zinc-600">{getSourceLabel(lead.source)}</TableCell>
+                        <TableCell>
+                          <Badge className={`${getStatusColor(lead.status)} text-white border-transparent`}>
+                            {getStatusLabel(lead.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-zinc-600">
+                          {format(lead.createdAt, "dd MMM yyyy, HH:mm", { locale: ru })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                            Открыть
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
