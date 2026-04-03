@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreateLeadDialog } from "@/components/leads/CreateLeadDialog";
+import { LeadDrawer } from "@/components/leads/LeadDrawer";
+import { KanbanBoard } from "@/components/leads/KanbanBoard";
+import { LayoutGrid, List } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getLeads } from "@/lib/leadService";
 import { Lead } from "@/lib/types";
@@ -50,6 +53,12 @@ const safeFormatDate = (timestamp: unknown) => {
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all-status");
+  const [sourceFilter, setSourceFilter] = useState<string>("all-source");
 
   const fetchLeads = async () => {
     try {
@@ -66,6 +75,24 @@ export default function LeadsPage() {
   useEffect(() => {
     fetchLeads();
   }, []);
+
+  // Filter leads based on current state
+  const filteredLeads = leads.filter(lead => {
+    // Search filter
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = !searchQuery ||
+      lead.name.toLowerCase().includes(searchLower) ||
+      lead.phone.toLowerCase().includes(searchLower) ||
+      (lead.car && lead.car.toLowerCase().includes(searchLower));
+
+    // Status filter
+    const matchesStatus = statusFilter === "all-status" || lead.status === statusFilter;
+
+    // Source filter
+    const matchesSource = sourceFilter === "all-source" || lead.source === sourceFilter;
+
+    return matchesSearch && matchesStatus && matchesSource;
+  });
 
   return (
     <div className="flex flex-col h-full space-y-6">
@@ -104,20 +131,52 @@ export default function LeadsPage() {
         <TabsContent value="all" className="flex-1 outline-none flex flex-col space-y-4 m-0">
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-3 rounded-xl border border-zinc-200 shadow-sm">
             <div className="flex w-full sm:w-auto items-center space-x-2">
+              <div className="flex items-center bg-zinc-100 p-1 rounded-lg border border-zinc-200 mr-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode("table")}
+                  className={`h-7 px-2 rounded-md ${viewMode === "table" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-700"}`}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode("kanban")}
+                  className={`h-7 px-2 rounded-md ${viewMode === "kanban" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-700"}`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+              </div>
+
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
                 <Input
                   type="text"
                   placeholder="Поиск по имени, телефону, авто..."
                   className="pl-9 w-full bg-zinc-50 border-zinc-200 focus-visible:ring-zinc-900"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </div>
 
             <div className="flex w-full sm:w-auto items-center gap-2">
-              <Select defaultValue="all-status">
+              <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val || "all-status")}>
                 <SelectTrigger className="w-[160px] bg-zinc-50 border-zinc-200">
-                  <SelectValue placeholder="Статус" />
+                  <SelectValue placeholder="Статус">
+                    <span className="data-[state=open]:hidden data-[value=all-status]:block hidden">Все статусы</span>
+                    <span className="data-[state=open]:hidden data-[value=new]:block hidden">Новый</span>
+                    <span className="data-[state=open]:hidden data-[value=in_progress]:block hidden">В работе</span>
+                    <span className="data-[state=open]:hidden data-[value=visit]:block hidden">Приезд</span>
+                    <span className="data-[state=open]:hidden data-[value=visited_or_refused]:block hidden">Приехал/отказ</span>
+                    <span className="data-[state=open]:hidden data-[value=refusal]:block hidden">Отказ</span>
+                    <span className="data-[state=open]:hidden data-[value=bank_refusal]:block hidden">Отказ банка</span>
+                    <span className="data-[state=open]:hidden data-[value=success]:block hidden">Оформился/купил</span>
+                    <span className="data-[state=open]:hidden data-[value=no_answer]:block hidden">Недозвон</span>
+                    <span className="data-[state=open]:hidden data-[value=spam]:block hidden">Брак/Тест</span>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-status">Все статусы</SelectItem>
@@ -133,9 +192,17 @@ export default function LeadsPage() {
                 </SelectContent>
               </Select>
 
-              <Select defaultValue="all-source">
+              <Select value={sourceFilter} onValueChange={(val) => setSourceFilter(val || "all-source")}>
                 <SelectTrigger className="w-[160px] bg-zinc-50 border-zinc-200">
-                  <SelectValue placeholder="Источник" />
+                  <SelectValue placeholder="Источник">
+                    <span className="data-[state=open]:hidden data-[value=all-source]:block hidden">Все источники</span>
+                    <span className="data-[state=open]:hidden data-[value=site]:block hidden">Сайт</span>
+                    <span className="data-[state=open]:hidden data-[value=instagram]:block hidden">Instagram</span>
+                    <span className="data-[state=open]:hidden data-[value=tiktok]:block hidden">TikTok</span>
+                    <span className="data-[state=open]:hidden data-[value=call]:block hidden">Звонок</span>
+                    <span className="data-[state=open]:hidden data-[value=zapier]:block hidden">Zapier/Avito</span>
+                    <span className="data-[state=open]:hidden data-[value=walk_in]:block hidden">С улицы</span>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-source">Все источники</SelectItem>
@@ -150,38 +217,34 @@ export default function LeadsPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex-1 flex flex-col">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-zinc-50 hover:bg-zinc-50">
-                    <TableHead className="w-[250px] font-medium text-zinc-600">Клиент</TableHead>
-                    <TableHead className="font-medium text-zinc-600">Автомобиль</TableHead>
-                    <TableHead className="font-medium text-zinc-600">Источник</TableHead>
-                    <TableHead className="font-medium text-zinc-600">Статус</TableHead>
-                    <TableHead className="font-medium text-zinc-600">Создан</TableHead>
-                    <TableHead className="text-right font-medium text-zinc-600">Действия</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-48 text-center">
-                        Загрузка...
-                      </TableCell>
+          <div className={`flex-1 flex flex-col ${viewMode === "table" ? "bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden" : ""}`}>
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center bg-white rounded-xl border border-zinc-200">
+                Загрузка...
+              </div>
+            ) : filteredLeads.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 bg-white rounded-xl border border-zinc-200 p-10">
+                <Inbox className="h-8 w-8 mb-2 text-zinc-300" />
+                <p className="text-base font-medium text-zinc-900">Ничего не найдено</p>
+                <p className="text-sm">Попробуйте изменить фильтры поиска</p>
+              </div>
+            ) : viewMode === "kanban" ? (
+              <KanbanBoard leads={filteredLeads} onLeadChange={fetchLeads} />
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-zinc-50 hover:bg-zinc-50">
+                      <TableHead className="w-[250px] font-medium text-zinc-600">Клиент</TableHead>
+                      <TableHead className="font-medium text-zinc-600">Автомобиль</TableHead>
+                      <TableHead className="font-medium text-zinc-600">Источник</TableHead>
+                      <TableHead className="font-medium text-zinc-600">Статус</TableHead>
+                      <TableHead className="font-medium text-zinc-600">Создан</TableHead>
+                      <TableHead className="text-right font-medium text-zinc-600">Действия</TableHead>
                     </TableRow>
-                  ) : leads.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-48 text-center">
-                        <div className="flex flex-col items-center justify-center text-zinc-500">
-                          <Inbox className="h-8 w-8 mb-2 text-zinc-300" />
-                          <p className="text-base font-medium text-zinc-900">Список пуст</p>
-                          <p className="text-sm">Здесь будут отображаться все лиды</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    leads.map((lead) => (
+                  </TableHeader>
+                  <TableBody>
+                    {filteredLeads.map((lead) => (
                       <TableRow key={lead.id}>
                         <TableCell>
                           <div className="font-medium text-zinc-900">{lead.name}</div>
@@ -198,16 +261,22 @@ export default function LeadsPage() {
                           {safeFormatDate(lead.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                            Открыть
-                          </Button>
+                          <LeadDrawer
+                            lead={lead}
+                            onChange={fetchLeads}
+                            trigger={
+                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                                Открыть
+                              </Button>
+                            }
+                          />
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>

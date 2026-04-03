@@ -90,7 +90,14 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
               <Label htmlFor="source">Источник</Label>
               <Select name="source" defaultValue="walk_in">
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите" />
+                  <SelectValue placeholder="Выберите">
+                    <span className="data-[state=open]:hidden data-[value=walk_in]:block hidden">С улицы</span>
+                    <span className="data-[state=open]:hidden data-[value=site]:block hidden">Сайт</span>
+                    <span className="data-[state=open]:hidden data-[value=instagram]:block hidden">Instagram</span>
+                    <span className="data-[state=open]:hidden data-[value=tiktok]:block hidden">TikTok</span>
+                    <span className="data-[state=open]:hidden data-[value=call]:block hidden">Звонок</span>
+                    <span className="data-[state=open]:hidden data-[value=zapier]:block hidden">Zapier/Avito</span>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="site">Сайт</SelectItem>
@@ -107,7 +114,11 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
               <Label htmlFor="status">Статус</Label>
               <Select name="status" defaultValue="new">
                 <SelectTrigger>
-                  <SelectValue placeholder="Выберите" />
+                  <SelectValue placeholder="Выберите">
+                    <span className="data-[state=open]:hidden data-[value=new]:block hidden">Новый</span>
+                    <span className="data-[state=open]:hidden data-[value=in_progress]:block hidden">В работе</span>
+                    <span className="data-[state=open]:hidden data-[value=success]:block hidden">Оформился/купил</span>
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">Новый</SelectItem>
