@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     const now = Date.now();
 
-    // Create lead object using Firebase Admin
+    // Create lead object using Firebase Admin SDK for robust authenticated writes
     const newLead = {
       name,
       phone,
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       status,
       nextActionDate: null,
       notes,
-      createdAt: now, // We use standard timestamp numbers to match the frontend type
+      createdAt: now,
       updatedAt: now,
       history: [
         {
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
           comment: "Лид создан через API (Zapier/Webhook)"
         }
       ],
-      payload: data // store the entire original payload for flexible mapping later
+      payload: data
     };
 
     const docRef = await adminDb.collection('leads').add(newLead);

@@ -2,8 +2,6 @@ import * as admin from 'firebase-admin';
 
 if (!admin.apps.length) {
   try {
-    // Attempt to initialize using standard environment variables first
-    // This expects FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY
     if (process.env.FIREBASE_PRIVATE_KEY) {
       admin.initializeApp({
         credential: admin.credential.cert({
@@ -13,8 +11,6 @@ if (!admin.apps.length) {
         }),
       });
     } else {
-      // For development, we fallback to default initialization
-      // This will use Application Default Credentials if available
       admin.initializeApp({
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "belauto-f2b93"
       });
