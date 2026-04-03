@@ -165,18 +165,7 @@ export default function LeadsPage() {
             <div className="flex w-full sm:w-auto items-center gap-2">
               <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val || "all-status")}>
                 <SelectTrigger className="w-[160px] bg-zinc-50 border-zinc-200">
-                  <SelectValue placeholder="Статус">
-                    <span className="data-[state=open]:hidden data-[value=all-status]:block hidden">Все статусы</span>
-                    <span className="data-[state=open]:hidden data-[value=new]:block hidden">Новый</span>
-                    <span className="data-[state=open]:hidden data-[value=in_progress]:block hidden">В работе</span>
-                    <span className="data-[state=open]:hidden data-[value=visit]:block hidden">Приезд</span>
-                    <span className="data-[state=open]:hidden data-[value=visited_or_refused]:block hidden">Приехал/отказ</span>
-                    <span className="data-[state=open]:hidden data-[value=refusal]:block hidden">Отказ</span>
-                    <span className="data-[state=open]:hidden data-[value=bank_refusal]:block hidden">Отказ банка</span>
-                    <span className="data-[state=open]:hidden data-[value=success]:block hidden">Оформился/купил</span>
-                    <span className="data-[state=open]:hidden data-[value=no_answer]:block hidden">Недозвон</span>
-                    <span className="data-[state=open]:hidden data-[value=spam]:block hidden">Брак/Тест</span>
-                  </SelectValue>
+                  <SelectValue placeholder="Статус" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-status">Все статусы</SelectItem>
@@ -194,15 +183,7 @@ export default function LeadsPage() {
 
               <Select value={sourceFilter} onValueChange={(val) => setSourceFilter(val || "all-source")}>
                 <SelectTrigger className="w-[160px] bg-zinc-50 border-zinc-200">
-                  <SelectValue placeholder="Источник">
-                    <span className="data-[state=open]:hidden data-[value=all-source]:block hidden">Все источники</span>
-                    <span className="data-[state=open]:hidden data-[value=site]:block hidden">Сайт</span>
-                    <span className="data-[state=open]:hidden data-[value=instagram]:block hidden">Instagram</span>
-                    <span className="data-[state=open]:hidden data-[value=tiktok]:block hidden">TikTok</span>
-                    <span className="data-[state=open]:hidden data-[value=call]:block hidden">Звонок</span>
-                    <span className="data-[state=open]:hidden data-[value=zapier]:block hidden">Zapier/Avito</span>
-                    <span className="data-[state=open]:hidden data-[value=walk_in]:block hidden">С улицы</span>
-                  </SelectValue>
+                  <SelectValue placeholder="Источник" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all-source">Все источники</SelectItem>

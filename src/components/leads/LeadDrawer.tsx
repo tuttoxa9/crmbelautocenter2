@@ -103,17 +103,7 @@ export function LeadDrawer({ lead, trigger, onChange }: { lead: Lead; trigger: R
               <div className="col-span-2">
                 <Select disabled={isUpdatingStatus} value={lead.status} onValueChange={handleStatusChange}>
                   <SelectTrigger className={`w-full ${getStatusColor(lead.status)} text-white border-transparent`}>
-                    <SelectValue placeholder="Статус">
-                      <span className="data-[state=open]:hidden data-[value=new]:block hidden">Новый</span>
-                      <span className="data-[state=open]:hidden data-[value=in_progress]:block hidden">В работе</span>
-                      <span className="data-[state=open]:hidden data-[value=visit]:block hidden">Приезд</span>
-                      <span className="data-[state=open]:hidden data-[value=visited_or_refused]:block hidden">Приехал/отказ</span>
-                      <span className="data-[state=open]:hidden data-[value=refusal]:block hidden">Отказ</span>
-                      <span className="data-[state=open]:hidden data-[value=bank_refusal]:block hidden">Отказ банка</span>
-                      <span className="data-[state=open]:hidden data-[value=success]:block hidden">Оформился/купил</span>
-                      <span className="data-[state=open]:hidden data-[value=no_answer]:block hidden">Недозвон</span>
-                      <span className="data-[state=open]:hidden data-[value=spam]:block hidden">Брак/Тест</span>
-                    </SelectValue>
+                    <SelectValue placeholder="Статус" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="new">Новый</SelectItem>
