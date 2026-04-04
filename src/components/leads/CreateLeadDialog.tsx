@@ -41,6 +41,9 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
     const formData = new FormData(e.currentTarget);
 
     try {
+      const nextActionDateRaw = formData.get("nextActionDate") as string;
+      const nextActionDate = nextActionDateRaw ? new Date(nextActionDateRaw).getTime() : null;
+
       await createLead(
         {
           name: formData.get("name") as string,
@@ -49,7 +52,7 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
           source: formData.get("source") as LeadSource,
           status: formData.get("status") as LeadStatus,
           notes: formData.get("notes") as string,
-          nextActionDate: null,
+          nextActionDate: nextActionDate,
         },
         user.email || "Unknown"
       );
@@ -129,6 +132,11 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="nextActionDate">Дата следующего действия (необязательно)</Label>
+            <Input id="nextActionDate" name="nextActionDate" type="datetime-local" />
           </div>
 
           <div className="grid gap-2">

@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
 import { ReactElement, useEffect } from "react";
-import { updateLeadStatus, deleteLead } from "@/lib/leadService";
+import { updateLeadStatus, deleteLead, updateLeadDetails } from "@/lib/leadService";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Select,
@@ -49,6 +49,7 @@ export function LeadDrawer({ lead, trigger, onChange }: { lead: Lead; trigger: R
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isUpdatingDate, setIsUpdatingDate] = useState(false);
   const { user } = useAuth();
 
   const handleDelete = async () => {
@@ -81,6 +82,26 @@ export function LeadDrawer({ lead, trigger, onChange }: { lead: Lead; trigger: R
       setIsUpdatingStatus(false);
     }
   };
+
+  const handleDateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    const newDate = val ? new Date(val).getTime() : null;
+
+    try {
+      setIsUpdatingDate(true);
+      await updateLeadDetails(lead.id!, { nextActionDate: newDate });
+      if (onChange) onChange();
+    } catch (error) {
+      console.error("Error updating date:", error);
+      alert("Ошибка при обновлении даты");
+    } finally {
+      setIsUpdatingDate(false);
+    }
+  };
+
+  const formattedActionDate = lead.nextActionDate
+    ? format(new Date(lead.nextActionDate), "yyyy-MM-dd'T'HH:mm")
+    : "";
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -143,16 +164,16 @@ export function LeadDrawer({ lead, trigger, onChange }: { lead: Lead; trigger: R
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 border-b pb-4">
+            <div className="grid grid-cols-3 gap-4 border-b pb-4 items-center">
               <div className="col-span-1 text-sm text-zinc-500">След. действие</div>
-              <div className="col-span-2 flex items-center gap-2">
-                {lead.nextActionDate ? (
-                   <span className="font-medium text-blue-600">
-                     {safeFormatDate(lead.nextActionDate)}
-                   </span>
-                ) : (
-                   <span className="text-zinc-400">Не запланировано</span>
-                )}
+              <div className="col-span-2">
+                <input
+                  type="datetime-local"
+                  className="flex h-9 w-full rounded-md border border-zinc-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-zinc-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={formattedActionDate}
+                  onChange={handleDateChange}
+                  disabled={isUpdatingDate}
+                />
               </div>
             </div>
 
