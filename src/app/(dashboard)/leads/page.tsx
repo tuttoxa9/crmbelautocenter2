@@ -1,8 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Inbox, LayoutGrid, List, Loader2 } from "lucide-react";
+import { Plus, Search, Inbox, LayoutGrid, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -146,7 +147,7 @@ export default function LeadsPage() {
             </div>
             {loading ? (
               <div className="flex-1 flex flex-col items-center justify-center text-zinc-400">
-                <Loader2 className="h-8 w-8 animate-spin mb-4 text-blue-500" />
+                <Spinner size="lg" className="mb-4 text-zinc-400" />
                 <p>Загрузка лидов...</p>
               </div>
             ) : todayLeads.length === 0 ? (
@@ -253,7 +254,7 @@ export default function LeadsPage() {
           <div className={`flex-1 flex flex-col ${viewMode === "table" ? "bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden" : ""}`}>
             {loading ? (
               <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-xl border border-zinc-200 text-zinc-400">
-                <Loader2 className="h-8 w-8 animate-spin mb-4" />
+                <Spinner size="lg" className="mb-4 text-zinc-400" />
                 <p>Загрузка лидов...</p>
               </div>
             ) : filteredLeads.length === 0 ? (
