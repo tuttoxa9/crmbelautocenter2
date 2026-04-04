@@ -10,8 +10,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://crm.belautocenter.by"),
   title: "Белавтоцентр CRM",
   description: "Внутренняя CRM-система для менеджеров автохауса Белавтоцентр",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({
