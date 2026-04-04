@@ -591,32 +591,33 @@ export default function FilesPage() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-3 rounded-xl border border-zinc-200 shadow-sm">
+      <div className="flex flex-col xl:flex-row gap-4 items-start xl:items-center justify-between bg-white p-3 rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full xl:w-auto">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setShowHidden(!showHidden)}
-            className={`text-xs h-8 ${showHidden ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500'}`}
+            className={`text-xs h-8 shrink-0 ${showHidden ? 'bg-zinc-100 text-zinc-900' : 'text-zinc-500'}`}
           >
             {showHidden ? <Eye className="h-3.5 w-3.5 mr-1.5" /> : <EyeOff className="h-3.5 w-3.5 mr-1.5" />}
-            {showHidden ? "Скрытые папки (показаны)" : "Скрытые папки (скрыты)"}
+            <span className="hidden sm:inline">{showHidden ? "Скрытые папки (показаны)" : "Скрытые папки (скрыты)"}</span>
+            <span className="sm:hidden">{showHidden ? "Скрытые (вкл)" : "Скрытые (выкл)"}</span>
           </Button>
 
           {/* Breadcrumbs */}
-          <div className="flex items-center space-x-1 text-sm font-medium text-zinc-600 overflow-x-auto whitespace-nowrap pb-1 sm:pb-0 border-l border-zinc-200 pl-4">
+          <div className="flex items-center space-x-1 text-sm font-medium text-zinc-600 overflow-x-auto whitespace-nowrap w-full sm:w-auto sm:border-l border-zinc-200 sm:pl-3 pb-1 sm:pb-0 scrollbar-hide">
           <button
             onClick={() => setCurrentPrefix("")}
-            className="hover:text-zinc-900 hover:bg-zinc-100 p-1 rounded-md transition-colors flex items-center"
+            className="hover:text-zinc-900 hover:bg-zinc-100 p-1 rounded-md transition-colors flex items-center shrink-0"
           >
              <Folder className="h-4 w-4 mr-1 text-zinc-400" /> Root
           </button>
             {breadcrumbs.map((part, index) => {
                const path = breadcrumbs.slice(0, index + 1).join('/') + '/';
                return (
-                 <div key={path} className="flex items-center">
-                    <ChevronRight className="h-4 w-4 text-zinc-400 mx-1" />
+                 <div key={path} className="flex items-center shrink-0">
+                    <ChevronRight className="h-4 w-4 text-zinc-400 mx-1 shrink-0" />
                     <button
                       onClick={() => setCurrentPrefix(path)}
                       className="hover:text-zinc-900 hover:bg-zinc-100 p-1 rounded-md transition-colors"
@@ -629,22 +630,23 @@ export default function FilesPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-           <div className="flex items-center">
+        <div className="flex flex-wrap items-center gap-2 w-full xl:w-auto justify-end">
+           <div className="flex items-center mr-auto xl:mr-0">
               <Input
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
-                className="h-9 w-32 rounded-r-none border-r-0 focus-visible:ring-0 focus-visible:border-zinc-300"
+                placeholder="Имя папки"
+                className="h-9 w-24 sm:w-32 rounded-r-none border-r-0 focus-visible:ring-0 focus-visible:border-zinc-300 text-sm"
               />
-              <Button onClick={handleCreateFolder} size="sm" variant="outline" className="h-9 rounded-l-none bg-zinc-50 hover:bg-zinc-100">
+              <Button onClick={handleCreateFolder} size="sm" variant="outline" className="h-9 rounded-l-none bg-zinc-50 hover:bg-zinc-100 px-2 sm:px-3">
                 <FolderPlus className="h-4 w-4" />
               </Button>
            </div>
 
-           <label className="cursor-pointer">
-              <div className="inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent text-sm font-medium whitespace-nowrap transition-all outline-none select-none bg-zinc-900 hover:bg-zinc-800 text-white h-9 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem]">
-                 <Upload className="h-4 w-4 mr-2" />
-                 Загрузить {uploading && "..."}
+           <label className="cursor-pointer shrink-0">
+              <div className="inline-flex items-center justify-center rounded-lg border border-transparent text-sm font-medium whitespace-nowrap transition-all outline-none select-none bg-zinc-900 hover:bg-zinc-800 text-white h-9 gap-1 rounded-[min(var(--radius-md),12px)] px-2 sm:px-3">
+                 <Upload className="h-4 w-4 sm:mr-1.5" />
+                 <span className="hidden sm:inline">Загрузить {uploading && "..."}</span>
               </div>
               <input
                  type="file"
@@ -659,58 +661,58 @@ export default function FilesPage() {
            </label>
 
            {selectedPaths.size > 0 && (
-             <>
-               <Button onClick={handleDownloadSelectedIndividual} size="sm" variant="outline" className="h-9 hidden sm:inline-flex" title="Скачать по отдельности">
-                  <Download className="h-4 w-4 mr-2" />
-                  Скачать ({selectedPaths.size})
+             <div className="flex items-center gap-1.5 bg-blue-50/50 p-1 rounded-lg border border-blue-100 shrink-0">
+               <Button onClick={handleDownloadSelectedIndividual} size="sm" variant="ghost" className="h-7 px-2 text-blue-700 hover:bg-blue-100" title="Скачать по отдельности">
+                  <Download className="h-4 w-4 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Скачать</span>
                </Button>
-               <Button onClick={handleDownloadSelectedZip} size="sm" variant="outline" className="h-9 hidden sm:inline-flex" disabled={isDownloadingZip}>
-                  {isDownloadingZip ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Archive className="h-4 w-4 mr-2" />}
-                  ZIP
+               <Button onClick={handleDownloadSelectedZip} size="sm" variant="ghost" className="h-7 px-2 text-blue-700 hover:bg-blue-100" disabled={isDownloadingZip} title="Скачать как ZIP">
+                  {isDownloadingZip ? <Loader2 className="h-4 w-4 animate-spin sm:mr-1.5" /> : <Archive className="h-4 w-4 sm:mr-1.5" />}
+                  <span className="hidden sm:inline">ZIP</span>
                </Button>
-               <Button onClick={handleDeleteSelected} size="sm" variant="destructive" className="h-9">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Удалить ({selectedPaths.size})</span>
-                  <span className="sm:hidden">{selectedPaths.size}</span>
+               <Button onClick={handleDeleteSelected} size="sm" variant="ghost" className="h-7 px-2 text-red-600 hover:bg-red-100 hover:text-red-700" title="Удалить">
+                  <Trash2 className="h-4 w-4 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Удалить</span>
+                  <span className="sm:hidden font-semibold ml-1">{selectedPaths.size}</span>
                </Button>
-             </>
+             </div>
            )}
         </div>
       </div>
 
-      <div className="flex-1 bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col">
+      <div className="flex-1 bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col min-h-0">
         {loading ? (
             <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 py-20">
                <Loader2 className="h-8 w-8 animate-spin mb-4 text-blue-500" />
                <p>Загрузка файлов...</p>
             </div>
         ) : (
-            <div className="overflow-x-auto flex-1">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-zinc-500 bg-zinc-50 border-b border-zinc-200 uppercase sticky top-0 z-10">
+            <div className="overflow-x-auto flex-1 relative">
+              <table className="w-full text-sm text-left min-w-[300px]">
+                <thead className="text-xs text-zinc-500 bg-zinc-50 border-b border-zinc-200 uppercase sticky top-0 z-10 shadow-sm">
                   <tr>
-                    <th className="px-4 py-3 w-10 text-center">
+                    <th className="px-2 sm:px-4 py-3 w-8 sm:w-10 text-center">
                        <button onClick={toggleAll} className="text-zinc-400 hover:text-zinc-700">
                          {items.length > 0 && selectedPaths.size === items.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
                        </button>
                     </th>
-                    <th className="px-4 py-3 font-medium">Имя</th>
-                    <th className="px-4 py-3 font-medium w-32 hidden sm:table-cell">Размер</th>
-                    <th className="px-4 py-3 font-medium w-48 hidden md:table-cell">Изменен</th>
-                    <th className="px-4 py-3 font-medium w-24 text-right">Действия</th>
+                    <th className="px-2 sm:px-4 py-3 font-medium">Имя</th>
+                    <th className="px-4 py-3 font-medium w-24 hidden lg:table-cell">Размер</th>
+                    <th className="px-4 py-3 font-medium w-40 hidden xl:table-cell">Изменен</th>
+                    <th className="px-2 sm:px-4 py-3 font-medium w-16 sm:w-24 text-right"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
                   {currentPrefix !== "" && (
                      <tr className="hover:bg-zinc-50/50 group">
-                        <td className="px-4 py-3"></td>
-                        <td className="px-4 py-3 cursor-pointer flex items-center gap-2" onClick={handleUpFolder}>
-                           <CornerLeftUp className="h-5 w-5 text-zinc-400" />
+                        <td className="px-2 sm:px-4 py-3"></td>
+                        <td className="px-2 sm:px-4 py-3 cursor-pointer flex items-center gap-2" onClick={handleUpFolder}>
+                           <CornerLeftUp className="h-5 w-5 text-zinc-400 shrink-0" />
                            <span className="font-medium text-zinc-700">..</span>
                         </td>
-                        <td className="px-4 py-3 hidden sm:table-cell"></td>
-                        <td className="px-4 py-3 hidden md:table-cell"></td>
-                        <td className="px-4 py-3"></td>
+                        <td className="px-4 py-3 hidden lg:table-cell"></td>
+                        <td className="px-4 py-3 hidden xl:table-cell"></td>
+                        <td className="px-2 sm:px-4 py-3"></td>
                      </tr>
                   )}
                   {displayedItems.map((item) => {
@@ -720,17 +722,17 @@ export default function FilesPage() {
 
                     return (
                       <tr key={item.path} className={`hover:bg-zinc-50 group transition-colors ${isSelected ? 'bg-blue-50/30' : ''} ${isHidden ? 'opacity-50' : ''}`}>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-2 sm:px-4 py-3 text-center">
                            <button onClick={() => toggleSelection(item.path)} className="text-zinc-400 hover:text-blue-600">
                              {isSelected ? <CheckSquare className="h-4 w-4 text-blue-600" /> : <Square className="h-4 w-4" />}
                            </button>
                         </td>
                         <td
-                          className={`px-4 py-3 flex items-center gap-3 ${item.type === 'folder' ? 'cursor-pointer' : ''}`}
+                          className={`px-2 sm:px-4 py-3 flex items-center gap-2 sm:gap-3 ${item.type === 'folder' ? 'cursor-pointer' : ''} max-w-[150px] sm:max-w-[200px] md:max-w-md`}
                           onClick={() => item.type === 'folder' && handleFolderClick(item)}
                         >
                           {item.type === 'folder' ? (
-                            <Folder className="h-5 w-5 text-zinc-400 fill-zinc-100 group-hover:text-blue-500 transition-colors" />
+                            <Folder className="h-5 w-5 text-zinc-400 fill-zinc-100 group-hover:text-blue-500 transition-colors shrink-0" />
                           ) : isImage ? (
                              <div
                                className="h-6 w-6 rounded flex items-center justify-center bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200 cursor-pointer hover:ring-2 ring-blue-400 transition-all"
@@ -742,23 +744,23 @@ export default function FilesPage() {
                           ) : (
                             <FileIcon className="h-5 w-5 text-zinc-400 shrink-0" />
                           )}
-                          <span className={`font-medium truncate max-w-[200px] sm:max-w-md ${item.type === 'folder' ? 'text-zinc-900 group-hover:text-blue-600' : 'text-zinc-700'}`}>
+                          <span className={`font-medium truncate ${item.type === 'folder' ? 'text-zinc-900 group-hover:text-blue-600' : 'text-zinc-700'}`} title={item.name}>
                             {item.name}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-zinc-500 whitespace-nowrap hidden sm:table-cell">
+                        <td className="px-4 py-3 text-zinc-500 whitespace-nowrap hidden lg:table-cell text-xs sm:text-sm">
                            {item.type === 'file' ? formatSize(item.size) : '—'}
                         </td>
-                        <td className="px-4 py-3 text-zinc-500 whitespace-nowrap hidden md:table-cell">
+                        <td className="px-4 py-3 text-zinc-500 whitespace-nowrap hidden xl:table-cell text-xs sm:text-sm">
                            {formatDate(item.lastModified)}
                         </td>
-                        <td className="px-4 py-3 text-right">
-                           <div className="flex justify-end gap-1 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <td className="px-2 sm:px-4 py-2 sm:py-3 text-right">
+                           <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                              {item.type === 'folder' && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 text-zinc-400 hover:text-blue-600"
+                                  className="h-8 w-8 text-zinc-400 hover:text-blue-600 bg-zinc-100 sm:bg-transparent"
                                   onClick={(e) => toggleFolderVisibility(item.path, e)}
                                   title={isHidden ? "Показывать папку" : "Скрыть папку"}
                                 >
@@ -767,10 +769,10 @@ export default function FilesPage() {
                              )}
                              {item.type === 'file' && (
                                 <>
-                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-blue-600" onClick={() => copyToClipboard(getPublicUrl(item.path))} title="Копировать ссылку">
+                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-blue-600 bg-zinc-100 sm:bg-transparent hidden sm:inline-flex" onClick={() => copyToClipboard(getPublicUrl(item.path))} title="Копировать ссылку">
                                       <Copy className="h-4 w-4" />
                                    </Button>
-                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900" onClick={(e) => handleDownloadFile(item.path, e)} title="Скачать">
+                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 bg-zinc-100 sm:bg-transparent" onClick={(e) => handleDownloadFile(item.path, e)} title="Скачать">
                                       <Download className="h-4 w-4" />
                                    </Button>
                                 </>
@@ -786,7 +788,7 @@ export default function FilesPage() {
                            <div className="flex flex-col items-center justify-center">
                               <Folder className="h-12 w-12 text-zinc-200 mb-3" />
                               <p className="text-base font-medium text-zinc-900">Хранилище пусто</p>
-                              <p className="text-sm mt-1">Перетащите файлы сюда или используйте кнопку загрузки</p>
+                              <p className="text-sm mt-1 px-4 text-center">Перетащите файлы сюда или используйте кнопку загрузки</p>
                            </div>
                         </td>
                      </tr>
