@@ -343,6 +343,17 @@ export default function FilesPage() {
     }
   };
 
+  const handleDownloadSelectedIndividual = async () => {
+    if (selectedPaths.size === 0) return;
+    const filesToDownload = items.filter(item => selectedPaths.has(item.path) && item.type === 'file');
+
+    // We open each file download url with a slight delay
+    for (const file of filesToDownload) {
+      await handleDownloadFile(file.path);
+      await new Promise(r => setTimeout(r, 500)); // Small delay to help browser process multiple downloads
+    }
+  };
+
   const handleDownloadSelectedZip = async () => {
     if (selectedPaths.size === 0) return;
     setIsDownloadingZip(true);
@@ -649,9 +660,13 @@ export default function FilesPage() {
 
            {selectedPaths.size > 0 && (
              <>
+               <Button onClick={handleDownloadSelectedIndividual} size="sm" variant="outline" className="h-9 hidden sm:inline-flex" title="Скачать по отдельности">
+                  <Download className="h-4 w-4 mr-2" />
+                  Скачать ({selectedPaths.size})
+               </Button>
                <Button onClick={handleDownloadSelectedZip} size="sm" variant="outline" className="h-9 hidden sm:inline-flex" disabled={isDownloadingZip}>
                   {isDownloadingZip ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Archive className="h-4 w-4 mr-2" />}
-                  ZIP ({selectedPaths.size})
+                  ZIP
                </Button>
                <Button onClick={handleDeleteSelected} size="sm" variant="destructive" className="h-9">
                   <Trash2 className="h-4 w-4 mr-2" />
