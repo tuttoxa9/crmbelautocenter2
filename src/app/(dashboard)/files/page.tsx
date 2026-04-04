@@ -348,36 +348,21 @@ export default function FilesPage() {
     if (selectedPaths.size === 0) return;
     const filesToDownload = items.filter(item => selectedPaths.has(item.path) && item.type === 'file');
 
-    // We open each file download url with a slight delay
-    for (const file of filesToDownload) {
-      await handleDownloadFile(file.path);
-      await new Promise(r => setTimeout(r, 500)); // Small delay to help browser process multiple downloads
-    }
-  };
-
-  const handleDownloadSelectedZip = async () => {
-    if (selectedPaths.size === 0) return;
-    setIsDownloadingZip(true);
+    setIsDownloadingZip(true); // Reusing this loading state for simplicity
     try {
-      const zip = new JSZip();
-
-      const filesToDownload = items.filter(item => selectedPaths.has(item.path) && item.type === 'file');
-
-      if (filesToDownload.length === 0) {
-         setIsDownloadingZip(false);
-         return;
-      }
-
-      const promises = filesToDownload.map(async (file) => {
+      // Instead of relying on window.location.href which cancels previous navigation,
+      // we fetch the Blob and save it using file-saver to force multiple downloads.
+      const promises = filesToDownload.map(async (file, index) => {
          try {
+           // Small staggered delay to not overwhelm the browser/network
+           await new Promise(r => setTimeout(r, index * 200));
+
            const { auth } = await import('@/lib/firebase');
            const token = await auth?.currentUser?.getIdToken();
            if (!token) return;
 
            const res = await fetch(`/api/s3/download?path=${encodeURIComponent(file.path)}`, {
-              headers: {
-                 Authorization: `Bearer ${token}`
-              }
+              headers: { Authorization: `Bearer ${token}` }
            });
 
            if (!res.ok) throw new Error("Failed to get signed url");
@@ -386,21 +371,19 @@ export default function FilesPage() {
            const downloadRes = await fetch(data.url);
            if (downloadRes.ok) {
               const blob = await downloadRes.blob();
-              zip.file(file.name, blob);
+              saveAs(blob, file.name);
            }
          } catch (e) {
-            console.error(`Error adding ${file.name} to zip:`, e);
+            console.error(`Error downloading ${file.name}:`, e);
          }
       });
 
       await Promise.all(promises);
-      const content = await zip.generateAsync({ type: "blob" });
-      saveAs(content, `archive_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.zip`);
-
     } catch (error) {
-      console.error("Error creating zip:", error);
+       console.error("Error in bulk download:", error);
     } finally {
-      setIsDownloadingZip(false);
+       setIsDownloadingZip(false);
+       setSelectedPaths(new Set()); // Deselect after download
     }
   };
 
@@ -663,13 +646,9 @@ export default function FilesPage() {
 
            {selectedPaths.size > 0 && (
              <div className="flex items-center gap-1.5 bg-blue-50/50 p-1 rounded-lg border border-blue-100 shrink-0">
-               <Button onClick={handleDownloadSelectedIndividual} size="sm" variant="ghost" className="h-7 px-2 text-blue-700 hover:bg-blue-100" title="Скачать по отдельности">
-                  <Download className="h-4 w-4 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Скачать</span>
-               </Button>
-               <Button onClick={handleDownloadSelectedZip} size="sm" variant="ghost" className="h-7 px-2 text-blue-700 hover:bg-blue-100" disabled={isDownloadingZip} title="Скачать как ZIP">
-                  {isDownloadingZip ? <Spinner size="sm" className="sm:mr-1.5" /> : <Archive className="h-4 w-4 sm:mr-1.5" />}
-                  <span className="hidden sm:inline">ZIP</span>
+               <Button onClick={handleDownloadSelectedIndividual} size="sm" variant="ghost" className="h-7 px-2 text-blue-700 hover:bg-blue-100" disabled={isDownloadingZip} title="Скачать выбранное">
+                  {isDownloadingZip ? <Spinner size="sm" className="sm:mr-1.5" /> : <Download className="h-4 w-4 sm:mr-1.5" />}
+                  <span className="hidden sm:inline">Скачать ({selectedPaths.size})</span>
                </Button>
                <Button onClick={handleDeleteSelected} size="sm" variant="ghost" className="h-7 px-2 text-red-600 hover:bg-red-100 hover:text-red-700" title="Удалить">
                   <Trash2 className="h-4 w-4 sm:mr-1.5" />
@@ -688,114 +667,107 @@ export default function FilesPage() {
                <p>Загрузка файлов...</p>
             </div>
         ) : (
-            <div className="overflow-x-auto flex-1 relative">
-              <table className="w-full text-sm text-left min-w-[300px]">
-                <thead className="text-xs text-zinc-500 bg-zinc-50 border-b border-zinc-200 uppercase sticky top-0 z-10 shadow-sm">
-                  <tr>
-                    <th className="px-2 sm:px-4 py-3 w-8 sm:w-10 text-center">
-                       <button onClick={toggleAll} className="text-zinc-400 hover:text-zinc-700">
-                         {items.length > 0 && selectedPaths.size === items.length ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4" />}
-                       </button>
-                    </th>
-                    <th className="px-2 sm:px-4 py-3 font-medium">Имя</th>
-                    <th className="px-4 py-3 font-medium w-24 hidden lg:table-cell">Размер</th>
-                    <th className="px-4 py-3 font-medium w-40 hidden xl:table-cell">Изменен</th>
-                    <th className="px-2 sm:px-4 py-3 font-medium w-16 sm:w-24 text-right"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
-                  {currentPrefix !== "" && (
-                     <tr className="hover:bg-zinc-50/50 group">
-                        <td className="px-2 sm:px-4 py-3"></td>
-                        <td className="px-2 sm:px-4 py-3 cursor-pointer flex items-center gap-2" onClick={handleUpFolder}>
-                           <CornerLeftUp className="h-5 w-5 text-zinc-400 shrink-0" />
-                           <span className="font-medium text-zinc-700">..</span>
-                        </td>
-                        <td className="px-4 py-3 hidden lg:table-cell"></td>
-                        <td className="px-4 py-3 hidden xl:table-cell"></td>
-                        <td className="px-2 sm:px-4 py-3"></td>
-                     </tr>
-                  )}
-                  {displayedItems.map((item) => {
-                    const isSelected = selectedPaths.has(item.path);
-                    const isImage = item.type === 'file' && /\.(jpe?g|png|gif|webp|svg)$/i.test(item.name);
-                    const isHidden = item.type === 'folder' && hiddenFolders.includes(item.path);
+            <div className="flex-1 p-4 overflow-y-auto relative">
+              <div className="flex items-center justify-between mb-4 bg-zinc-50 p-2 rounded-lg border border-zinc-200 sticky top-0 z-10 shadow-sm backdrop-blur-md bg-zinc-50/90">
+                <div className="flex items-center gap-2 px-2">
+                   <button onClick={toggleAll} className="text-zinc-500 hover:text-zinc-900 flex items-center gap-2 text-sm font-medium transition-colors">
+                     {items.length > 0 && selectedPaths.size === items.length ? <CheckSquare className="h-5 w-5 text-blue-600" /> : <Square className="h-5 w-5" />}
+                     <span>Выбрать все</span>
+                   </button>
+                </div>
+              </div>
 
-                    return (
-                      <tr key={item.path} className={`hover:bg-zinc-50 group transition-colors ${isSelected ? 'bg-blue-50/30' : ''} ${isHidden ? 'opacity-50' : ''}`}>
-                        <td className="px-2 sm:px-4 py-3 text-center">
-                           <button onClick={() => toggleSelection(item.path)} className="text-zinc-400 hover:text-blue-600">
-                             {isSelected ? <CheckSquare className="h-4 w-4 text-blue-600" /> : <Square className="h-4 w-4" />}
-                           </button>
-                        </td>
-                        <td
-                          className={`px-2 sm:px-4 py-3 flex items-center gap-2 sm:gap-3 ${item.type === 'folder' ? 'cursor-pointer' : ''} max-w-[150px] sm:max-w-[200px] md:max-w-md`}
-                          onClick={() => item.type === 'folder' && handleFolderClick(item)}
-                        >
-                          {item.type === 'folder' ? (
-                            <Folder className="h-5 w-5 text-zinc-400 fill-zinc-100 group-hover:text-blue-500 transition-colors shrink-0" />
-                          ) : isImage ? (
-                             <div
-                               className="h-6 w-6 rounded flex items-center justify-center bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200 cursor-pointer hover:ring-2 ring-blue-400 transition-all"
-                               onClick={(e) => { e.stopPropagation(); openLightbox(item.path); }}
-                             >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={getPublicUrl(item.path)} alt={item.name} className="object-cover h-full w-full" loading="lazy" />
-                             </div>
-                          ) : (
-                            <FileIcon className="h-5 w-5 text-zinc-400 shrink-0" />
-                          )}
-                          <span className={`font-medium truncate ${item.type === 'folder' ? 'text-zinc-900 group-hover:text-blue-600' : 'text-zinc-700'}`} title={item.name}>
-                            {item.name}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-zinc-500 whitespace-nowrap hidden lg:table-cell text-xs sm:text-sm">
-                           {item.type === 'file' ? formatSize(item.size) : '—'}
-                        </td>
-                        <td className="px-4 py-3 text-zinc-500 whitespace-nowrap hidden xl:table-cell text-xs sm:text-sm">
-                           {formatDate(item.lastModified)}
-                        </td>
-                        <td className="px-2 sm:px-4 py-2 sm:py-3 text-right">
-                           <div className="flex justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                             {item.type === 'folder' && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-zinc-400 hover:text-blue-600 bg-zinc-100 sm:bg-transparent"
-                                  onClick={(e) => toggleFolderVisibility(item.path, e)}
-                                  title={isHidden ? "Показывать папку" : "Скрыть папку"}
-                                >
-                                  {isHidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                                </Button>
-                             )}
-                             {item.type === 'file' && (
-                                <>
-                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-blue-600 bg-zinc-100 sm:bg-transparent hidden sm:inline-flex" onClick={() => copyToClipboard(getPublicUrl(item.path))} title="Копировать ссылку">
-                                      <Copy className="h-4 w-4" />
-                                   </Button>
-                                   <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-zinc-900 bg-zinc-100 sm:bg-transparent" onClick={(e) => handleDownloadFile(item.path, e)} title="Скачать">
-                                      <Download className="h-4 w-4" />
-                                   </Button>
-                                </>
-                             )}
-                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {displayedItems.length === 0 && currentPrefix === "" && !loading && (
-                     <tr>
-                        <td colSpan={5} className="px-4 py-12 text-center text-zinc-500">
-                           <div className="flex flex-col items-center justify-center">
-                              <Folder className="h-12 w-12 text-zinc-200 mb-3" />
-                              <p className="text-base font-medium text-zinc-900">Хранилище пусто</p>
-                              <p className="text-sm mt-1 px-4 text-center">Перетащите файлы сюда или используйте кнопку загрузки</p>
-                           </div>
-                        </td>
-                     </tr>
-                  )}
-                </tbody>
-              </table>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-10">
+                {currentPrefix !== "" && (
+                   <div
+                     onClick={handleUpFolder}
+                     className="group relative flex flex-col items-center p-3 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 transition-all cursor-pointer shadow-sm"
+                   >
+                      <div className="w-full aspect-square mb-2 flex items-center justify-center">
+                         <CornerLeftUp className="h-10 w-10 text-zinc-400" />
+                      </div>
+                      <span className="font-medium text-zinc-700 text-sm w-full text-center truncate px-1">..</span>
+                   </div>
+                )}
+
+                {displayedItems.map((item) => {
+                  const isSelected = selectedPaths.has(item.path);
+                  const isImage = item.type === 'file' && /\.(jpe?g|png|gif|webp|svg)$/i.test(item.name);
+                  const isHidden = item.type === 'folder' && hiddenFolders.includes(item.path);
+
+                  return (
+                    <div
+                      key={item.path}
+                      className={`group relative flex flex-col items-center p-3 rounded-xl border transition-all shadow-sm
+                        ${isSelected ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500' : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50'}
+                        ${isHidden ? 'opacity-50' : ''}
+                      `}
+                    >
+                      <div className={`absolute top-2 left-2 z-10 transition-opacity focus-within:opacity-100 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                        <button onClick={(e) => { e.stopPropagation(); toggleSelection(item.path); }} className="bg-white rounded-md p-0.5 shadow-sm border border-zinc-200 text-zinc-400 hover:text-zinc-600 transition-colors">
+                          {isSelected ? <CheckSquare className="h-5 w-5 text-blue-600" /> : <Square className="h-5 w-5" />}
+                        </button>
+                      </div>
+
+                      <div className="absolute top-2 right-2 z-10 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {item.type === 'file' ? (
+                          <>
+                            <Button onClick={(e) => { e.stopPropagation(); handleDownloadFile(item.path, e); }} variant="secondary" size="icon" className="h-7 w-7 rounded-full shadow-sm bg-white hover:bg-zinc-100 text-blue-600 border border-zinc-200" title="Скачать">
+                              <Download className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button onClick={(e) => { e.stopPropagation(); copyToClipboard(getPublicUrl(item.path)); }} variant="secondary" size="icon" className="h-7 w-7 rounded-full shadow-sm bg-white hover:bg-zinc-100 text-zinc-600 border border-zinc-200" title="Копировать ссылку">
+                              <Copy className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Button onClick={(e) => { e.stopPropagation(); toggleFolderVisibility(item.path, e); }} variant="secondary" size="icon" className="h-7 w-7 rounded-full shadow-sm bg-white hover:bg-zinc-100 text-zinc-600 border border-zinc-200" title={isHidden ? "Показывать папку" : "Скрыть папку"}>
+                            {isHidden ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                          </Button>
+                        )}
+                      </div>
+
+                      <div
+                        className={`w-full aspect-square mb-2 flex items-center justify-center rounded-lg overflow-hidden bg-zinc-50 border border-zinc-100 ${item.type === 'folder' ? 'cursor-pointer' : ''}`}
+                        onClick={() => {
+                          if (item.type === 'folder') handleFolderClick(item);
+                          else if (isImage) openLightbox(item.path);
+                          else toggleSelection(item.path);
+                        }}
+                      >
+                        {item.type === 'folder' ? (
+                          <Folder className="h-16 w-16 text-zinc-400 fill-zinc-200 group-hover:text-blue-500 group-hover:fill-blue-100 transition-colors" />
+                        ) : isImage ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={getPublicUrl(item.path)} alt={item.name} className="object-cover h-full w-full cursor-pointer hover:scale-105 transition-transform" loading="lazy" />
+                        ) : (
+                          <FileIcon className="h-12 w-12 text-zinc-400" />
+                        )}
+                      </div>
+
+                      <span
+                        className={`font-medium text-center text-sm w-full truncate px-1 cursor-default ${item.type === 'folder' ? 'text-zinc-900 group-hover:text-blue-600 cursor-pointer' : 'text-zinc-700'}`}
+                        title={item.name}
+                        onClick={() => { if (item.type === 'folder') handleFolderClick(item); }}
+                      >
+                        {item.name}
+                      </span>
+                      {item.type === 'file' && (
+                        <span className="text-[11px] text-zinc-500 mt-0.5">
+                          {formatSize(item.size)}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {displayedItems.length === 0 && currentPrefix === "" && !loading && (
+                <div className="flex flex-col items-center justify-center text-zinc-500 py-16 w-full">
+                  <Folder className="h-12 w-12 text-zinc-200 mb-3" />
+                  <p className="text-base font-medium text-zinc-900">Хранилище пусто</p>
+                  <p className="text-sm mt-1 px-4 text-center">Перетащите файлы сюда или используйте кнопку загрузки</p>
+                </div>
+              )}
             </div>
         )}
       </div>

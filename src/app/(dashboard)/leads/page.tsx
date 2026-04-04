@@ -123,7 +123,8 @@ export default function LeadsPage() {
   const tasksLeads = leads.filter(lead => {
      if (lead.status === "success" || lead.status === "refusal" || lead.status === "bank_refusal" || lead.status === "spam") return false;
 
-     const filterDate = startOfDay(new Date(taskDateFilter));
+     // Ensure we parse the string in local time, not UTC, to prevent off-by-one errors in negative UTC offsets
+     const filterDate = startOfDay(new Date(taskDateFilter + "T00:00:00"));
      const isFilterToday = isToday(filterDate);
 
      // For "Today", show new leads and tasks scheduled for today or earlier (overdue)
@@ -168,9 +169,9 @@ export default function LeadsPage() {
               <div>
                 <h3 className="font-semibold text-zinc-800">Задачи</h3>
                 <p className="text-sm text-zinc-500">
-                  {isToday(new Date(taskDateFilter))
+                  {isToday(new Date(taskDateFilter + "T00:00:00"))
                     ? "Свежие заявки и запланированные визиты/звонки"
-                    : `Запланированные визиты/звонки на ${format(new Date(taskDateFilter), "dd MMMM", { locale: ru })}`}
+                    : `Запланированные визиты/звонки на ${format(new Date(taskDateFilter + "T00:00:00"), "dd MMMM", { locale: ru })}`}
                 </p>
               </div>
               <div>
