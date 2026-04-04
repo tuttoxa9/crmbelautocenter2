@@ -24,12 +24,13 @@ import { CreateLeadDialog } from "@/components/leads/CreateLeadDialog";
 import { LeadDrawer } from "@/components/leads/LeadDrawer";
 import { KanbanBoard } from "@/components/leads/KanbanBoard";
 import { useEffect, useState } from "react";
-import { getLeads } from "@/lib/leadService";
+import { getLeads, deleteLead } from "@/lib/leadService";
 import { Lead } from "@/lib/types";
 import { getStatusLabel, getStatusColor, getSourceLabel } from "@/lib/displayUtils";
 import { Badge } from "@/components/ui/badge";
-import { format, isValid } from "date-fns";
+import { format, isValid, isToday, isPast, isSameDay, startOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
+import { Trash2 } from "lucide-react";
 
 const safeFormatDate = (timestamp: unknown) => {
   if (!timestamp) return "—";
@@ -60,6 +61,7 @@ export default function LeadsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all-status");
   const [sourceFilter, setSourceFilter] = useState<string>("all-source");
   const [dateFilter, setDateFilter] = useState<string>("all-dates");
+  const [taskDateFilter, setTaskDateFilter] = useState<string>(format(new Date(), "yyyy-MM-dd"));
 
   const fetchLeads = async () => {
     try {
@@ -107,14 +109,35 @@ export default function LeadsPage() {
     return matchesSearch && matchesStatus && matchesSource && matchesDate;
   });
 
-  const { isToday, isPast } = require("date-fns");
-  const todayLeads = leads.filter(lead => {
+  const handleDelete = async (leadId: string) => {
+    if (!confirm("Вы уверены, что хотите удалить этого лида?")) return;
+    try {
+      await deleteLead(leadId);
+      await fetchLeads();
+    } catch (error) {
+      console.error("Error deleting lead:", error);
+      alert("Ошибка при удалении");
+    }
+  };
+
+  const tasksLeads = leads.filter(lead => {
      if (lead.status === "success" || lead.status === "refusal" || lead.status === "bank_refusal" || lead.status === "spam") return false;
 
-     if (lead.status === "new") return true;
+     const filterDate = startOfDay(new Date(taskDateFilter));
+     const isFilterToday = isToday(filterDate);
 
+     // For "Today", show new leads and tasks scheduled for today or earlier (overdue)
+     if (isFilterToday) {
+       if (lead.status === "new") return true;
+       if (lead.nextActionDate) {
+          return isToday(lead.nextActionDate) || isPast(lead.nextActionDate);
+       }
+       return false;
+     }
+
+     // For other dates, show only tasks specifically scheduled for that date
      if (lead.nextActionDate) {
-        return isToday(lead.nextActionDate) || isPast(lead.nextActionDate);
+       return isSameDay(new Date(lead.nextActionDate), filterDate);
      }
      return false;
   });
@@ -133,32 +156,46 @@ export default function LeadsPage() {
         </CreateLeadDialog>
       </div>
 
-      <Tabs defaultValue="today" className="flex-1 flex flex-col">
+      <Tabs defaultValue="tasks" className="flex-1 flex flex-col">
         <TabsList className="mb-4">
-          <TabsTrigger value="today">☀️ На сегодня</TabsTrigger>
+          <TabsTrigger value="tasks">☀️ Задачи</TabsTrigger>
           <TabsTrigger value="all">🗂 Все лиды</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="today" className="flex-1 outline-none m-0 flex flex-col">
+        <TabsContent value="tasks" className="flex-1 outline-none m-0 flex flex-col">
           <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex-1 flex flex-col h-full">
-            <div className="p-4 border-b border-zinc-200 bg-zinc-50">
-              <h3 className="font-semibold text-zinc-800">Задачи на сегодня</h3>
-              <p className="text-sm text-zinc-500">Свежие заявки и запланированные визиты/звонки</p>
+            <div className="p-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-zinc-800">Задачи</h3>
+                <p className="text-sm text-zinc-500">
+                  {isToday(new Date(taskDateFilter))
+                    ? "Свежие заявки и запланированные визиты/звонки"
+                    : `Запланированные визиты/звонки на ${format(new Date(taskDateFilter), "dd MMMM", { locale: ru })}`}
+                </p>
+              </div>
+              <div>
+                <input
+                  type="date"
+                  className="flex h-9 rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
+                  value={taskDateFilter}
+                  onChange={(e) => setTaskDateFilter(e.target.value)}
+                />
+              </div>
             </div>
             {loading ? (
               <div className="flex-1 flex flex-col items-center justify-center text-zinc-400">
                 <Spinner size="lg" className="mb-4 text-zinc-400" />
                 <p>Загрузка лидов...</p>
               </div>
-            ) : todayLeads.length === 0 ? (
+            ) : tasksLeads.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 p-8">
                 <Inbox className="h-10 w-10 mb-4 text-zinc-300" />
-                <p className="text-lg font-medium text-zinc-900">На сегодня задач нет</p>
-                <p className="text-sm">Все новые заявки обработаны</p>
+                <p className="text-lg font-medium text-zinc-900">На выбранную дату задач нет</p>
+                <p className="text-sm">Отдыхайте или выберите другой день</p>
               </div>
             ) : (
               <div className="flex-1 p-4 overflow-y-auto">
-                 <KanbanBoard leads={todayLeads} onLeadChange={fetchLeads} />
+                 <KanbanBoard leads={tasksLeads} onLeadChange={fetchLeads} />
               </div>
             )}
           </div>
@@ -296,15 +333,25 @@ export default function LeadsPage() {
                           {safeFormatDate(lead.createdAt)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <LeadDrawer
-                            lead={lead}
-                            onChange={fetchLeads}
-                            trigger={
-                              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                                Открыть
-                              </Button>
-                            }
-                          />
+                          <div className="flex justify-end gap-1">
+                            <LeadDrawer
+                              lead={lead}
+                              onChange={fetchLeads}
+                              trigger={
+                                <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                                  Открыть
+                                </Button>
+                              }
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50 px-2"
+                              onClick={() => handleDelete(lead.id!)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
