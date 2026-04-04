@@ -11,6 +11,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ClipboardList, Folder, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
 
 const navItems = [
   { name: "Лиды", href: "/leads", icon: ClipboardList },
@@ -25,8 +26,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"></div>
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
+         <Spinner size="lg" />
       </div>
     );
   }

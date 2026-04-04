@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Folder, File as FileIcon, Upload, Trash2, FolderPlus, Download, ChevronRight, CornerLeftUp, Image as ImageIcon, CheckSquare, Square, Copy, EyeOff, Eye, Loader2, Archive } from "lucide-react";
+import { Folder, File as FileIcon, Upload, Trash2, FolderPlus, Download, ChevronRight, CornerLeftUp, Image as ImageIcon, CheckSquare, Square, Copy, EyeOff, Eye, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -519,7 +520,7 @@ export default function FilesPage() {
                    <div className="shrink-0 flex items-center">
                       {sf.status === 'success' && <CheckSquare className="h-5 w-5 text-green-500" />}
                       {sf.status === 'error' && <span className="text-xs text-red-500">Ошибка</span>}
-                      {sf.status === 'uploading' && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+                      {sf.status === 'uploading' && <Spinner size="sm" />}
                       {(sf.status === 'ready' || sf.status === 'error' || sf.status === 'pending') && (
                          <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-red-500" onClick={() => removeStagedFile(sf.file)}>
                             <Trash2 className="h-4 w-4" />
@@ -539,7 +540,7 @@ export default function FilesPage() {
                 onClick={handleUploadAll}
                 disabled={uploading || isAnyCompressing || !isAnyReady}
              >
-                {uploading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                {uploading ? <Spinner size="sm" className="mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
                 {uploading ? "Загрузка..." : isAnyCompressing ? "Идет сжатие..." : "Загрузить на сервер"}
              </Button>
           </div>
@@ -667,7 +668,7 @@ export default function FilesPage() {
                   <span className="hidden sm:inline">Скачать</span>
                </Button>
                <Button onClick={handleDownloadSelectedZip} size="sm" variant="ghost" className="h-7 px-2 text-blue-700 hover:bg-blue-100" disabled={isDownloadingZip} title="Скачать как ZIP">
-                  {isDownloadingZip ? <Loader2 className="h-4 w-4 animate-spin sm:mr-1.5" /> : <Archive className="h-4 w-4 sm:mr-1.5" />}
+                  {isDownloadingZip ? <Spinner size="sm" className="sm:mr-1.5" /> : <Archive className="h-4 w-4 sm:mr-1.5" />}
                   <span className="hidden sm:inline">ZIP</span>
                </Button>
                <Button onClick={handleDeleteSelected} size="sm" variant="ghost" className="h-7 px-2 text-red-600 hover:bg-red-100 hover:text-red-700" title="Удалить">
@@ -683,7 +684,7 @@ export default function FilesPage() {
       <div className="flex-1 bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex flex-col min-h-0">
         {loading ? (
             <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 py-20">
-               <Loader2 className="h-8 w-8 animate-spin mb-4 text-blue-500" />
+               <Spinner size="lg" className="mb-4 text-zinc-400" />
                <p>Загрузка файлов...</p>
             </div>
         ) : (

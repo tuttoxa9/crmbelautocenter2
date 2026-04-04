@@ -5,61 +5,12 @@
 ▲ Next.js 16.2.2 (Turbopack)
 - Local:         http://localhost:3000
 - Network:       http://192.168.0.2:3000
-- Environments: .env.local
-✓ Ready in 1171ms
+✓ Ready in 663ms
 
- GET /login 200 in 2.2s (next.js: 978ms, application-code: 1237ms)
- GET /login 200 in 86ms (next.js: 7ms, application-code: 79ms)
-[browser] FirebaseError: Firebase: Error (auth/invalid-credential).
-    at async handleLogin (src/app/login/page.tsx:40:7)
-  38 |
-  39 |     try {
-> 40 |       await signInWithEmailAndPassword(auth, email, password);
-     |       ^
-  41 |       router.push("/leads");
-  42 |     } catch (err: unknown) {
-  43 |       setError("Неверный email или пароль."); (src/app/login/page.tsx:44:15)
- GET /leads 200 in 376ms (next.js: 35ms, application-code: 340ms)
- GET /login 200 in 127ms (next.js: 19ms, application-code: 108ms)
- GET /login 200 in 90ms (next.js: 6ms, application-code: 84ms)
-[browser] FirebaseError: Firebase: Error (auth/invalid-credential).
-    at async handleLogin (src/app/login/page.tsx:40:7)
-  38 |
-  39 |     try {
-> 40 |       await signInWithEmailAndPassword(auth, email, password);
-     |       ^
-  41 |       router.push("/leads");
-  42 |     } catch (err: unknown) {
-  43 |       setError("Неверный email или пароль."); (src/app/login/page.tsx:44:15)
- GET /leads 200 in 71ms (next.js: 4ms, application-code: 67ms)
- GET /login 200 in 37ms (next.js: 5ms, application-code: 32ms)
- GET /login 200 in 98ms (next.js: 8ms, application-code: 90ms)
-[browser] FirebaseError: Firebase: Error (auth/invalid-credential).
-    at async handleLogin (src/app/login/page.tsx:40:7)
-  38 |
-  39 |     try {
-> 40 |       await signInWithEmailAndPassword(auth, email, password);
-     |       ^
-  41 |       router.push("/leads");
-  42 |     } catch (err: unknown) {
-  43 |       setError("Неверный email или пароль."); (src/app/login/page.tsx:44:15)
- GET /leads 200 in 76ms (next.js: 5ms, application-code: 71ms)
- GET /login 200 in 60ms (next.js: 8ms, application-code: 52ms)
- GET /login 200 in 78ms (next.js: 4ms, application-code: 73ms)
-[browser] FirebaseError: Firebase: Error (auth/invalid-credential).
-    at async handleLogin (src/app/login/page.tsx:40:7)
-  38 |
-  39 |     try {
-> 40 |       await signInWithEmailAndPassword(auth, email, password);
-     |       ^
-  41 |       router.push("/leads");
-  42 |     } catch (err: unknown) {
-  43 |       setError("Неверный email или пароль."); (src/app/login/page.tsx:44:15)
- GET /leads 200 in 81ms (next.js: 4ms, application-code: 78ms)
- GET /login 200 in 36ms (next.js: 8ms, application-code: 28ms)
-✓ Compiled in 546ms
- GET /login 200 in 590ms (next.js: 149ms, application-code: 441ms)
- GET /leads 200 in 262ms (next.js: 30ms, application-code: 232ms)
+○ Compiling /login ...
+ GET /login 200 in 6.1s (next.js: 5.2s, application-code: 908ms)
+○ Compiling /leads ...
+ GET /leads 200 in 6.2s (next.js: 5.8s, application-code: 429ms)
 [browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
 
 - A server/client branch `if (typeof window !== 'undefined')`.
@@ -92,335 +43,40 @@ https://react.dev/link/hydration-mismatch
                             <DashboardLayout>
                               <div
 +                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
--                               className="min-h-screen flex items-center justify-center"
+-                               className="min-h-screen flex items-center justify-center bg-zinc-50"
                               >
                                 <Sidebar>
-                                  <div
++                                 <div
 +                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
--                                   className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"
-                                  >
-+                                   <div className="p-6 border-b border-zinc-800">
-                                    ...
++                                 >
+-                                 <svg
+-                                   xmlns="http://www.w3.org/2000/svg"
+-                                   width="24"
+-                                   height="24"
+-                                   viewBox="0 0 24 24"
+-                                   fill="none"
+-                                   stroke="currentColor"
+-                                   stroke-width="2"
+-                                   stroke-linecap="round"
+-                                   stroke-linejoin="round"
+-                                   className="animate-spin text-zinc-900/20 dark:text-zinc-50/20 h-8 w-8"
+-                                 >
                                 ...
                     ...
         ...
 
     at <unknown> (https://react.dev/link/hydration-mismatch)
     at div (<anonymous>)
-    at Sidebar (src/components/layout/Sidebar.tsx:33:7)
-    at DashboardLayout (src/components/layout/DashboardLayout.tsx:49:7)
+    at Sidebar (src/components/layout/Sidebar.tsx:32:5)
+    at DashboardLayout (src/components/layout/DashboardLayout.tsx:50:7)
     at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
+  30 |
   31 |   return (
-  32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
-> 33 |       <div className="p-6 border-b border-zinc-800">
-     |       ^
+> 32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
+     |     ^
+  33 |       <div className="p-6 border-b border-zinc-800">
   34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
   35 |       </div>
-  36 |
-[browser] Base UI: A component that acts as a button expected a native <button> because the `nativeButton` prop is true. Rendering a non-<button> removes native button semantics, which can impact forms and accessibility. Use a real <button> in the `render` prop, or set `nativeButton` to `false`.
-    at SheetTrigger (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1436:214)
-    at LeadDrawer (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1737:215)
-    at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2386:256
-    at Array.map (<anonymous>)
-    at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2386:42
-    at Array.map (<anonymous>)
-    at KanbanBoard (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2354:31)
-    at LeadsPage (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2778:249)
-    at ClientPageRoot (http://localhost:3000/_next/static/chunks/node_modules_next_0diyh-_._.js:6217:50)
-[browser] Base UI: A component that acts as a button expected a native <button> because the `nativeButton` prop is true. Rendering a non-<button> removes native button semantics, which can impact forms and accessibility. Use a real <button> in the `render` prop, or set `nativeButton` to `false`.
-    at SheetTrigger (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1436:214)
-    at LeadDrawer (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1737:215)
-    at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2386:256
-    at Array.map (<anonymous>)
-    at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2386:42
-    at Array.map (<anonymous>)
-    at KanbanBoard (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2354:31)
-    at LeadsPage (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:3160:270)
-    at ClientPageRoot (http://localhost:3000/_next/static/chunks/node_modules_next_0diyh-_._.js:6217:50)
- GET /login 200 in 80ms (next.js: 5ms, application-code: 74ms)
- GET /leads 200 in 88ms (next.js: 4ms, application-code: 84ms)
-[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
-
-- A server/client branch `if (typeof window !== 'undefined')`.
-- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
-- Date formatting in a user's locale which doesn't match the server.
-- External changing data without sending a snapshot of it along with the HTML.
-- Invalid HTML tag nesting.
-
-It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
-
-https://react.dev/link/hydration-mismatch
-
-  ...
-    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
-      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
-        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
-          <LoadingBoundary name="/" loading={null}>
-            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
-              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
-                <RedirectBoundary>
-                  <RedirectErrorBoundary router={{...}}>
-                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
-                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
-                        <SegmentTrieNode>
-                        <script>
-                        <script>
-                        <script>
-                        <LeadsLayout>
-                          <AuthGuard>
-                            <DashboardLayout>
-                              <div
-+                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
--                               className="min-h-screen flex items-center justify-center"
-                              >
-                                <Sidebar>
-                                  <div
-+                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
--                                   className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"
-                                  >
-+                                   <div className="p-6 border-b border-zinc-800">
-                                    ...
-                                ...
-                    ...
-        ...
-
-    at <unknown> (https://react.dev/link/hydration-mismatch)
-    at div (<anonymous>)
-    at Sidebar (src/components/layout/Sidebar.tsx:33:7)
-    at DashboardLayout (src/components/layout/DashboardLayout.tsx:49:7)
-    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
-  31 |   return (
-  32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
-> 33 |       <div className="p-6 border-b border-zinc-800">
-     |       ^
-  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
-  35 |       </div>
-  36 |
-[browser] Base UI: A component that acts as a button expected a native <button> because the `nativeButton` prop is true. Rendering a non-<button> removes native button semantics, which can impact forms and accessibility. Use a real <button> in the `render` prop, or set `nativeButton` to `false`.
-    at SheetTrigger (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1436:214)
-    at LeadDrawer (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1737:215)
-    at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2386:256
-    at Array.map (<anonymous>)
-    at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2386:42
-    at Array.map (<anonymous>)
-    at KanbanBoard (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2354:31)
-    at LeadsPage (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2778:249)
-    at ClientPageRoot (http://localhost:3000/_next/static/chunks/node_modules_next_0diyh-_._.js:6217:50)
-[browser] Base UI: A component that acts as a button expected a native <button> because the `nativeButton` prop is true. Rendering a non-<button> removes native button semantics, which can impact forms and accessibility. Use a real <button> in the `render` prop, or set `nativeButton` to `false`.
-    at SheetTrigger (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1436:214)
-    at LeadDrawer (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1737:215)
-    at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2386:256
-    at Array.map (<anonymous>)
-    at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2386:42
-    at Array.map (<anonymous>)
-    at KanbanBoard (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2354:31)
-    at LeadsPage (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:3160:270)
-    at ClientPageRoot (http://localhost:3000/_next/static/chunks/node_modules_next_0diyh-_._.js:6217:50)
- GET /login 200 in 90ms (next.js: 6ms, application-code: 84ms)
- GET /leads 200 in 82ms (next.js: 10ms, application-code: 72ms)
-[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
-
-- A server/client branch `if (typeof window !== 'undefined')`.
-- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
-- Date formatting in a user's locale which doesn't match the server.
-- External changing data without sending a snapshot of it along with the HTML.
-- Invalid HTML tag nesting.
-
-It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
-
-https://react.dev/link/hydration-mismatch
-
-  ...
-    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
-      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
-        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
-          <LoadingBoundary name="/" loading={null}>
-            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
-              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
-                <RedirectBoundary>
-                  <RedirectErrorBoundary router={{...}}>
-                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
-                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
-                        <SegmentTrieNode>
-                        <script>
-                        <script>
-                        <script>
-                        <LeadsLayout>
-                          <AuthGuard>
-                            <DashboardLayout>
-                              <div
-+                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
--                               className="min-h-screen flex items-center justify-center"
-                              >
-                                <Sidebar>
-                                  <div
-+                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
--                                   className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"
-                                  >
-+                                   <div className="p-6 border-b border-zinc-800">
-                                    ...
-                                ...
-                    ...
-        ...
-
-    at <unknown> (https://react.dev/link/hydration-mismatch)
-    at div (<anonymous>)
-    at Sidebar (src/components/layout/Sidebar.tsx:33:7)
-    at DashboardLayout (src/components/layout/DashboardLayout.tsx:49:7)
-    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
-  31 |   return (
-  32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
-> 33 |       <div className="p-6 border-b border-zinc-800">
-     |       ^
-  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
-  35 |       </div>
-  36 |
-[browser] Uncaught RangeError: Invalid time value
-    at <unknown> (src/components/leads/KanbanBoard.tsx:85:51)
-    at Array.map (<anonymous>)
-    at <unknown> (src/components/leads/KanbanBoard.tsx:42:27)
-    at Array.map (<anonymous>)
-    at KanbanBoard (src/components/leads/KanbanBoard.tsx:32:20)
-    at LeadsPage (src/app/(dashboard)/leads/page.tsx:160:18)
-  83 | ...                   ? "Завтра"
-  84 | ...                   : format(lead.nextActionDate, "d MMM, HH:mm", { locale: ru }))
-> 85 | ...                 : (lead.createdAt ? format(lead.createdAt, "d MMM", { locale: ru }) : ...
-     |                                               ^
-  86 | ...               }
-  87 | ...             </div>
-  88 | ...           </div>
- GET /login 200 in 91ms (next.js: 4ms, application-code: 87ms)
- GET /leads 200 in 146ms (next.js: 10ms, application-code: 136ms)
-[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
-
-- A server/client branch `if (typeof window !== 'undefined')`.
-- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
-- Date formatting in a user's locale which doesn't match the server.
-- External changing data without sending a snapshot of it along with the HTML.
-- Invalid HTML tag nesting.
-
-It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
-
-https://react.dev/link/hydration-mismatch
-
-  ...
-    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
-      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
-        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
-          <LoadingBoundary name="/" loading={null}>
-            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
-              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
-                <RedirectBoundary>
-                  <RedirectErrorBoundary router={{...}}>
-                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
-                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
-                        <SegmentTrieNode>
-                        <script>
-                        <script>
-                        <script>
-                        <LeadsLayout>
-                          <AuthGuard>
-                            <DashboardLayout>
-                              <div
-+                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
--                               className="min-h-screen flex items-center justify-center"
-                              >
-                                <Sidebar>
-                                  <div
-+                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
--                                   className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"
-                                  >
-+                                   <div className="p-6 border-b border-zinc-800">
-                                    ...
-                                ...
-                    ...
-        ...
-
-    at <unknown> (https://react.dev/link/hydration-mismatch)
-    at div (<anonymous>)
-    at Sidebar (src/components/layout/Sidebar.tsx:33:7)
-    at DashboardLayout (src/components/layout/DashboardLayout.tsx:49:7)
-    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
-  31 |   return (
-  32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
-> 33 |       <div className="p-6 border-b border-zinc-800">
-     |       ^
-  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
-  35 |       </div>
-  36 |
-[browser] Uncaught RangeError: Invalid time value
-    at <unknown> (src/components/leads/KanbanBoard.tsx:85:51)
-    at Array.map (<anonymous>)
-    at <unknown> (src/components/leads/KanbanBoard.tsx:42:27)
-    at Array.map (<anonymous>)
-    at KanbanBoard (src/components/leads/KanbanBoard.tsx:32:20)
-    at LeadsPage (src/app/(dashboard)/leads/page.tsx:160:18)
-  83 | ...                   ? "Завтра"
-  84 | ...                   : format(lead.nextActionDate, "d MMM, HH:mm", { locale: ru }))
-> 85 | ...                 : (lead.createdAt ? format(lead.createdAt, "d MMM", { locale: ru }) : ...
-     |                                               ^
-  86 | ...               }
-  87 | ...             </div>
-  88 | ...           </div>
- GET /login 200 in 422ms (next.js: 27ms, application-code: 395ms)
- GET /leads 200 in 187ms (next.js: 13ms, application-code: 174ms)
-[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
-
-- A server/client branch `if (typeof window !== 'undefined')`.
-- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
-- Date formatting in a user's locale which doesn't match the server.
-- External changing data without sending a snapshot of it along with the HTML.
-- Invalid HTML tag nesting.
-
-It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
-
-https://react.dev/link/hydration-mismatch
-
-  ...
-    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
-      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
-        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
-          <LoadingBoundary name="/" loading={null}>
-            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
-              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
-                <RedirectBoundary>
-                  <RedirectErrorBoundary router={{...}}>
-                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
-                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
-                        <SegmentTrieNode>
-                        <script>
-                        <script>
-                        <script>
-                        <LeadsLayout>
-                          <AuthGuard>
-                            <DashboardLayout>
-                              <div
-+                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
--                               className="min-h-screen flex items-center justify-center"
-                              >
-                                <Sidebar>
-                                  <div
-+                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
--                                   className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"
-                                  >
-+                                   <div className="p-6 border-b border-zinc-800">
-                                    ...
-                                ...
-                    ...
-        ...
-
-    at <unknown> (https://react.dev/link/hydration-mismatch)
-    at div (<anonymous>)
-    at Sidebar (src/components/layout/Sidebar.tsx:33:7)
-    at DashboardLayout (src/components/layout/DashboardLayout.tsx:49:7)
-    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
-  31 |   return (
-  32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
-> 33 |       <div className="p-6 border-b border-zinc-800">
-     |       ^
-  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
-  35 |       </div>
-  36 |
 [browser] Base UI: A component that acts as a button expected a native <button> because the `nativeButton` prop is true. Rendering a non-<button> removes native button semantics, which can impact forms and accessibility. Use a real <button> in the `render` prop, or set `nativeButton` to `false`.
     at SheetTrigger (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1432:214)
     at LeadDrawer (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1733:215)
@@ -429,23 +85,5 @@ https://react.dev/link/hydration-mismatch
     at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2382:42
     at Array.map (<anonymous>)
     at KanbanBoard (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2350:31)
-    at LeadsPage (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2788:249)
+    at LeadsPage (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2790:249)
     at ClientPageRoot (http://localhost:3000/_next/static/chunks/node_modules_next_0diyh-_._.js:6217:50)
-[browser] Base UI: A component that acts as a button expected a native <button> because the `nativeButton` prop is true. Rendering a non-<button> removes native button semantics, which can impact forms and accessibility. Use a real <button> in the `render` prop, or set `nativeButton` to `false`.
-    at SheetTrigger (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1432:214)
-    at LeadDrawer (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:1733:215)
-    at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2382:256
-    at Array.map (<anonymous>)
-    at http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2382:42
-    at Array.map (<anonymous>)
-    at KanbanBoard (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:2350:31)
-    at LeadsPage (http://localhost:3000/_next/static/chunks/src_0urm~dv._.js:3231:270)
-    at ClientPageRoot (http://localhost:3000/_next/static/chunks/node_modules_next_0diyh-_._.js:6217:50)
- GET /files 200 in 2.4s (next.js: 596ms, application-code: 1757ms)
- GET /login 200 in 310ms (next.js: 71ms, application-code: 240ms)
- GET /files 200 in 604ms (next.js: 15ms, application-code: 590ms)
- GET /login 200 in 77ms (next.js: 10ms, application-code: 68ms)
- GET /files 200 in 84ms (next.js: 8ms, application-code: 75ms)
- GET /login 200 in 53ms (next.js: 21ms, application-code: 32ms)
- GET /files 200 in 131ms (next.js: 4ms, application-code: 127ms)
- GET /login 200 in 34ms (next.js: 3ms, application-code: 31ms)
