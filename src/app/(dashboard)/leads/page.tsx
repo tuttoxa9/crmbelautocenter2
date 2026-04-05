@@ -110,7 +110,7 @@ export default function LeadsPage() {
         {/* Right Column - Details */}
         <div className="flex-1 min-h-0 hidden lg:block h-full relative">
           {selectedLead ? (
-            <LeadDetails lead={selectedLead} onClose={() => setSelectedLeadId(null)} />
+            <LeadDetails key={selectedLead.id} lead={selectedLead} onClose={() => setSelectedLeadId(null)} />
           ) : (
             <div className="h-full border-2 border-dashed border-zinc-200/80 rounded-[2rem] bg-zinc-50/50 flex flex-col items-center justify-center text-zinc-400">
               <Inbox className="w-16 h-16 mb-4 text-zinc-300" />
@@ -132,7 +132,7 @@ export default function LeadsPage() {
                 </button>
              </div>
              <div className="flex-1 overflow-y-auto bg-zinc-50">
-                <LeadDetails lead={selectedLead} onClose={() => setSelectedLeadId(null)} />
+                <LeadDetails key={selectedLead.id} lead={selectedLead} onClose={() => setSelectedLeadId(null)} />
              </div>
           </div>
         )}

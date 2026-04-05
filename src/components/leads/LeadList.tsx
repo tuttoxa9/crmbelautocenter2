@@ -58,11 +58,11 @@ export function LeadList({ leads, selectedLeadId, onSelect }: LeadListProps) {
             `}
           >
             <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-2 min-w-0 pr-2">
                 <div className="p-1.5 bg-zinc-100 rounded-lg shrink-0">
                   {getSourceIcon(lead.source)}
                 </div>
-                <div className="font-semibold text-zinc-900 truncate max-w-[140px]">
+                <div className="font-semibold text-zinc-900 whitespace-normal break-words leading-tight">
                   {lead.name || <span className="text-zinc-400 italic font-medium">Новая заявка</span>}
                 </div>
               </div>
