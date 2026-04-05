@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No keys provided" }, { status: 400 });
     }
 
-    let allKeysToDelete: string[] = [];
+    const allKeysToDelete: string[] = [];
 
     for (const key of keys) {
       if (key.endsWith('/')) {

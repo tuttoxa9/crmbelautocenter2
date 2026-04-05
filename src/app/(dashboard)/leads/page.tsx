@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Inbox, LayoutGrid, List } from "lucide-react";
+import { Plus, Search, Inbox, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -28,7 +28,7 @@ import { getLeads, deleteLead } from "@/lib/leadService";
 import { Lead } from "@/lib/types";
 import { getStatusLabel, getStatusColor, getSourceLabel } from "@/lib/displayUtils";
 import { Badge } from "@/components/ui/badge";
-import { format, isValid, isToday, isPast, isSameDay, startOfDay } from "date-fns";
+import { format, isValid, isToday, isPast, isSameDay, startOfDay, addDays, subDays } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Trash2 } from "lucide-react";
 
@@ -54,7 +54,6 @@ const safeFormatDate = (timestamp: unknown) => {
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,6 +61,20 @@ export default function LeadsPage() {
   const [sourceFilter, setSourceFilter] = useState<string>("all-source");
   const [dateFilter, setDateFilter] = useState<string>("all-dates");
   const [taskDateFilter, setTaskDateFilter] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+
+  const handlePrevDay = () => {
+     const current = new Date(taskDateFilter + "T00:00:00");
+     setTaskDateFilter(format(subDays(current, 1), "yyyy-MM-dd"));
+  };
+
+  const handleNextDay = () => {
+     const current = new Date(taskDateFilter + "T00:00:00");
+     setTaskDateFilter(format(addDays(current, 1), "yyyy-MM-dd"));
+  };
+
+  const handleToday = () => {
+     setTaskDateFilter(format(new Date(), "yyyy-MM-dd"));
+  };
 
   const fetchLeads = async () => {
     try {
@@ -158,44 +171,64 @@ export default function LeadsPage() {
       </div>
 
       <Tabs defaultValue="tasks" className="flex-1 flex flex-col">
-        <TabsList className="mb-4">
-          <TabsTrigger value="tasks">☀️ Задачи</TabsTrigger>
-          <TabsTrigger value="all">🗂 Все лиды</TabsTrigger>
+        <TabsList className="mb-4 inline-flex w-fit bg-zinc-100/80 p-1 rounded-xl">
+          <TabsTrigger value="tasks" className="rounded-lg px-6 py-2">⚡️ Рабочий день</TabsTrigger>
+          <TabsTrigger value="all" className="rounded-lg px-6 py-2">🗂 База лидов</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tasks" className="flex-1 outline-none m-0 flex flex-col">
           <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden flex-1 flex flex-col h-full">
-            <div className="p-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
+            <div className="p-3 sm:p-4 border-b border-zinc-200 bg-zinc-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
-                <h3 className="font-semibold text-zinc-800">Задачи</h3>
-                <p className="text-sm text-zinc-500">
-                  {isToday(new Date(taskDateFilter + "T00:00:00"))
-                    ? "Свежие заявки и запланированные визиты/звонки"
-                    : `Запланированные визиты/звонки на ${format(new Date(taskDateFilter + "T00:00:00"), "dd MMMM", { locale: ru })}`}
-                </p>
+                <h3 className="font-semibold text-zinc-800 hidden sm:block">Оперативная работа</h3>
               </div>
-              <div>
-                <input
-                  type="date"
-                  className="flex h-9 rounded-md border border-zinc-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950"
-                  value={taskDateFilter}
-                  onChange={(e) => setTaskDateFilter(e.target.value)}
-                />
+
+              <div className="flex items-center bg-white border border-zinc-200 rounded-lg shadow-sm p-1">
+                 <Button variant="ghost" size="sm" onClick={handlePrevDay} className="h-8 px-3 text-zinc-500 hover:text-zinc-900">
+                    <ChevronLeft className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Пред. день</span>
+                 </Button>
+
+                 <div className="flex items-center px-2 border-x border-zinc-100">
+                   <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleToday}
+                      className={`h-8 font-medium ${isToday(new Date(taskDateFilter + "T00:00:00")) ? "text-blue-600 bg-blue-50/50" : "text-zinc-700"}`}
+                   >
+                      {isToday(new Date(taskDateFilter + "T00:00:00")) ? "Сегодня" : format(new Date(taskDateFilter + "T00:00:00"), "d MMM, EEE", { locale: ru })}
+                   </Button>
+                   <div className="relative overflow-hidden w-8 h-8 flex items-center justify-center ml-1 text-zinc-400 hover:text-blue-600 transition-colors">
+                     <CalendarIcon className="h-4 w-4" />
+                     <input
+                       type="date"
+                       className="absolute inset-0 opacity-0 cursor-pointer"
+                       value={taskDateFilter}
+                       onChange={(e) => setTaskDateFilter(e.target.value)}
+                     />
+                   </div>
+                 </div>
+
+                 <Button variant="ghost" size="sm" onClick={handleNextDay} className="h-8 px-3 text-zinc-500 hover:text-zinc-900">
+                    <span className="hidden sm:inline">След. день</span>
+                    <ChevronRight className="h-4 w-4 sm:ml-1" />
+                 </Button>
               </div>
             </div>
+
             {loading ? (
               <div className="flex-1 flex flex-col items-center justify-center text-zinc-400">
                 <Spinner size="lg" className="mb-4 text-zinc-400" />
-                <p>Загрузка лидов...</p>
+                <p>Загрузка доски...</p>
               </div>
-            ) : tasksLeads.length === 0 ? (
+            ) : tasksLeads.length === 0 && !isToday(new Date(taskDateFilter + "T00:00:00")) ? (
               <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 p-8">
                 <Inbox className="h-10 w-10 mb-4 text-zinc-300" />
-                <p className="text-lg font-medium text-zinc-900">На выбранную дату задач нет</p>
-                <p className="text-sm">Отдыхайте или выберите другой день</p>
+                <p className="text-lg font-medium text-zinc-900">На этот день ничего не запланировано</p>
+                <p className="text-sm">Отдохните или выберите другую дату</p>
               </div>
             ) : (
-              <div className="flex-1 p-4 overflow-y-auto">
+              <div className="flex-1 p-4 overflow-y-auto bg-zinc-50/30">
                  <KanbanBoard leads={tasksLeads} onLeadChange={fetchLeads} />
               </div>
             )}
@@ -203,29 +236,10 @@ export default function LeadsPage() {
         </TabsContent>
 
         <TabsContent value="all" className="flex-1 outline-none flex flex-col space-y-4 m-0">
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-white p-3 rounded-xl border border-zinc-200 shadow-sm">
-            <div className="flex w-full sm:w-auto items-center space-x-2">
-              <div className="flex items-center bg-zinc-100 p-1 rounded-lg border border-zinc-200 mr-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode("table")}
-                  className={`h-7 px-2 rounded-md ${viewMode === "table" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-700"}`}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode("kanban")}
-                  className={`h-7 px-2 rounded-md ${viewMode === "kanban" ? "bg-white shadow-sm text-zinc-900" : "text-zinc-500 hover:text-zinc-700"}`}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-zinc-400" />
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-3 rounded-xl border border-zinc-200 shadow-sm">
+            <div className="flex w-full md:w-auto items-center space-x-2 flex-1">
+              <div className="relative w-full md:w-80">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
                 <Input
                   type="text"
                   className="pl-9 w-full bg-zinc-50 border-zinc-200 focus-visible:ring-zinc-900"
@@ -253,7 +267,7 @@ export default function LeadsPage() {
               <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val || "all-status")}>
                 <SelectTrigger className="w-[160px] bg-zinc-50 border-zinc-200">
                   <SelectValue>
-                    {statusFilter === "all-status" ? "Все статусы" : getStatusLabel(statusFilter as any)}
+                    {statusFilter === "all-status" ? "Все статусы" : getStatusLabel(statusFilter as Parameters<typeof getStatusLabel>[0])}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -273,7 +287,7 @@ export default function LeadsPage() {
               <Select value={sourceFilter} onValueChange={(val) => setSourceFilter(val || "all-source")}>
                 <SelectTrigger className="w-[160px] bg-zinc-50 border-zinc-200">
                   <SelectValue>
-                    {sourceFilter === "all-source" ? "Все источники" : getSourceLabel(sourceFilter as any)}
+                    {sourceFilter === "all-source" ? "Все источники" : getSourceLabel(sourceFilter as Parameters<typeof getSourceLabel>[0])}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -289,25 +303,23 @@ export default function LeadsPage() {
             </div>
           </div>
 
-          <div className={`flex-1 flex flex-col ${viewMode === "table" ? "bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden" : ""}`}>
+          <div className="flex-1 flex flex-col bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
             {loading ? (
-              <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-xl border border-zinc-200 text-zinc-400">
+              <div className="flex-1 flex flex-col items-center justify-center text-zinc-400">
                 <Spinner size="lg" className="mb-4 text-zinc-400" />
-                <p>Загрузка лидов...</p>
+                <p>Загрузка базы...</p>
               </div>
             ) : filteredLeads.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 bg-white rounded-xl border border-zinc-200 p-10">
+              <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 p-10">
                 <Inbox className="h-8 w-8 mb-2 text-zinc-300" />
-                <p className="text-base font-medium text-zinc-900">Ничего не найдено</p>
-                <p className="text-sm">Попробуйте изменить фильтры поиска</p>
+                <p className="text-base font-medium text-zinc-900">По вашему запросу ничего не найдено</p>
+                <p className="text-sm">Попробуйте изменить фильтры</p>
               </div>
-            ) : viewMode === "kanban" ? (
-              <KanbanBoard leads={filteredLeads} onLeadChange={fetchLeads} />
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto flex-1">
                 <Table>
-                  <TableHeader>
-                    <TableRow className="bg-zinc-50 hover:bg-zinc-50">
+                  <TableHeader className="sticky top-0 bg-zinc-50 shadow-sm z-10">
+                    <TableRow className="hover:bg-zinc-50">
                       <TableHead className="w-[250px] font-medium text-zinc-600">Клиент</TableHead>
                       <TableHead className="font-medium text-zinc-600">Автомобиль</TableHead>
                       <TableHead className="font-medium text-zinc-600">Источник</TableHead>
