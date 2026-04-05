@@ -1,8 +1,31 @@
-import { collection, addDoc, updateDoc, doc, getDocs, query, orderBy, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, updateDoc, doc, getDocs, query, orderBy, deleteDoc, onSnapshot } from "firebase/firestore";
 import { db } from "./firebase";
 import { Lead, LeadStatus, StatusHistoryEntry } from "./types";
 
 const LEADS_COLLECTION = "leads";
+
+export const subscribeToLeads = (callback: (leads: Lead[]) => void) => {
+  if (!db) {
+    console.error("Firestore is not initialized");
+    callback([]);
+    return () => {};
+  }
+
+  const leadsRef = collection(db, LEADS_COLLECTION);
+  const q = query(leadsRef, orderBy("createdAt", "desc"));
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const leads = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Lead[];
+    callback(leads);
+  }, (error) => {
+    console.error("Error listening to leads:", error);
+  });
+
+  return unsubscribe;
+};
 
 export const getLeads = async (): Promise<Lead[]> => {
   if (!db) return [];
