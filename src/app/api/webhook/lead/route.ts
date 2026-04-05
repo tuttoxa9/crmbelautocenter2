@@ -57,7 +57,7 @@ export async function POST(request: Request) {
           status,
           changedAt: now,
           changedBy: "API Webhook",
-          comment: `Новая заявка (${detectedSource})`
+          comment: `${detectedSource === 'instagram' ? 'Instagram' : detectedSource === 'tiktok' ? 'TikTok' : detectedSource === 'site' ? 'Сайт' : detectedSource === 'telegram' ? 'Telegram' : 'Zapier'} Лид`
         }
       ],
       payload: data

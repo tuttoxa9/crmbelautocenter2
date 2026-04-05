@@ -85,17 +85,6 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
     nextActionDate: lead.nextActionDate,
   });
 
-  useEffect(() => {
-    setFormData({
-      name: lead.name,
-      phone: lead.phone,
-      car: lead.car || "",
-      notes: lead.notes || "",
-      status: lead.status,
-      nextActionDate: lead.nextActionDate,
-    });
-  }, [lead]);
-
   const handleSave = async () => {
     try {
       setIsSaving(true);
@@ -214,7 +203,7 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                   <MapPin className="h-4 w-4 text-blue-500" /> Статус заявки
                 </label>
                 <Select value={formData.status} onValueChange={(val) => setFormData(prev => ({...prev, status: val as LeadStatus}))}>
-                  <SelectTrigger className={`w-full h-12 rounded-2xl font-semibold text-sm ${getStatusColor(formData.status)} border-transparent shadow-sm focus:ring-blue-500`}>
+                  <SelectTrigger className={`w-full h-12 box-border rounded-2xl font-semibold text-sm ${getStatusColor(formData.status)} border-transparent shadow-sm focus:ring-blue-500`}>
                     <SelectValue>{getStatusLabel(formData.status)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -235,76 +224,67 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                 <input
                   type="datetime-local"
                   disabled={isTerminal}
-                  className="flex h-12 w-full rounded-2xl border-0 bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-200 transition-all focus:ring-2 focus:ring-inset focus:ring-purple-500 disabled:opacity-50"
+                  className="flex h-12 box-border w-full rounded-2xl border-0 bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-200 transition-all focus:ring-2 focus:ring-inset focus:ring-purple-500 disabled:opacity-50"
                   value={formattedActionDate}
                   onChange={handleDateChange}
                 />
               </div>
 
-              <div className="space-y-2 col-span-2">
+              <div className="space-y-2 col-span-1">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
                    Желаемое авто
                 </label>
-                <Input
+                <Textarea
                   value={formData.car}
                   onChange={(e) => setFormData(prev => ({...prev, car: e.target.value}))}
-                  className="h-12 rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 text-base px-4"
+                  className="h-[80px] min-h-[80px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-3 resize-none text-base"
                 />
               </div>
 
-              <div className="space-y-2 col-span-2">
+              <div className="space-y-2 col-span-1">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
                   <FileText className="h-4 w-4 text-amber-500" /> Заметки менеджера
                 </label>
                 <Textarea
-                  className="min-h-[120px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-4 resize-y text-base"
+                  className="h-[80px] min-h-[80px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-3 resize-none text-base"
                   value={formData.notes}
                   onChange={(e) => setFormData(prev => ({...prev, notes: e.target.value}))}
                 />
               </div>
           </div>
 
-          {/* Timeline and Payload Side-by-side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          {/* Timeline and Payload */}
+          <div className="space-y-6 mt-8">
 
-            {/* Timeline */}
+            {/* Horizontal Timeline */}
             {lead.history && lead.history.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
                   <Clock className="w-4 h-4 text-zinc-400" /> История
                 </h3>
-                <div className="bg-white rounded-3xl border border-zinc-100 p-6 shadow-sm relative">
-                  <div className="absolute left-[39px] top-6 bottom-6 w-px bg-zinc-100" />
-                  <div className="space-y-6 relative">
-                    {lead.history.map((event, i) => (
-                      <div key={i} className="flex gap-4 relative">
-                        <div className="w-8 h-8 rounded-full bg-zinc-50 border-2 border-white shadow-sm flex items-center justify-center shrink-0 z-10 text-[10px]">
-                          🔹
-                        </div>
-                        <div className="flex flex-col pt-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm text-zinc-900">{getStatusLabel(event.status)}</span>
-                            <span className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">{safeFormatDate(event.changedAt)}</span>
-                          </div>
-                          {event.comment && (
-                            <p className="text-sm text-zinc-600 mt-1">{event.comment}</p>
-                          )}
-                          <p className="text-[10px] text-zinc-400 mt-1 font-medium">{event.changedBy}</p>
-                        </div>
+                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+                  {lead.history.map((event, i) => (
+                    <div key={i} className="flex-shrink-0 w-[240px] bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm flex flex-col relative">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-sm text-zinc-900">{getStatusLabel(event.status)}</span>
+                        <span className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">{safeFormatDate(event.changedAt)}</span>
                       </div>
-                    ))}
-                  </div>
+                      {event.comment && (
+                        <p className="text-sm text-zinc-600 leading-snug line-clamp-2" title={event.comment}>{event.comment}</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
             {/* Unstructured Payload */}
             {lead.payload && Object.keys(lead.payload).filter(k => !["name", "phone", "car", "source", "notes"].includes(k)).length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
                   <Smartphone className="w-4 h-4 text-zinc-400" /> Данные интеграции
                 </h3>
-                <div className="bg-white rounded-3xl border border-zinc-100 p-6 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm overflow-hidden">
                    <pre className="text-[11px] font-mono text-zinc-500 overflow-x-auto custom-scrollbar pb-2">
                      {JSON.stringify(Object.fromEntries(
                         Object.entries(lead.payload).filter(([k]) => !["name", "phone", "car", "source", "notes"].includes(k))
