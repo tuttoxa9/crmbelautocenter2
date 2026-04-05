@@ -15,7 +15,7 @@ import { getStatusColor, getStatusLabel, getSourceLabel } from "@/lib/displayUti
 import { Badge } from "@/components/ui/badge";
 import { format, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
-import { ReactElement, useState as useReactState, useEffect } from "react";
+import React, { ReactElement, useState as useReactState, useEffect } from "react";
 import { updateLeadStatus, deleteLead, updateLeadDetails } from "@/lib/leadService";
 import { useAuth } from "@/contexts/AuthContext";
 import {
