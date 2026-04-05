@@ -3,6 +3,7 @@ import { LeadStatus, LeadSource } from "@/lib/types";
 export const getStatusLabel = (status: LeadStatus) => {
   const map: Record<LeadStatus, string> = {
     new: "Новый",
+    in_progress: "В работе",
     visit: "Приезд",
     refusal: "Отказ",
     bank_refusal: "Отказ банка",
@@ -15,15 +16,16 @@ export const getStatusLabel = (status: LeadStatus) => {
 
 export const getStatusColor = (status: LeadStatus) => {
   const map: Record<LeadStatus, string> = {
-    new: "bg-red-500 hover:bg-red-600",
-    visit: "bg-purple-500 hover:bg-purple-600",
-    refusal: "bg-slate-800 hover:bg-slate-900",
-    bank_refusal: "bg-orange-700 hover:bg-orange-800",
-    success: "bg-green-600 hover:bg-green-700",
-    no_answer: "bg-yellow-500 hover:bg-yellow-600",
-    spam: "bg-zinc-400 hover:bg-zinc-500",
+    new: "bg-blue-100 text-blue-700 border-blue-200",
+    in_progress: "bg-amber-100 text-amber-700 border-amber-200",
+    visit: "bg-purple-100 text-purple-700 border-purple-200",
+    refusal: "bg-zinc-100 text-zinc-700 border-zinc-200",
+    bank_refusal: "bg-red-100 text-red-700 border-red-200",
+    success: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    no_answer: "bg-orange-100 text-orange-700 border-orange-200",
+    spam: "bg-zinc-100 text-zinc-500 border-zinc-200",
   };
-  return map[status] || "bg-zinc-500";
+  return map[status] || "bg-zinc-100 text-zinc-700";
 };
 
 export const getSourceLabel = (source: LeadSource) => {

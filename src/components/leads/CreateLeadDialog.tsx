@@ -26,7 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { LeadSource, LeadStatus } from "@/lib/types";
 import { ReactElement } from "react";
 
-export function CreateLeadDialog({ children, onSuccess }: { children: ReactElement, onSuccess: () => void }) {
+export function CreateLeadDialog({ children, onSuccess }: { children: ReactElement, onSuccess?: () => void }) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
@@ -57,7 +57,7 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
         user.email || "Unknown"
       );
       setOpen(false);
-      onSuccess();
+      if (onSuccess) onSuccess();
     } catch (error) {
       console.error("Error creating lead:", error);
       alert("Ошибка при создании лида");
