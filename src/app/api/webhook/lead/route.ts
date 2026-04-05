@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebaseAdmin';
 import { LeadSource, LeadStatus } from '@/lib/types';
 
 export async function POST(request: Request) {
@@ -26,7 +25,7 @@ export async function POST(request: Request) {
 
     const now = Date.now();
 
-    // Create lead object using Firebase Client SDK
+    // Create lead object using Firebase Admin SDK
     const newLead = {
       name,
       phone,
@@ -48,12 +47,11 @@ export async function POST(request: Request) {
       payload: data
     };
 
-    if (!db) {
-      throw new Error("Firebase is not initialized");
+    if (!adminDb) {
+      throw new Error("Firebase Admin is not initialized");
     }
 
-    const leadsCollection = collection(db, 'leads');
-    const docRef = await addDoc(leadsCollection, newLead);
+    const docRef = await adminDb.collection('leads').add(newLead);
 
     return NextResponse.json(
       { success: true, id: docRef.id, message: "Lead created successfully via Webhook" },
