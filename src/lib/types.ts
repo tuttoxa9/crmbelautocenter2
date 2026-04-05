@@ -1,8 +1,6 @@
 export type LeadStatus =
   | "new"                 // Новый
-  | "in_progress"         // В работе
   | "visit"               // Приезд
-  | "visited_or_refused"  // Приехал/отказ
   | "refusal"             // Отказ
   | "bank_refusal"        // Отказ банка
   | "success"             // Оформился/купил

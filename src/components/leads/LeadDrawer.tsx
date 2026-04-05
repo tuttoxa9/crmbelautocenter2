@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { LeadStatus } from "@/lib/types";
+import { Trash2 } from "lucide-react";
 
 const safeFormatDate = (timestamp: unknown) => {
   if (!timestamp) return "—";
@@ -110,6 +111,16 @@ export function LeadDrawer({ lead, trigger, onChange }: { lead: Lead; trigger: R
         <SheetHeader className="mb-6">
           <SheetTitle className="text-xl flex justify-between items-center pr-8">
             <span>{lead.name}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              title="Удалить"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </SheetTitle>
           <SheetDescription>
             Заявка от {safeFormatDate(lead.createdAt)}
@@ -130,9 +141,7 @@ export function LeadDrawer({ lead, trigger, onChange }: { lead: Lead; trigger: R
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="new">Новый</SelectItem>
-                    <SelectItem value="in_progress">В работе</SelectItem>
                     <SelectItem value="visit">Приезд</SelectItem>
-                    <SelectItem value="visited_or_refused">Приехал/отказ</SelectItem>
                     <SelectItem value="refusal">Отказ</SelectItem>
                     <SelectItem value="bank_refusal">Отказ банка</SelectItem>
                     <SelectItem value="success">Оформился/купил</SelectItem>
@@ -203,14 +212,6 @@ export function LeadDrawer({ lead, trigger, onChange }: { lead: Lead; trigger: R
           {/* Action buttons */}
           <div className="pt-6 flex gap-3 border-t">
             <Button disabled variant="outline" className="w-full">Изменить детали</Button>
-            <Button
-              variant="destructive"
-              className="w-full"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Удаление..." : "Удалить"}
-            </Button>
           </div>
 
           {/* History */}

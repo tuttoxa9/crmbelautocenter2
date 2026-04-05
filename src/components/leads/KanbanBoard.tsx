@@ -17,7 +17,6 @@ interface KanbanBoardProps {
 
 const COLUMNS: { id: LeadStatus; label: string }[] = [
   { id: "new", label: "Новые" },
-  { id: "in_progress", label: "В работе" },
   { id: "visit", label: "Ждем приезда" },
   { id: "success", label: "Успешно" },
 ];
