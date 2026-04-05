@@ -121,14 +121,22 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите">
                     {status === "new" && "Новый"}
-                    {status === "in_progress" && "В работе"}
+                    {status === "visit" && "Приезд"}
+                    {status === "refusal" && "Отказ"}
+                    {status === "bank_refusal" && "Отказ банка"}
                     {status === "success" && "Оформился/купил"}
+                    {status === "no_answer" && "Недозвон"}
+                    {status === "spam" && "Брак/Тест"}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="new">Новый</SelectItem>
-                  <SelectItem value="in_progress">В работе</SelectItem>
+                  <SelectItem value="visit">Приезд</SelectItem>
+                  <SelectItem value="refusal">Отказ</SelectItem>
+                  <SelectItem value="bank_refusal">Отказ банка</SelectItem>
                   <SelectItem value="success">Оформился/купил</SelectItem>
+                  <SelectItem value="no_answer">Недозвон</SelectItem>
+                  <SelectItem value="spam">Брак/Тест</SelectItem>
                 </SelectContent>
               </Select>
             </div>
