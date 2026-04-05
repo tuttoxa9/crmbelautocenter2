@@ -134,7 +134,11 @@ export default function LeadsPage() {
   };
 
   const tasksLeads = leads.filter(lead => {
+     // Убираем с рабочей доски все "закрытые" статусы
      if (lead.status === "success" || lead.status === "refusal" || lead.status === "bank_refusal" || lead.status === "spam") return false;
+
+     // Недозвоны всегда показываются во все дни (сортировка по дате создания будет в самой колонке)
+     if (lead.status === "no_answer") return true;
 
      // Ensure we parse the string in local time, not UTC, to prevent off-by-one errors in negative UTC offsets
      const filterDate = startOfDay(new Date(taskDateFilter + "T00:00:00"));
@@ -273,9 +277,7 @@ export default function LeadsPage() {
                 <SelectContent>
                   <SelectItem value="all-status">Все статусы</SelectItem>
                   <SelectItem value="new">Новый</SelectItem>
-                  <SelectItem value="in_progress">В работе</SelectItem>
                   <SelectItem value="visit">Приезд</SelectItem>
-                  <SelectItem value="visited_or_refused">Приехал/отказ</SelectItem>
                   <SelectItem value="refusal">Отказ</SelectItem>
                   <SelectItem value="bank_refusal">Отказ банка</SelectItem>
                   <SelectItem value="success">Оформился/купил</SelectItem>
