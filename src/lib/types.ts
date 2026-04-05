@@ -36,5 +36,5 @@ export interface Lead {
   createdAt: number;
   updatedAt: number;
   history: StatusHistoryEntry[];
-  payload?: Record<string, any>; // Гибкая структура для сырых данных (например из Zapier, Telegram и т.д.)
+  payload?: Record<string, unknown>; // Гибкая структура для сырых данных (например из Zapier, Telegram и т.д.)
 }

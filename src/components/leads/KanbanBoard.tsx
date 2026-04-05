@@ -4,9 +4,11 @@ import { Lead, LeadStatus } from "@/lib/types";
 import { getStatusLabel, getStatusColor } from "@/lib/displayUtils";
 import { Badge } from "@/components/ui/badge";
 import { LeadDrawer } from "./LeadDrawer";
-import { format, isToday, isTomorrow, isPast, isFuture } from "date-fns";
+import { format, isToday, isTomorrow, isPast } from "date-fns";
 import { ru } from "date-fns/locale";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, Trash2 } from "lucide-react";
+import { deleteLead } from "@/lib/leadService";
+import { Button } from "@/components/ui/button";
 
 interface KanbanBoardProps {
   leads: Lead[];
@@ -27,6 +29,18 @@ export function KanbanBoard({ leads, onLeadChange }: KanbanBoardProps) {
     items: leads.filter((lead) => lead.status === col.id),
   }));
 
+  const handleDelete = async (e: React.MouseEvent, leadId: string) => {
+    e.stopPropagation();
+    if (!confirm("Вы уверены, что хотите удалить этого лида?")) return;
+    try {
+      await deleteLead(leadId);
+      if (onLeadChange) onLeadChange();
+    } catch (error) {
+      console.error("Error deleting lead:", error);
+      alert("Ошибка при удалении");
+    }
+  };
+
   return (
     <div className="flex h-full w-full gap-4 overflow-x-auto pb-4">
       {columnsData.map((column) => (
@@ -45,8 +59,21 @@ export function KanbanBoard({ leads, onLeadChange }: KanbanBoardProps) {
                 lead={lead}
                 onChange={onLeadChange}
                 trigger={
-                  <div className="bg-white p-3 rounded-lg border border-zinc-200 shadow-sm cursor-pointer hover:border-zinc-300 transition-colors text-left w-full group">
-                    <div className="flex justify-between items-start mb-2">
+                  <div className="bg-white p-3 rounded-lg border border-zinc-200 shadow-sm cursor-pointer hover:border-zinc-300 transition-colors text-left w-full group relative">
+
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-red-500 hover:bg-red-50 hover:text-red-600 rounded bg-white shadow-sm border border-zinc-100"
+                        onClick={(e) => handleDelete(e, lead.id!)}
+                        title="Удалить лида"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    <div className="flex justify-between items-start mb-2 pr-8">
                       <div className="font-medium text-sm text-zinc-900 group-hover:text-blue-600 transition-colors truncate pr-2">
                         {lead.name}
                       </div>
@@ -82,7 +109,7 @@ export function KanbanBoard({ leads, onLeadChange }: KanbanBoardProps) {
                           : isTomorrow(lead.nextActionDate)
                           ? "Завтра"
                           : format(lead.nextActionDate, "d MMM, HH:mm", { locale: ru }))
-                        : (lead.createdAt ? format(typeof lead.createdAt === 'object' && lead.createdAt !== null && 'seconds' in lead.createdAt ? new Date((lead.createdAt as any).seconds * 1000) : new Date(lead.createdAt), "d MMM", { locale: ru }) : "—")
+                        : (lead.createdAt ? format(typeof lead.createdAt === 'object' && lead.createdAt !== null && 'seconds' in lead.createdAt ? new Date((lead.createdAt as {seconds: number}).seconds * 1000) : new Date(lead.createdAt as string | number), "d MMM", { locale: ru }) : "—")
                       }
                     </div>
                   </div>
