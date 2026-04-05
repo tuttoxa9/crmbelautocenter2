@@ -56,7 +56,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error creating lead via webhook:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to process lead data' },
+      { success: false, error: 'Failed to process lead data', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
