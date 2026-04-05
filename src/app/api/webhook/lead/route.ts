@@ -30,11 +30,14 @@ export async function POST(request: Request) {
     }
 
     // Parse mapping - standard fields
-    const name = data.name || "Без имени";
-    const phone = data.phone || "Нет телефона";
+    const name = data.name || "";
+    const phone = data.phone || "";
     const car = data.car || "";
     const status: LeadStatus = "new";
-    const notes = data.notes || ""; // Don't write generic API messages
+    let notes = data.notes || "";
+    if (notes.includes("Получено через API")) {
+      notes = notes.replace("Получено через API", "").trim();
+    }
 
     const now = Date.now();
 

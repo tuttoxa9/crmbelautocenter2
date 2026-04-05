@@ -170,43 +170,32 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
           <Input
             value={formData.name}
             onChange={e => setFormData(prev => ({...prev, name: e.target.value}))}
-            className="text-3xl font-extrabold text-zinc-900 border-none shadow-none px-0 h-auto focus-visible:ring-0 placeholder:text-zinc-300 w-full truncate"
-            placeholder="Имя клиента"
+            className="text-3xl font-extrabold text-zinc-900 border-none shadow-none px-0 h-auto focus-visible:ring-0 w-full truncate"
           />
           <div className="flex items-center gap-4 mt-3">
-             <div className="flex items-center gap-2 text-zinc-600 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-100">
-               <Phone className="w-4 h-4 text-zinc-400" />
-               <Input
-                 value={formData.phone}
-                 onChange={e => setFormData(prev => ({...prev, phone: e.target.value}))}
-                 className="text-sm font-medium border-none shadow-none px-0 h-auto focus-visible:ring-0 w-[140px] bg-transparent"
-                 placeholder="+375..."
-               />
-             </div>
+             {formData.phone ? (
+               <div className="flex items-center gap-2 text-zinc-600 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-100">
+                 <Phone className="w-4 h-4 text-zinc-400" />
+                 <Input
+                   value={formData.phone}
+                   onChange={e => setFormData(prev => ({...prev, phone: e.target.value}))}
+                   className="text-sm font-medium border-none shadow-none px-0 h-auto focus-visible:ring-0 w-[140px] bg-transparent"
+                 />
+               </div>
+             ) : (
+               <div className="flex items-center gap-2 text-zinc-600">
+                 <Input
+                   value={formData.phone}
+                   onChange={e => setFormData(prev => ({...prev, phone: e.target.value}))}
+                   className="text-sm font-medium border-none shadow-none px-0 h-auto focus-visible:ring-0 w-[140px] bg-transparent"
+                 />
+               </div>
+             )}
              <SourceBadge source={lead.source} />
           </div>
         </div>
 
         <div className="flex flex-col gap-2 shrink-0">
-          {!isTerminal && (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => handleTerminal('success')}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/20 rounded-xl"
-              >
-                Оформился
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleTerminal('refusal')}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-100 rounded-xl"
-              >
-                Отказ
-              </Button>
-            </div>
-          )}
           <Button variant="ghost" size="icon" onClick={handleDelete} className="ml-auto text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-full">
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -224,9 +213,9 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
                   <MapPin className="h-4 w-4 text-blue-500" /> Статус заявки
                 </label>
-                <Select disabled={isTerminal} value={formData.status} onValueChange={(val) => setFormData(prev => ({...prev, status: val as LeadStatus}))}>
+                <Select value={formData.status} onValueChange={(val) => setFormData(prev => ({...prev, status: val as LeadStatus}))}>
                   <SelectTrigger className={`w-full h-12 rounded-2xl font-semibold text-sm ${getStatusColor(formData.status)} border-transparent shadow-sm focus:ring-blue-500`}>
-                    <SelectValue placeholder="Статус" />
+                    <SelectValue>{getStatusLabel(formData.status)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     <SelectItem value="new">Новый</SelectItem>
@@ -257,8 +246,6 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                    Желаемое авто
                 </label>
                 <Input
-                  disabled={isTerminal}
-                  placeholder="Например: Geely Coolray"
                   value={formData.car}
                   onChange={(e) => setFormData(prev => ({...prev, car: e.target.value}))}
                   className="h-12 rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 text-base px-4"
@@ -270,10 +257,8 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                   <FileText className="h-4 w-4 text-amber-500" /> Заметки менеджера
                 </label>
                 <Textarea
-                  placeholder="Добавьте важную информацию о разговоре..."
                   className="min-h-[120px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-4 resize-y text-base"
                   value={formData.notes}
-                  disabled={isTerminal}
                   onChange={(e) => setFormData(prev => ({...prev, notes: e.target.value}))}
                 />
               </div>
@@ -319,8 +304,8 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                 <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
                   <Smartphone className="w-4 h-4 text-zinc-400" /> Данные интеграции
                 </h3>
-                <div className="bg-zinc-900 rounded-3xl p-6 shadow-sm overflow-hidden">
-                   <pre className="text-[11px] font-mono text-zinc-300 overflow-x-auto custom-scrollbar pb-2">
+                <div className="bg-white rounded-3xl border border-zinc-100 p-6 shadow-sm overflow-hidden">
+                   <pre className="text-[11px] font-mono text-zinc-500 overflow-x-auto custom-scrollbar pb-2">
                      {JSON.stringify(Object.fromEntries(
                         Object.entries(lead.payload).filter(([k]) => !["name", "phone", "car", "source", "notes"].includes(k))
                      ), null, 2)}
@@ -335,7 +320,7 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
       </div>
 
       {/* Footer Action Bar */}
-      {hasChanges && !isTerminal && (
+      {hasChanges && (
         <div className="absolute bottom-6 right-8 left-8 flex justify-end animate-in slide-in-from-bottom-4 z-20 pointer-events-none">
           <div className="bg-zinc-900 p-2 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto ring-1 ring-white/10">
             <span className="text-sm font-medium text-zinc-300 pl-4">Есть несохраненные изменения</span>

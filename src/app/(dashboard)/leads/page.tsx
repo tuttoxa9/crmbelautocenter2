@@ -59,8 +59,8 @@ export default function LeadsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900">Умный Inbox</h2>
-          <p className="text-sm font-medium text-zinc-500 mt-1">Вся работа с клиентами на одном экране</p>
+          <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900">Лиды</h2>
+          <p className="text-sm font-medium text-zinc-500 mt-1">Управление заявками</p>
         </div>
         <CreateLeadDialog>
           <Button className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-full px-6 shadow-sm h-11">
@@ -78,7 +78,6 @@ export default function LeadsPage() {
              <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
                 <Input
-                  placeholder="Поиск по имени или телефону..."
                   className="pl-11 h-12 bg-white border-zinc-200/80 rounded-2xl shadow-sm focus-visible:ring-blue-500 font-medium"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
