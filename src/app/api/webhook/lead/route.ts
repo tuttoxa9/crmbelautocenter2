@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebaseAdmin';
+import { adminDb, adminInitError } from '@/lib/firebaseAdmin';
 import { LeadSource, LeadStatus } from '@/lib/types';
 
 export async function POST(request: Request) {
@@ -46,6 +46,17 @@ export async function POST(request: Request) {
       ],
       payload: data
     };
+
+    if (!adminDb) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Firebase Admin SDK is not initialized properly on the server.',
+          details: adminInitError?.message || 'Unknown initialization error'
+        },
+        { status: 500 }
+      );
+    }
 
     const docRef = await adminDb.collection('leads').add(newLead);
 
