@@ -203,7 +203,7 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                   <MapPin className="h-4 w-4 text-blue-500" /> Статус заявки
                 </label>
                 <Select value={formData.status} onValueChange={(val) => setFormData(prev => ({...prev, status: val as LeadStatus}))}>
-                  <SelectTrigger className={`w-full h-12 box-border rounded-2xl font-semibold text-sm ${getStatusColor(formData.status)} border-transparent shadow-sm focus:ring-blue-500`}>
+                  <SelectTrigger className={`w-full !h-[48px] box-border rounded-2xl font-semibold text-sm ${getStatusColor(formData.status)} border-transparent shadow-sm focus:ring-blue-500`}>
                     <SelectValue>{getStatusLabel(formData.status)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
@@ -224,7 +224,7 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                 <input
                   type="datetime-local"
                   disabled={isTerminal}
-                  className="flex h-12 box-border w-full rounded-2xl border-0 bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-200 transition-all focus:ring-2 focus:ring-inset focus:ring-purple-500 disabled:opacity-50"
+                  className="flex h-[48px] box-border w-full rounded-2xl border-0 bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-200 transition-all focus:ring-2 focus:ring-inset focus:ring-purple-500 disabled:opacity-50"
                   value={formattedActionDate}
                   onChange={handleDateChange}
                 />
