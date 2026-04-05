@@ -35,6 +35,7 @@ export const getSourceLabel = (source: LeadSource) => {
     tiktok: "TikTok",
     call: "Звонок",
     zapier: "Zapier",
+    telegram: "Telegram",
     walk_in: "С улицы",
   };
   return map[source] || source;

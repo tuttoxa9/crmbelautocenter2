@@ -15,13 +15,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Enhanced source detection from payload text/tags if source field is missing or generic
+    let detectedSource: LeadSource = data.source || "zapier";
+    const payloadString = JSON.stringify(data).toLowerCase();
+
+    if (detectedSource === "zapier" || detectedSource === "telegram") {
+      if (payloadString.includes("instagram") || payloadString.includes("ig")) {
+        detectedSource = "instagram";
+      } else if (payloadString.includes("tiktok") || payloadString.includes("tik tok")) {
+        detectedSource = "tiktok";
+      } else if (payloadString.includes("site") || payloadString.includes("сайт") || payloadString.includes("web")) {
+        detectedSource = "site";
+      }
+    }
+
     // Parse mapping - standard fields
     const name = data.name || "Без имени";
     const phone = data.phone || "Нет телефона";
     const car = data.car || "";
-    const source: LeadSource = data.source || "zapier";
     const status: LeadStatus = "new";
-    const notes = data.notes || "Получено через API";
+    const notes = data.notes || ""; // Don't write generic API messages
 
     const now = Date.now();
 
@@ -30,7 +43,7 @@ export async function POST(request: Request) {
       name,
       phone,
       car,
-      source,
+      source: detectedSource,
       status,
       nextActionDate: null,
       notes,
@@ -41,7 +54,7 @@ export async function POST(request: Request) {
           status,
           changedAt: now,
           changedBy: "API Webhook",
-          comment: "Лид создан через API (Zapier/Webhook)"
+          comment: `Новая заявка (${detectedSource})`
         }
       ],
       payload: data
