@@ -17,16 +17,25 @@ interface KanbanBoardProps {
 
 const COLUMNS: { id: LeadStatus; label: string }[] = [
   { id: "new", label: "Новые" },
+  { id: "no_answer", label: "Недозвон" },
   { id: "visit", label: "Ждем приезда" },
-  { id: "success", label: "Успешно" },
 ];
 
 export function KanbanBoard({ leads, onLeadChange }: KanbanBoardProps) {
   // Simple grouping without drag and drop for now
-  const columnsData = COLUMNS.map((col) => ({
-    ...col,
-    items: leads.filter((lead) => lead.status === col.id),
-  }));
+  const columnsData = COLUMNS.map((col) => {
+    let items = leads.filter((lead) => lead.status === col.id);
+
+    // Sort "no_answer" column by createdAt (oldest first or newest first, let's do newest first)
+    if (col.id === "no_answer") {
+      items = items.sort((a, b) => b.createdAt - a.createdAt);
+    }
+
+    return {
+      ...col,
+      items
+    };
+  });
 
   const handleDelete = async (e: React.MouseEvent, leadId: string) => {
     e.stopPropagation();
@@ -92,23 +101,27 @@ export function KanbanBoard({ leads, onLeadChange }: KanbanBoardProps) {
                     )}
 
                     <div className={`mt-2 flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded w-fit border
-                      ${lead.nextActionDate
-                        ? (isPast(lead.nextActionDate) && !isToday(lead.nextActionDate)
-                          ? "bg-red-50 text-red-600 border-red-100"
-                          : isToday(lead.nextActionDate)
-                          ? "bg-amber-50 text-amber-600 border-amber-100"
-                          : "bg-blue-50 text-blue-600 border-blue-100")
-                        : "bg-zinc-50 text-zinc-500 border-zinc-200"
+                      ${lead.status === "no_answer"
+                        ? "bg-zinc-50 text-zinc-500 border-zinc-200"
+                        : lead.nextActionDate
+                          ? (isPast(lead.nextActionDate) && !isToday(lead.nextActionDate)
+                            ? "bg-red-50 text-red-600 border-red-100"
+                            : isToday(lead.nextActionDate)
+                            ? "bg-amber-50 text-amber-600 border-amber-100"
+                            : "bg-blue-50 text-blue-600 border-blue-100")
+                          : "bg-zinc-50 text-zinc-500 border-zinc-200"
                       }
                     `}>
                       <CalendarClock className="h-3 w-3" />
-                      {lead.nextActionDate
-                        ? (isToday(lead.nextActionDate)
-                          ? "Сегодня"
-                          : isTomorrow(lead.nextActionDate)
-                          ? "Завтра"
-                          : format(lead.nextActionDate, "d MMM, HH:mm", { locale: ru }))
-                        : (lead.createdAt ? format(typeof lead.createdAt === 'object' && lead.createdAt !== null && 'seconds' in lead.createdAt ? new Date((lead.createdAt as {seconds: number}).seconds * 1000) : new Date(lead.createdAt as string | number), "d MMM", { locale: ru }) : "—")
+                      {lead.status === "no_answer"
+                        ? (lead.createdAt ? format(typeof lead.createdAt === 'object' && lead.createdAt !== null && 'seconds' in lead.createdAt ? new Date((lead.createdAt as {seconds: number}).seconds * 1000) : new Date(lead.createdAt as string | number), "d MMM yyyy", { locale: ru }) : "—")
+                        : lead.nextActionDate
+                          ? (isToday(lead.nextActionDate)
+                            ? "Сегодня"
+                            : isTomorrow(lead.nextActionDate)
+                            ? "Завтра"
+                            : format(lead.nextActionDate, "d MMM, HH:mm", { locale: ru }))
+                          : (lead.createdAt ? format(typeof lead.createdAt === 'object' && lead.createdAt !== null && 'seconds' in lead.createdAt ? new Date((lead.createdAt as {seconds: number}).seconds * 1000) : new Date(lead.createdAt as string | number), "d MMM yyyy", { locale: ru }) : "—")
                       }
                     </div>
                   </div>
