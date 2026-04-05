@@ -23,22 +23,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No keys provided" }, { status: 400 });
     }
 
-    const allKeysToDelete: string[] = [];
-
-    for (const key of keys) {
+    const results = await Promise.all(keys.map(async (key: string) => {
       if (key.endsWith('/')) {
         const listCommand = new ListObjectsV2Command({
           Bucket: BUCKET_NAME,
           Prefix: key,
         });
         const listResponse = await s3Client.send(listCommand);
-        if (listResponse.Contents) {
-          allKeysToDelete.push(...listResponse.Contents.map(c => c.Key!).filter(Boolean));
-        }
-      } else {
-        allKeysToDelete.push(key);
+        return listResponse.Contents?.map(c => c.Key!).filter(Boolean) || [];
       }
-    }
+      return [key];
+    }));
+
+    const allKeysToDelete = results.flat();
 
     if (allKeysToDelete.length === 0) {
        return NextResponse.json({ success: true, message: "Nothing to delete" });
