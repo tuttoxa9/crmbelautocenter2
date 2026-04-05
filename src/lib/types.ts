@@ -14,6 +14,7 @@ export type LeadSource =
   | "tiktok"
   | "call"
   | "zapier"
+  | "telegram"
   | "walk_in"; // С улицы
 
 export interface StatusHistoryEntry {
