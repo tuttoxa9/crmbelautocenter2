@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useDropzone } from "react-dropzone";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import imageCompression from "browser-image-compression";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import JSZip from "jszip";
@@ -65,7 +65,6 @@ export default function FilesPage() {
     setLoading(true);
     setSelectedPaths(new Set());
     try {
-      const { auth } = await import('@/lib/firebase');
       const token = await auth?.currentUser?.getIdToken();
       if (!token) {
          console.warn("No token available for S3 list");
@@ -110,7 +109,6 @@ export default function FilesPage() {
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
     try {
-      const { auth } = await import('@/lib/firebase');
       const token = await auth?.currentUser?.getIdToken();
       await fetch('/api/s3/create-folder', {
         method: 'POST',
@@ -132,7 +130,6 @@ export default function FilesPage() {
     if (!confirm(`Удалить выбранные элементы (${selectedPaths.size})?`)) return;
 
     try {
-      const { auth } = await import('@/lib/firebase');
       const token = await auth?.currentUser?.getIdToken();
       await fetch('/api/s3/delete', {
         method: 'POST',
@@ -248,7 +245,6 @@ export default function FilesPage() {
   const handleUploadAll = async () => {
     setUploading(true);
     try {
-      const { auth } = await import('@/lib/firebase');
       const token = await auth?.currentUser?.getIdToken();
 
       const filesToUpload = stagedFiles.filter(f => f.status === 'ready' || f.status === 'error');
@@ -333,7 +329,6 @@ export default function FilesPage() {
   const handleDownloadFile = async (key: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     try {
-      const { auth } = await import('@/lib/firebase');
       const token = await auth?.currentUser?.getIdToken();
       if (!token) return;
 
@@ -357,7 +352,6 @@ export default function FilesPage() {
            // Small staggered delay to not overwhelm the browser/network
            await new Promise(r => setTimeout(r, index * 200));
 
-           const { auth } = await import('@/lib/firebase');
            const token = await auth?.currentUser?.getIdToken();
            if (!token) return;
 
