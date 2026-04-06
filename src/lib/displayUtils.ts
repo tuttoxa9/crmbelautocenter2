@@ -10,6 +10,8 @@ export const getStatusLabel = (status: LeadStatus) => {
     success: "Оформился/купил",
     no_answer: "Недозвон",
     spam: "Брак/Тест",
+    thinking: "Думает",
+    callback: "Перезвонить",
   };
   return map[status] || status;
 };
@@ -24,6 +26,8 @@ export const getStatusColor = (status: LeadStatus) => {
     success: "bg-emerald-100 text-emerald-700 border-emerald-200",
     no_answer: "bg-orange-100 text-orange-700 border-orange-200",
     spam: "bg-zinc-100 text-zinc-500 border-zinc-200",
+    thinking: "bg-indigo-100 text-indigo-700 border-indigo-200",
+    callback: "bg-yellow-100 text-yellow-700 border-yellow-200",
   };
   return map[status] || "bg-zinc-100 text-zinc-700";
 };
