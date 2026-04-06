@@ -5,18 +5,10 @@
 ▲ Next.js 16.2.2 (Turbopack)
 - Local:         http://localhost:3000
 - Network:       http://192.168.0.2:3000
-✓ Ready in 546ms
-Attention: Next.js now collects completely anonymous telemetry regarding usage.
-This information is used to shape Next.js' roadmap and prioritize features.
-You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
-https://nextjs.org/telemetry
+✓ Ready in 566ms
 
-
-○ Compiling / ...
- GET / 307 in 6.7s (next.js: 5.7s, application-code: 962ms)
-○ Compiling /leads ...
- GET /leads 200 in 6.2s (next.js: 5.6s, application-code: 626ms)
- GET /leads 200 in 163ms (next.js: 22ms, application-code: 141ms)
+ GET /leads 200 in 1044ms (next.js: 337ms, application-code: 707ms)
+ GET /leads 200 in 104ms (next.js: 5ms, application-code: 99ms)
 [browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
 
 - A server/client branch `if (typeof window !== 'undefined')`.
@@ -83,210 +75,35 @@ https://react.dev/link/hydration-mismatch
   33 |       <div className="p-6 border-b border-zinc-800">
   34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
   35 |       </div>
- GET / 307 in 149ms (next.js: 5ms, application-code: 144ms)
- GET /leads 200 in 83ms (next.js: 5ms, application-code: 79ms)
- GET /leads 200 in 92ms (next.js: 4ms, application-code: 88ms)
-[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
-
-- A server/client branch `if (typeof window !== 'undefined')`.
-- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
-- Date formatting in a user's locale which doesn't match the server.
-- External changing data without sending a snapshot of it along with the HTML.
-- Invalid HTML tag nesting.
-
-It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
-
-https://react.dev/link/hydration-mismatch
-
-  ...
-    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
-      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
-        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
-          <LoadingBoundary name="/" loading={null}>
-            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
-              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
-                <RedirectBoundary>
-                  <RedirectErrorBoundary router={{...}}>
-                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
-                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
-                        <SegmentTrieNode>
-                        <script>
-                        <script>
-                        <script>
-                        <LeadsLayout>
-                          <AuthGuard>
-                            <DashboardLayout>
-                              <div
-+                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
--                               className="min-h-screen flex items-center justify-center bg-zinc-50"
-                              >
-                                <Sidebar>
-+                                 <div
-+                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
-+                                 >
--                                 <svg
--                                   xmlns="http://www.w3.org/2000/svg"
--                                   width="24"
--                                   height="24"
--                                   viewBox="0 0 24 24"
--                                   fill="none"
--                                   stroke="currentColor"
--                                   stroke-width="2"
--                                   stroke-linecap="round"
--                                   stroke-linejoin="round"
--                                   className="animate-spin text-zinc-900/20 dark:text-zinc-50/20 h-8 w-8"
--                                 >
-                                ...
-                    ...
-        ...
-
-    at <unknown> (https://react.dev/link/hydration-mismatch)
-    at div (<anonymous>)
-    at Sidebar (src/components/layout/Sidebar.tsx:32:5)
-    at DashboardLayout (src/components/layout/DashboardLayout.tsx:50:7)
-    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
-  30 |
-  31 |   return (
-> 32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
-     |     ^
-  33 |       <div className="p-6 border-b border-zinc-800">
-  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
-  35 |       </div>
- GET / 307 in 132ms (next.js: 4ms, application-code: 128ms)
- GET /leads 200 in 77ms (next.js: 6ms, application-code: 71ms)
- GET /leads 200 in 99ms (next.js: 6ms, application-code: 92ms)
-[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
-
-- A server/client branch `if (typeof window !== 'undefined')`.
-- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
-- Date formatting in a user's locale which doesn't match the server.
-- External changing data without sending a snapshot of it along with the HTML.
-- Invalid HTML tag nesting.
-
-It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
-
-https://react.dev/link/hydration-mismatch
-
-  ...
-    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
-      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
-        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
-          <LoadingBoundary name="/" loading={null}>
-            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
-              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
-                <RedirectBoundary>
-                  <RedirectErrorBoundary router={{...}}>
-                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
-                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
-                        <SegmentTrieNode>
-                        <script>
-                        <script>
-                        <script>
-                        <LeadsLayout>
-                          <AuthGuard>
-                            <DashboardLayout>
-                              <div
-+                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
--                               className="min-h-screen flex items-center justify-center bg-zinc-50"
-                              >
-                                <Sidebar>
-+                                 <div
-+                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
-+                                 >
--                                 <svg
--                                   xmlns="http://www.w3.org/2000/svg"
--                                   width="24"
--                                   height="24"
--                                   viewBox="0 0 24 24"
--                                   fill="none"
--                                   stroke="currentColor"
--                                   stroke-width="2"
--                                   stroke-linecap="round"
--                                   stroke-linejoin="round"
--                                   className="animate-spin text-zinc-900/20 dark:text-zinc-50/20 h-8 w-8"
--                                 >
-                                ...
-                    ...
-        ...
-
-    at <unknown> (https://react.dev/link/hydration-mismatch)
-    at div (<anonymous>)
-    at Sidebar (src/components/layout/Sidebar.tsx:32:5)
-    at DashboardLayout (src/components/layout/DashboardLayout.tsx:50:7)
-    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
-  30 |
-  31 |   return (
-> 32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
-     |     ^
-  33 |       <div className="p-6 border-b border-zinc-800">
-  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
-  35 |       </div>
- GET / 307 in 739ms (next.js: 243ms, application-code: 496ms)
- GET /leads 200 in 366ms (next.js: 40ms, application-code: 326ms)
- GET /leads 200 in 72ms (next.js: 6ms, application-code: 66ms)
-[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
-
-- A server/client branch `if (typeof window !== 'undefined')`.
-- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
-- Date formatting in a user's locale which doesn't match the server.
-- External changing data without sending a snapshot of it along with the HTML.
-- Invalid HTML tag nesting.
-
-It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
-
-https://react.dev/link/hydration-mismatch
-
-  ...
-    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
-      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
-        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
-          <LoadingBoundary name="/" loading={null}>
-            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
-              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
-                <RedirectBoundary>
-                  <RedirectErrorBoundary router={{...}}>
-                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
-                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
-                        <SegmentTrieNode>
-                        <script>
-                        <script>
-                        <script>
-                        <LeadsLayout>
-                          <AuthGuard>
-                            <DashboardLayout>
-                              <div
-+                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
--                               className="min-h-screen flex items-center justify-center bg-zinc-50"
-                              >
-                                <Sidebar>
-+                                 <div
-+                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
-+                                 >
--                                 <svg
--                                   xmlns="http://www.w3.org/2000/svg"
--                                   width="24"
--                                   height="24"
--                                   viewBox="0 0 24 24"
--                                   fill="none"
--                                   stroke="currentColor"
--                                   stroke-width="2"
--                                   stroke-linecap="round"
--                                   stroke-linejoin="round"
--                                   className="animate-spin text-zinc-900/20 dark:text-zinc-50/20 h-8 w-8"
--                                 >
-                                ...
-                    ...
-        ...
-
-    at <unknown> (https://react.dev/link/hydration-mismatch)
-    at div (<anonymous>)
-    at Sidebar (src/components/layout/Sidebar.tsx:32:5)
-    at DashboardLayout (src/components/layout/DashboardLayout.tsx:50:7)
-    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
-  30 |
-  31 |   return (
-> 32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
-     |     ^
-  33 |       <div className="p-6 border-b border-zinc-800">
-  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
-  35 |       </div>
+[browser] Uncaught RangeError: Invalid time value
+    at formatTimeAgo (src/components/leads/LeadColumn.tsx:31:29)
+    at <unknown> (src/components/leads/LeadColumn.tsx:124:27)
+    at Array.map (<anonymous>)
+    at LeadColumn (src/components/leads/LeadColumn.tsx:72:26)
+    at LeadsPage (src/app/(dashboard)/leads/page.tsx:186:17)
+  29 |
+  30 | const formatTimeAgo = (timestamp: number) => {
+> 31 |   return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: ru });
+     |                             ^
+  32 | };
+  33 |
+  34 | export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
+ GET /leads 200 in 102ms (next.js: 9ms, application-code: 93ms)
+ GET /leads 200 in 96ms (next.js: 7ms, application-code: 90ms)
+[browser] Uncaught RangeError: Invalid time value
+    at formatTimeAgo (src/components/leads/LeadColumn.tsx:31:29)
+    at <unknown> (src/components/leads/LeadColumn.tsx:124:27)
+    at Array.map (<anonymous>)
+    at LeadColumn (src/components/leads/LeadColumn.tsx:72:26)
+    at LeadsPage (src/app/(dashboard)/leads/page.tsx:186:17)
+  29 |
+  30 | const formatTimeAgo = (timestamp: number) => {
+> 31 |   return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: ru });
+     |                             ^
+  32 | };
+  33 |
+  34 | export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
+ GET /leads 200 in 105ms (next.js: 9ms, application-code: 96ms)
+ GET /leads 200 in 83ms (next.js: 5ms, application-code: 78ms)
+ GET /leads 200 in 79ms (next.js: 7ms, application-code: 72ms)
+ GET /leads 200 in 131ms (next.js: 4ms, application-code: 127ms)

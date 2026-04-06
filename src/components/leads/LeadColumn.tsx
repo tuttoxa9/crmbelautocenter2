@@ -27,8 +27,13 @@ const getSourceIcon = (source: string) => {
   }
 };
 
-const formatTimeAgo = (timestamp: number) => {
-  return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: ru });
+const formatTimeAgo = (timestamp: number | null | undefined) => {
+  if (!timestamp) return "";
+  try {
+    return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: ru });
+  } catch (e) {
+    return "";
+  }
 };
 
 export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
@@ -49,13 +54,13 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
       {title && (
         <div className="flex items-center gap-2 mb-4 shrink-0">
           <h2 className="text-lg font-bold text-zinc-800 tracking-tight">{title}</h2>
-          <span className="text-xs font-bold text-zinc-500 bg-zinc-200/50 px-2 py-0.5 rounded-full">{leads.length}</span>
+          <span className="text-xs font-bold text-zinc-500 bg-zinc-200/50 px-2 py-0.5 rounded-full">{(leads || []).length}</span>
         </div>
       )}
 
       <div className="flex flex-col gap-3 overflow-y-auto px-1 pb-4 flex-1 custom-scrollbar">
         <AnimatePresence>
-          {leads.length === 0 && (
+          {(!leads || leads.length === 0) && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -69,7 +74,7 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
             </motion.div>
           )}
 
-          {leads.map((lead) => {
+          {(leads || []).map((lead) => {
             const isApproaching = lead.nextActionDate && (lead.nextActionDate - now) > 0 && (lead.nextActionDate - now) < 2 * 60 * 60 * 1000;
             const isOverdue = lead.nextActionDate && (now - lead.nextActionDate) > 0;
 
