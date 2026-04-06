@@ -24,6 +24,7 @@ import {
 import { createLead } from "@/lib/leadService";
 import { useAuth } from "@/contexts/AuthContext";
 import { LeadSource, LeadStatus } from "@/lib/types";
+import { LEAD_STATUSES } from "@/constants/leadStatuses";
 import { ReactElement } from "react";
 
 export function CreateLeadDialog({ children, onSuccess }: { children: ReactElement, onSuccess?: () => void }) {
@@ -120,23 +121,15 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
               <Select name="status" value={status} onValueChange={(val: string | null) => setStatus(val || "new")}>
                 <SelectTrigger>
                   <SelectValue placeholder="Выберите">
-                    {status === "new" && "Новый"}
-                    {status === "visit" && "Приезд"}
-                    {status === "refusal" && "Отказ"}
-                    {status === "bank_refusal" && "Отказ банка"}
-                    {status === "success" && "Оформился/купил"}
-                    {status === "no_answer" && "Недозвон"}
-                    {status === "spam" && "Брак/Тест"}
+                    {LEAD_STATUSES.find(s => s.value === status)?.label}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="new">Новый</SelectItem>
-                  <SelectItem value="visit">Приезд</SelectItem>
-                  <SelectItem value="refusal">Отказ</SelectItem>
-                  <SelectItem value="bank_refusal">Отказ банка</SelectItem>
-                  <SelectItem value="success">Оформился/купил</SelectItem>
-                  <SelectItem value="no_answer">Недозвон</SelectItem>
-                  <SelectItem value="spam">Брак/Тест</SelectItem>
+                  {LEAD_STATUSES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

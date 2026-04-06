@@ -2,6 +2,7 @@
 
 import { Lead, LeadStatus } from "@/lib/types";
 import { getStatusColor, getStatusLabel } from "@/lib/displayUtils";
+import { LEAD_STATUSES } from "@/constants/leadStatuses";
 import { format, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
 import React, { useState, useEffect } from "react";
@@ -228,12 +229,11 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                     <SelectValue>{getStatusLabel(formData.status)}</SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    <SelectItem value="new">Новый</SelectItem>
-                    <SelectItem value="in_progress">В работе</SelectItem>
-                    <SelectItem value="visit">Ждем приезда</SelectItem>
-                    <SelectItem value="no_answer">Недозвон</SelectItem>
-                    <SelectItem value="success">Оформился</SelectItem>
-                    <SelectItem value="refusal">Отказ</SelectItem>
+                    {LEAD_STATUSES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
