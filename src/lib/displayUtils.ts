@@ -32,15 +32,15 @@ export const getStatusColor = (status: LeadStatus) => {
   return map[status] || "bg-zinc-100 text-zinc-700";
 };
 
-export const getSourceLabel = (source: LeadSource) => {
-  const map: Record<LeadSource, string> = {
+export const getSourceLabel = (source: string) => {
+  const map: Record<string, string> = {
     site: "Сайт",
     instagram: "Instagram",
     tiktok: "TikTok",
     call: "Звонок",
-    zapier: "Zapier",
-    telegram: "Telegram",
+    zapier: "Интеграция",
+    telegram: "Телеграм",
     walk_in: "С улицы",
   };
-  return map[source] || source;
+  return map[source] || "Неизвестно";
 };
