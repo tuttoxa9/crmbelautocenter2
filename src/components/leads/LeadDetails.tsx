@@ -269,7 +269,7 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
 
               <div className="space-y-2 col-span-1">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
-                  <FileText className="h-4 w-4 text-amber-500" /> Заметки менеджера
+                  <FileText className="h-4 w-4 text-amber-500" /> Заметки
                 </label>
                 <Textarea
                   className="h-[80px] min-h-[80px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-3 resize-none text-base"
@@ -288,15 +288,15 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                 <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
                   <Clock className="w-4 h-4 text-zinc-400" /> История
                 </h3>
-                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+                <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar">
                   {lead.history.map((event, i) => (
-                    <div key={i} className="flex-shrink-0 w-[240px] bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm flex flex-col relative">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-sm text-zinc-900">{getStatusLabel(event.status)}</span>
-                        <span className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider">{safeFormatDate(event.changedAt)}</span>
+                    <div key={i} className="flex-shrink-0 w-[200px] bg-white rounded-xl border border-zinc-100 p-3 shadow-sm flex flex-col relative">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="font-bold text-xs text-zinc-900">{getStatusLabel(event.status)}</span>
+                        <span className="text-zinc-400 text-[9px] uppercase font-bold tracking-wider">{safeFormatDate(event.changedAt)}</span>
                       </div>
                       {event.comment && (
-                        <p className="text-sm text-zinc-600 leading-snug line-clamp-2" title={event.comment}>{event.comment}</p>
+                        <p className="text-xs text-zinc-600 leading-snug line-clamp-2" title={event.comment}>{event.comment}</p>
                       )}
                     </div>
                   ))}

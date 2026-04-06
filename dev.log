@@ -221,3 +221,72 @@ https://react.dev/link/hydration-mismatch
   33 |       <div className="p-6 border-b border-zinc-800">
   34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
   35 |       </div>
+ GET / 307 in 739ms (next.js: 243ms, application-code: 496ms)
+ GET /leads 200 in 366ms (next.js: 40ms, application-code: 326ms)
+ GET /leads 200 in 72ms (next.js: 6ms, application-code: 66ms)
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
+      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+          <LoadingBoundary name="/" loading={null}>
+            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
+                <RedirectBoundary>
+                  <RedirectErrorBoundary router={{...}}>
+                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
+                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
+                        <SegmentTrieNode>
+                        <script>
+                        <script>
+                        <script>
+                        <LeadsLayout>
+                          <AuthGuard>
+                            <DashboardLayout>
+                              <div
++                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
+-                               className="min-h-screen flex items-center justify-center bg-zinc-50"
+                              >
+                                <Sidebar>
++                                 <div
++                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
++                                 >
+-                                 <svg
+-                                   xmlns="http://www.w3.org/2000/svg"
+-                                   width="24"
+-                                   height="24"
+-                                   viewBox="0 0 24 24"
+-                                   fill="none"
+-                                   stroke="currentColor"
+-                                   stroke-width="2"
+-                                   stroke-linecap="round"
+-                                   stroke-linejoin="round"
+-                                   className="animate-spin text-zinc-900/20 dark:text-zinc-50/20 h-8 w-8"
+-                                 >
+                                ...
+                    ...
+        ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at div (<anonymous>)
+    at Sidebar (src/components/layout/Sidebar.tsx:32:5)
+    at DashboardLayout (src/components/layout/DashboardLayout.tsx:50:7)
+    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
+  30 |
+  31 |   return (
+> 32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
+     |     ^
+  33 |       <div className="p-6 border-b border-zinc-800">
+  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
+  35 |       </div>

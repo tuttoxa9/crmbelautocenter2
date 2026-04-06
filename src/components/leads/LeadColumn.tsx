@@ -9,6 +9,7 @@ import { Search, Globe, Phone, Car, Clock, XCircle, Play } from "lucide-react";
 import { updateLeadStatus } from "@/lib/leadService";
 import { useAuth } from "@/contexts/AuthContext";
 import { LEAD_STATUSES } from "@/constants/leadStatuses";
+import { getSourceLabel } from "@/lib/displayUtils";
 
 interface LeadColumnProps {
   leads: Lead[];
@@ -85,7 +86,7 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
                         {getSourceIcon(lead.source)}
                       </div>
                       <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">
-                        {lead.source}
+                        {getSourceLabel(lead.source)}
                       </span>
                     </div>
                     <div className="flex items-center gap-1 text-xs font-medium text-zinc-400 bg-zinc-50 px-2 py-1 rounded-full">
