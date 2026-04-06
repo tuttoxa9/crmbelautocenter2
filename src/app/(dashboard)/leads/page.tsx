@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { CreateLeadDialog } from "@/components/leads/CreateLeadDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +13,15 @@ import { Spinner } from "@/components/ui/spinner";
 import { LeadDetailsDrawer } from "@/components/leads/LeadDetailsDrawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeadList } from "@/components/leads/LeadList";
+import { format, isSameDay, startOfDay, addDays, subDays } from "date-fns";
+import { ru } from "date-fns/locale";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
 
   // Sync selectedLead when leads change
   useEffect(() => {
@@ -41,6 +44,8 @@ export default function LeadsPage() {
     return () => unsubscribe();
   }, []);
 
+  const isTodayDate = isSameDay(selectedDate, new Date());
+
   const filteredLeads = leads.filter(lead => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
@@ -50,39 +55,55 @@ export default function LeadsPage() {
     return matchesName || matchesPhone || matchesCar;
   });
 
-  // Sort and filter new leads
-  const newLeads = filteredLeads
-    .filter(lead => lead.status === "new")
-    .sort((a, b) => b.createdAt - a.createdAt); // Новые сверху
+  // Date Filtering Logic
+  const dateFilteredLeads = filteredLeads.filter(lead => {
+    // New leads are ALWAYS visible on ANY date (until they are taken in progress)
+    if (lead.status === "new") return true;
 
-  // Sort and filter active leads
-  const actionLeads = filteredLeads
-    .filter(lead => lead.status === "in_progress" || lead.status === "callback")
-    .sort((a, b) => {
-      // Prioritize callback leads with closest nextActionDate
-      if (a.status === "callback" && b.status === "callback") {
-        return (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity);
+    // Terminal statuses are hidden from the pipeline (shown only in Base)
+    if (["refusal", "bank_refusal", "success", "spam"].includes(lead.status)) return false;
+
+    // If a lead has a nextActionDate, check if it belongs to the selected date
+    if (lead.nextActionDate) {
+      const actionDate = new Date(lead.nextActionDate);
+      const isSameAsSelected = isSameDay(actionDate, selectedDate);
+
+      // If today is selected, also show overdue leads (actionDate < today)
+      if (isTodayDate && actionDate < startOfDay(new Date())) {
+        return true;
       }
-      if (a.status === "callback") return -1;
-      if (b.status === "callback") return 1;
 
-      const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
-      const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
-      return bTime - aTime; // Недавние изменения сверху
-    });
+      return isSameAsSelected;
+    }
 
-  const pausedLeads = filteredLeads
-    .filter(lead => lead.status === "thinking" || lead.status === "no_answer")
-    .sort((a, b) => {
-      const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
-      const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
-      return bTime - aTime; // Недавние изменения сверху
-    });
+    // If no action date is set, show them only on "Today"
+    return isTodayDate;
+  });
 
-  // Sort and filter visit leads
-  const visitLeads = filteredLeads
-    .filter(lead => lead.status === "visit")
-    .sort((a, b) => (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity)); // Ближайшие приезды сверху
+  // Pipeline Columns
+  const newLeads = dateFilteredLeads.filter(l => l.status === "new").sort((a, b) => b.createdAt - a.createdAt);
+
+  const inProgressLeads = dateFilteredLeads.filter(l => l.status === "in_progress").sort((a, b) => {
+    const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
+    const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
+    return bTime - aTime;
+  });
+
+  const callbackLeads = dateFilteredLeads.filter(l => l.status === "callback").sort((a, b) => (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity));
+
+  const noAnswerLeads = dateFilteredLeads.filter(l => l.status === "no_answer").sort((a, b) => {
+    const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
+    const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
+    return bTime - aTime;
+  });
+
+  const thinkingLeads = dateFilteredLeads.filter(l => l.status === "thinking").sort((a, b) => {
+    const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
+    const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
+    return bTime - aTime;
+  });
+
+  const visitLeads = dateFilteredLeads.filter(l => l.status === "visit").sort((a, b) => (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity));
 
   // All Leads sorted by creation date
   const allLeadsSorted = [...filteredLeads].sort((a, b) => b.createdAt - a.createdAt);
@@ -95,16 +116,20 @@ export default function LeadsPage() {
     );
   }
 
+  const handlePrevDay = () => setSelectedDate(prev => subDays(prev, 1));
+  const handleNextDay = () => setSelectedDate(prev => addDays(prev, 1));
+  const handleToday = () => setSelectedDate(startOfDay(new Date()));
+
   return (
     <div className="h-full flex flex-col bg-zinc-50/30">
       {/* Header */}
-      <header className="flex-none px-4 sm:px-8 py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 bg-white/50 backdrop-blur-md sticky top-0 z-10">
+      <header className="flex-none px-4 sm:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 bg-white/50 backdrop-blur-md sticky top-0 z-10">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-zinc-900">Zero Inbox</h1>
-          <p className="text-sm text-zinc-500 font-medium">Компактные колонки</p>
+          <p className="text-sm text-zinc-500 font-medium">Контроль заявок</p>
         </div>
 
-        <div className="flex items-center gap-4 w-full sm:w-auto">
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap">
           <div className="relative flex-1 sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
             <Input
@@ -133,26 +158,47 @@ export default function LeadsPage() {
             </TabsList>
           </div>
 
-          <TabsContent value="pipeline" className="flex-1 mt-0 outline-none h-full">
-            {/*
-              On mobile: flex container with horizontal scroll and snapping.
-              On desktop (lg): grid with 4 columns.
-            */}
-            <div className="h-full flex overflow-x-auto snap-x snap-mandatory lg:grid lg:grid-cols-4 gap-6 hide-scrollbar pb-4 lg:pb-0">
-              <div className="flex justify-center h-full min-w-[85vw] sm:min-w-[400px] lg:min-w-0 snap-center">
+          <TabsContent value="pipeline" className="flex-1 flex flex-col mt-0 outline-none h-full overflow-hidden">
+            {/* Date Navigation */}
+            <div className="flex items-center justify-between bg-white px-4 py-2 rounded-2xl shadow-sm border border-zinc-100 mb-4 mx-auto w-full max-w-lg">
+              <Button variant="ghost" size="icon" onClick={handlePrevDay} className="hover:bg-zinc-100 text-zinc-600 rounded-xl">
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <div className="flex flex-col items-center cursor-pointer hover:bg-zinc-50 px-4 py-1 rounded-xl transition-colors" onClick={handleToday}>
+                <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">
+                  {isTodayDate ? "Сегодня" : "Выбранная дата"}
+                </span>
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className={`w-4 h-4 ${isTodayDate ? 'text-blue-500' : 'text-zinc-600'}`} />
+                  <span className={`text-base font-bold ${isTodayDate ? 'text-blue-600' : 'text-zinc-800'}`}>
+                    {format(selectedDate, "d MMMM yyyy", { locale: ru })}
+                  </span>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={handleNextDay} className="hover:bg-zinc-100 text-zinc-600 rounded-xl">
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
+
+            {/* Pipeline Columns - Horizontal Scroll */}
+            <div className="flex-1 flex overflow-x-auto gap-4 lg:gap-6 hide-scrollbar pb-4 snap-x snap-mandatory">
+              <div className="flex h-full snap-center pl-2 lg:pl-0">
                 <LeadColumn leads={newLeads} title="Новые" onSelectLead={setSelectedLead} />
               </div>
-
-              <div className="flex justify-center h-full min-w-[85vw] sm:min-w-[400px] lg:min-w-0 snap-center">
-                <LeadColumn leads={actionLeads} title="В работе / Звонки" onSelectLead={setSelectedLead} />
+              <div className="flex h-full snap-center">
+                <LeadColumn leads={inProgressLeads} title="В работе" onSelectLead={setSelectedLead} />
               </div>
-
-              <div className="flex justify-center h-full min-w-[85vw] sm:min-w-[400px] lg:min-w-0 snap-center">
-                <LeadColumn leads={pausedLeads} title="На паузе" onSelectLead={setSelectedLead} />
+              <div className="flex h-full snap-center">
+                <LeadColumn leads={callbackLeads} title="Перезвонить" onSelectLead={setSelectedLead} />
               </div>
-
-              <div className="flex justify-center h-full min-w-[85vw] sm:min-w-[400px] lg:min-w-0 snap-center">
-                <LeadColumn leads={visitLeads} title="Радар приездов" onSelectLead={setSelectedLead} />
+              <div className="flex h-full snap-center">
+                <LeadColumn leads={noAnswerLeads} title="Недозвон" onSelectLead={setSelectedLead} />
+              </div>
+              <div className="flex h-full snap-center">
+                <LeadColumn leads={thinkingLeads} title="Думает" onSelectLead={setSelectedLead} />
+              </div>
+              <div className="flex h-full snap-center pr-4 lg:pr-0">
+                <LeadColumn leads={visitLeads} title="Приезд" onSelectLead={setSelectedLead} />
               </div>
             </div>
           </TabsContent>
