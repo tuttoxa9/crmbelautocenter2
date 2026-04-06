@@ -6,7 +6,7 @@ import { CreateLeadDialog } from "@/components/leads/CreateLeadDialog";
 import { Button } from "@/components/ui/button";
 import { Lead } from "@/lib/types";
 import { subscribeToLeads } from "@/lib/leadService";
-import { SmartStack } from "@/components/leads/SmartStack";
+import { LeadColumn } from "@/components/leads/LeadColumn";
 import { VisitTimeline } from "@/components/leads/VisitTimeline";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -55,7 +55,7 @@ export default function LeadsPage() {
       <header className="flex-none px-4 sm:px-8 py-6 flex justify-between items-center border-b border-zinc-100 bg-white/50 backdrop-blur-md sticky top-0 z-10">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-zinc-900">Zero Inbox</h1>
-          <p className="text-sm text-zinc-500 font-medium">Умные стопки карточек</p>
+          <p className="text-sm text-zinc-500 font-medium">Компактные колонки</p>
         </div>
 
         <CreateLeadDialog>
@@ -66,15 +66,15 @@ export default function LeadsPage() {
       </header>
 
       {/* Bento Grid layout */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-8">
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="flex-1 overflow-hidden p-4 sm:p-8">
+        <div className="max-w-[1400px] h-full mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          <div className="flex justify-center">
-            <SmartStack leads={newLeads} title="Новые" />
+          <div className="flex justify-center h-full">
+            <LeadColumn leads={newLeads} title="Новые" />
           </div>
 
-          <div className="flex justify-center">
-            <SmartStack leads={activeLeads} title="В работе" />
+          <div className="flex justify-center h-full">
+            <LeadColumn leads={activeLeads} title="В работе" />
           </div>
 
           <div className="flex justify-center">
