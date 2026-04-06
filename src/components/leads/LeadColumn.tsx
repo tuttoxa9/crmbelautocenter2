@@ -50,7 +50,7 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
   };
 
   return (
-    <div className="flex flex-col h-full w-full min-w-[320px] max-w-[350px]">
+    <div className="flex flex-col h-full w-full min-w-[280px] sm:min-w-[320px] xl:min-w-[180px] max-w-[350px] xl:max-w-[calc(100%/6)] flex-1 shrink-0 xl:shrink">
       {title && (
         <div className="flex items-center gap-2 mb-4 shrink-0">
           <h2 className="text-lg font-bold text-zinc-800 tracking-tight">{title}</h2>
@@ -87,7 +87,7 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 className={`
-                  w-full rounded-2xl bg-white shadow-sm border overflow-hidden cursor-pointer
+                  w-full shrink-0 rounded-2xl bg-white shadow-sm border overflow-hidden cursor-pointer
                   hover:shadow-md transition-all relative
                   ${isOverdue ? 'border-red-300 ring-1 ring-red-300/50' : 'border-zinc-200/80'}
                 `}
