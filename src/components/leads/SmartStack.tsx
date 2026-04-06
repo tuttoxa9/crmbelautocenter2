@@ -7,9 +7,10 @@ import { LeadStackCard } from "./LeadStackCard";
 interface SmartStackProps {
   leads: Lead[];
   type: "new" | "active";
+  onSelectLead: (lead: Lead) => void;
 }
 
-export function SmartStack({ leads, type }: SmartStackProps) {
+export function SmartStack({ leads, type, onSelectLead }: SmartStackProps) {
   if (leads.length === 0) {
     return (
       <div className="h-[600px] border-2 border-dashed border-zinc-200/80 rounded-[2rem] bg-zinc-50/50 flex flex-col items-center justify-center text-zinc-400">
@@ -50,7 +51,7 @@ export function SmartStack({ leads, type }: SmartStackProps) {
               style={{ zIndex: 30 - index * 10 }}
               className="absolute w-full top-0 left-0"
             >
-              <LeadStackCard lead={lead} isTop={isTop} type={type} />
+              <LeadStackCard lead={lead} isTop={isTop} type={type} onClick={() => onSelectLead(lead)} />
             </motion.div>
           );
         })}

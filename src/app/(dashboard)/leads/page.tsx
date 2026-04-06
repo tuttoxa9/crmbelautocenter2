@@ -6,13 +6,16 @@ import { CreateLeadDialog } from "@/components/leads/CreateLeadDialog";
 import { Button } from "@/components/ui/button";
 import { SmartStack } from "@/components/leads/SmartStack";
 import { VisitTimeline } from "@/components/leads/VisitTimeline";
+import { LeadDetails } from "@/components/leads/LeadDetails";
 import { Lead } from "@/lib/types";
 import { subscribeToLeads } from "@/lib/leadService";
 import { Spinner } from "@/components/ui/spinner";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToLeads((fetchedLeads) => {
@@ -28,9 +31,25 @@ export default function LeadsPage() {
       .sort((a, b) => b.createdAt - a.createdAt);
   }, [leads]);
 
-  const activeLeads = useMemo(() => {
+  const actionLeads = useMemo(() => {
     return leads
-      .filter((lead) => lead.status === "in_progress" || lead.status === "no_answer")
+      .filter((lead) => lead.status === "in_progress" || lead.status === "callback")
+      .sort((a, b) => {
+        if (a.status === "callback" && b.status === "callback") {
+           return (a.nextActionDate || 0) - (b.nextActionDate || 0);
+        }
+        if (a.status === "callback") return -1;
+        if (b.status === "callback") return 1;
+
+        const aTime = a.history.length > 0 ? a.history[a.history.length - 1].changedAt : a.updatedAt;
+        const bTime = b.history.length > 0 ? b.history[b.history.length - 1].changedAt : b.updatedAt;
+        return bTime - aTime;
+      });
+  }, [leads]);
+
+  const pausedLeads = useMemo(() => {
+    return leads
+      .filter((lead) => lead.status === "thinking" || lead.status === "no_answer")
       .sort((a, b) => {
         const aTime = a.history.length > 0 ? a.history[a.history.length - 1].changedAt : a.updatedAt;
         const bTime = b.history.length > 0 ? b.history[b.history.length - 1].changedAt : b.updatedAt;
@@ -47,6 +66,8 @@ export default function LeadsPage() {
         return aDate - bDate;
       });
   }, [leads]);
+
+  const selectedLead = useMemo(() => leads.find(l => l.id === selectedLeadId), [leads, selectedLeadId]);
 
   if (isLoading) {
     return (
@@ -71,35 +92,51 @@ export default function LeadsPage() {
         </CreateLeadDialog>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
 
         {/* New Leads Column */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h3 className="font-bold text-lg text-zinc-800">Новые ({newLeads.length})</h3>
           </div>
-          <SmartStack leads={newLeads} type="new" />
+          <SmartStack leads={newLeads} type="new" onSelectLead={(l) => setSelectedLeadId(l.id || null)} />
         </div>
 
-        {/* Active Leads Column */}
+        {/* Action Leads Column */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-lg text-zinc-800">В работе ({activeLeads.length})</h3>
+            <h3 className="font-bold text-lg text-zinc-800">В работе / Звонки ({actionLeads.length})</h3>
           </div>
-          <SmartStack leads={activeLeads} type="active" />
+          <SmartStack leads={actionLeads} type="active" onSelectLead={(l) => setSelectedLeadId(l.id || null)} />
+        </div>
+
+        {/* Paused Leads Column */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-lg text-zinc-800">На паузе ({pausedLeads.length})</h3>
+          </div>
+          <SmartStack leads={pausedLeads} type="active" onSelectLead={(l) => setSelectedLeadId(l.id || null)} />
         </div>
 
         {/* Visit Timeline Column */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-lg text-zinc-800">Приезды ({visitLeads.length})</h3>
+            <h3 className="font-bold text-lg text-zinc-800">Радар приездов ({visitLeads.length})</h3>
           </div>
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-10">
-            <VisitTimeline leads={visitLeads} />
+            <VisitTimeline leads={visitLeads} onSelectLead={(l) => setSelectedLeadId(l.id || null)} />
           </div>
         </div>
 
       </div>
+
+      <Sheet open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLeadId(null)}>
+        <SheetContent className="w-full sm:max-w-md p-0 border-l border-zinc-200">
+           {selectedLead && (
+             <LeadDetails key={selectedLead.id} lead={selectedLead} onClose={() => setSelectedLeadId(null)} />
+           )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

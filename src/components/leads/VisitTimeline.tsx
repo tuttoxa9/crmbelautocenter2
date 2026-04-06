@@ -7,9 +7,10 @@ import { Clock, Car, MapPin } from "lucide-react";
 
 interface VisitTimelineProps {
   leads: Lead[];
+  onSelectLead: (lead: Lead) => void;
 }
 
-export function VisitTimeline({ leads }: VisitTimelineProps) {
+export function VisitTimeline({ leads, onSelectLead }: VisitTimelineProps) {
   if (leads.length === 0) {
     return (
       <div className="h-full border-2 border-dashed border-zinc-200/80 rounded-[2rem] bg-zinc-50/50 flex flex-col items-center justify-center text-zinc-400 p-8 text-center min-h-[300px]">
@@ -31,8 +32,9 @@ export function VisitTimeline({ leads }: VisitTimelineProps) {
         return (
           <div
             key={lead.id}
+            onClick={() => onSelectLead(lead)}
             className={`
-              bg-white rounded-3xl p-5 shadow-sm border transition-all
+              bg-white rounded-3xl p-5 shadow-sm border transition-all cursor-pointer hover:shadow-md
               ${isUrgent ? 'border-amber-400 ring-2 ring-amber-400/20 bg-amber-50/30' : 'border-zinc-200/60'}
               ${isOverdue ? 'border-red-200 bg-red-50/30 opacity-70' : ''}
             `}
