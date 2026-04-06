@@ -15,4 +15,6 @@ export const LEAD_STATUSES: StatusConfig[] = [
   { value: "refusal", label: "Отказ", colorClass: "bg-zinc-100 text-zinc-700 border-zinc-200" },
   { value: "bank_refusal", label: "Отказ банка", colorClass: "bg-red-100 text-red-700 border-red-200" },
   { value: "spam", label: "Брак/Тест", colorClass: "bg-zinc-100 text-zinc-500 border-zinc-200" },
+  { value: "thinking", label: "Думает", colorClass: "bg-indigo-100 text-indigo-700 border-indigo-200" },
+  { value: "callback", label: "Перезвонить", colorClass: "bg-yellow-100 text-yellow-700 border-yellow-200" },
 ];

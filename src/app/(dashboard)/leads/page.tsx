@@ -9,10 +9,25 @@ import { subscribeToLeads } from "@/lib/leadService";
 import { LeadColumn } from "@/components/leads/LeadColumn";
 import { VisitTimeline } from "@/components/leads/VisitTimeline";
 import { Spinner } from "@/components/ui/spinner";
+import { LeadDetailsDrawer } from "@/components/leads/LeadDetailsDrawer";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+
+  // Sync selectedLead when leads change
+  useEffect(() => {
+    if (selectedLead) {
+      const updatedSelectedLead = leads.find(l => l.id === selectedLead.id);
+      if (updatedSelectedLead) {
+        setSelectedLead(updatedSelectedLead);
+      } else {
+        // If the lead was deleted, close the drawer
+        setSelectedLead(null);
+      }
+    }
+  }, [leads, selectedLead]);
 
   useEffect(() => {
     const unsubscribe = subscribeToLeads((fetchedLeads) => {
@@ -28,8 +43,23 @@ export default function LeadsPage() {
     .sort((a, b) => b.createdAt - a.createdAt); // Новые сверху
 
   // Sort and filter active leads
-  const activeLeads = leads
-    .filter(lead => lead.status === "in_progress" || lead.status === "no_answer")
+  const actionLeads = leads
+    .filter(lead => lead.status === "in_progress" || lead.status === "callback")
+    .sort((a, b) => {
+      // Prioritize callback leads with closest nextActionDate
+      if (a.status === "callback" && b.status === "callback") {
+        return (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity);
+      }
+      if (a.status === "callback") return -1;
+      if (b.status === "callback") return 1;
+
+      const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
+      const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
+      return bTime - aTime; // Недавние изменения сверху
+    });
+
+  const pausedLeads = leads
+    .filter(lead => lead.status === "thinking" || lead.status === "no_answer")
     .sort((a, b) => {
       const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
       const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
@@ -38,8 +68,8 @@ export default function LeadsPage() {
 
   // Sort and filter visit leads
   const visitLeads = leads
-    .filter(lead => lead.status === "visit" && lead.nextActionDate)
-    .sort((a, b) => (a.nextActionDate || 0) - (b.nextActionDate || 0)); // Ближайшие приезды сверху
+    .filter(lead => lead.status === "visit")
+    .sort((a, b) => (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity)); // Ближайшие приезды сверху
 
   if (isLoading) {
     return (
@@ -67,22 +97,34 @@ export default function LeadsPage() {
 
       {/* Bento Grid layout */}
       <div className="flex-1 overflow-hidden p-4 sm:p-8">
-        <div className="max-w-[1400px] h-full mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-[1600px] h-full mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
 
           <div className="flex justify-center h-full">
-            <LeadColumn leads={newLeads} title="Новые" />
+            <LeadColumn leads={newLeads} title="Новые" onSelectLead={setSelectedLead} />
           </div>
 
           <div className="flex justify-center h-full">
-            <LeadColumn leads={activeLeads} title="В работе" />
+            <LeadColumn leads={actionLeads} title="В работе / Звонки" onSelectLead={setSelectedLead} />
           </div>
 
-          <div className="flex justify-center">
-            <VisitTimeline leads={visitLeads} />
+          <div className="flex justify-center h-full">
+            <LeadColumn leads={pausedLeads} title="На паузе" onSelectLead={setSelectedLead} />
+          </div>
+
+          <div className="flex justify-center h-full">
+            <LeadColumn leads={visitLeads} title="Радар приездов" onSelectLead={setSelectedLead} />
           </div>
 
         </div>
       </div>
+
+      <LeadDetailsDrawer
+        lead={selectedLead}
+        open={!!selectedLead}
+        onOpenChange={(open) => {
+          if (!open) setSelectedLead(null);
+        }}
+      />
     </div>
   );
 }
