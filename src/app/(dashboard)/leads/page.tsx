@@ -1,20 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Plus, Search, Inbox } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { Plus } from "lucide-react";
 import { CreateLeadDialog } from "@/components/leads/CreateLeadDialog";
 import { Button } from "@/components/ui/button";
-import { LeadList } from "@/components/leads/LeadList";
+import { SmartStack } from "@/components/leads/SmartStack";
+import { VisitTimeline } from "@/components/leads/VisitTimeline";
 import { LeadDetails } from "@/components/leads/LeadDetails";
-import { Input } from "@/components/ui/input";
 import { Lead } from "@/lib/types";
 import { subscribeToLeads } from "@/lib/leadService";
+import { Spinner } from "@/components/ui/spinner";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterMode, setFilterMode] = useState<"all" | "new" | "in_progress" | "no_answer">("all");
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -25,42 +25,65 @@ export default function LeadsPage() {
     return () => unsubscribe();
   }, []);
 
-  const filteredLeads = leads.filter(lead => {
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = !searchQuery ||
-      lead.name.toLowerCase().includes(searchLower) ||
-      lead.phone.toLowerCase().includes(searchLower);
+  const newLeads = useMemo(() => {
+    return leads
+      .filter((lead) => lead.status === "new")
+      .sort((a, b) => b.createdAt - a.createdAt);
+  }, [leads]);
 
-    let matchesFilter = true;
-    if (filterMode === "new") matchesFilter = lead.status === "new";
-    if (filterMode === "in_progress") matchesFilter = lead.status === "in_progress" || lead.status === "visit";
-    if (filterMode === "no_answer") matchesFilter = lead.status === "no_answer";
+  const actionLeads = useMemo(() => {
+    return leads
+      .filter((lead) => lead.status === "in_progress" || lead.status === "callback")
+      .sort((a, b) => {
+        if (a.status === "callback" && b.status === "callback") {
+           return (a.nextActionDate || 0) - (b.nextActionDate || 0);
+        }
+        if (a.status === "callback") return -1;
+        if (b.status === "callback") return 1;
 
-    return matchesSearch && matchesFilter;
-  });
+        const aTime = a.history.length > 0 ? a.history[a.history.length - 1].changedAt : a.updatedAt;
+        const bTime = b.history.length > 0 ? b.history[b.history.length - 1].changedAt : b.updatedAt;
+        return bTime - aTime;
+      });
+  }, [leads]);
 
-  const selectedLead = leads.find(l => l.id === selectedLeadId) || null;
+  const pausedLeads = useMemo(() => {
+    return leads
+      .filter((lead) => lead.status === "thinking" || lead.status === "no_answer")
+      .sort((a, b) => {
+        const aTime = a.history.length > 0 ? a.history[a.history.length - 1].changedAt : a.updatedAt;
+        const bTime = b.history.length > 0 ? b.history[b.history.length - 1].changedAt : b.updatedAt;
+        return bTime - aTime;
+      });
+  }, [leads]);
 
-  const FilterPill = ({ mode, label, count }: { mode: typeof filterMode, label: string, count?: number }) => (
-    <button
-      onClick={() => setFilterMode(mode)}
-      className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
-        filterMode === mode
-          ? 'bg-zinc-900 text-white shadow-md'
-          : 'bg-white text-zinc-600 hover:bg-zinc-100 border border-zinc-200'
-      }`}
-    >
-      {label} {count !== undefined && <span className="ml-1.5 opacity-70">({count})</span>}
-    </button>
-  );
+  const visitLeads = useMemo(() => {
+    return leads
+      .filter((lead) => lead.status === "visit")
+      .sort((a, b) => {
+        const aDate = a.nextActionDate || 0;
+        const bDate = b.nextActionDate || 0;
+        return aDate - bDate;
+      });
+  }, [leads]);
+
+  const selectedLead = useMemo(() => leads.find(l => l.id === selectedLeadId), [leads, selectedLeadId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-full">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full bg-zinc-50/50 -mx-4 -my-4 sm:-mx-8 sm:-my-8 p-4 sm:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900">Лиды</h2>
-          <p className="text-sm font-medium text-zinc-500 mt-1">Управление заявками</p>
+          <p className="text-sm font-medium text-zinc-500 mt-1">Smart Stacks</p>
         </div>
         <CreateLeadDialog>
           <Button className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-full px-6 shadow-sm h-11">
@@ -69,75 +92,51 @@ export default function LeadsPage() {
         </CreateLeadDialog>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0">
 
-        {/* Left Column - List */}
-        <div className="w-full lg:w-[380px] xl:w-[420px] flex flex-col gap-5 shrink-0 h-full">
-          {/* Filters & Search */}
-          <div className="space-y-4">
-             <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                <Input
-                  className="pl-11 h-12 bg-white border-zinc-200/80 rounded-2xl shadow-sm focus-visible:ring-blue-500 font-medium"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-             </div>
-             <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-                <FilterPill mode="all" label="Все" count={leads.length} />
-                <FilterPill mode="new" label="Новые" count={leads.filter(l => l.status === 'new').length} />
-                <FilterPill mode="in_progress" label="В работе" />
-                <FilterPill mode="no_answer" label="Недозвон" />
-             </div>
+        {/* New Leads Column */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-lg text-zinc-800">Новые ({newLeads.length})</h3>
           </div>
-
-          {/* List Area */}
-          <div className="flex-1 min-h-0 bg-transparent rounded-3xl overflow-hidden mt-2">
-             {isLoading ? (
-                <div className="flex justify-center items-center h-full">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-zinc-900"></div>
-                </div>
-             ) : (
-                <LeadList
-                  leads={filteredLeads}
-                  selectedLeadId={selectedLeadId}
-                  onSelect={(lead) => setSelectedLeadId(lead.id || null)}
-                />
-             )}
-          </div>
+          <SmartStack leads={newLeads} type="new" onSelectLead={(l) => setSelectedLeadId(l.id || null)} />
         </div>
 
-        {/* Right Column - Details */}
-        <div className="flex-1 min-h-0 hidden lg:block h-full relative">
-          {selectedLead ? (
-            <LeadDetails key={selectedLead.id} lead={selectedLead} onClose={() => setSelectedLeadId(null)} />
-          ) : (
-            <div className="h-full border-2 border-dashed border-zinc-200/80 rounded-[2rem] bg-zinc-50/50 flex flex-col items-center justify-center text-zinc-400">
-              <Inbox className="w-16 h-16 mb-4 text-zinc-300" />
-              <p className="text-xl font-bold text-zinc-700">Выберите лид для просмотра</p>
-              <p className="text-sm font-medium mt-2">Вся детальная информация и редактирование будут доступны здесь</p>
-            </div>
-          )}
+        {/* Action Leads Column */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-lg text-zinc-800">В работе / Звонки ({actionLeads.length})</h3>
+          </div>
+          <SmartStack leads={actionLeads} type="active" onSelectLead={(l) => setSelectedLeadId(l.id || null)} />
         </div>
 
-        {/* Mobile Details Overlay */}
-        {selectedLead && (
-          <div className="fixed inset-0 z-50 bg-zinc-50 lg:hidden flex flex-col animate-in slide-in-from-right-full duration-300">
-             <div className="px-4 py-4 border-b border-zinc-200 flex justify-between items-center bg-white shadow-sm z-20">
-                <button
-                   onClick={() => setSelectedLeadId(null)}
-                   className="font-semibold text-zinc-600 px-5 py-2 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors text-sm"
-                >
-                  Назад к списку
-                </button>
-             </div>
-             <div className="flex-1 overflow-hidden bg-zinc-50 relative">
-                <LeadDetails key={selectedLead.id} lead={selectedLead} onClose={() => setSelectedLeadId(null)} />
-             </div>
+        {/* Paused Leads Column */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-lg text-zinc-800">На паузе ({pausedLeads.length})</h3>
           </div>
-        )}
+          <SmartStack leads={pausedLeads} type="active" onSelectLead={(l) => setSelectedLeadId(l.id || null)} />
+        </div>
+
+        {/* Visit Timeline Column */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-lg text-zinc-800">Радар приездов ({visitLeads.length})</h3>
+          </div>
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-10">
+            <VisitTimeline leads={visitLeads} onSelectLead={(l) => setSelectedLeadId(l.id || null)} />
+          </div>
+        </div>
 
       </div>
+
+      <Sheet open={!!selectedLead} onOpenChange={(open) => !open && setSelectedLeadId(null)}>
+        <SheetContent className="w-full sm:max-w-md p-0 border-l border-zinc-200">
+           {selectedLead && (
+             <LeadDetails key={selectedLead.id} lead={selectedLead} onClose={() => setSelectedLeadId(null)} />
+           )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
