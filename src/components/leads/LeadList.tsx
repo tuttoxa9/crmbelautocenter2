@@ -117,7 +117,12 @@ export function LeadList({ leads, selectedLeadId, onSelect }: LeadListProps) {
                            <Phone className="w-3 h-3" /> {lead.phone}
                          </span>
                          <span className="flex items-center gap-1">
-                           <CalendarIcon className="w-3 h-3 text-zinc-400" /> {format(new Date(lead.createdAt), "d MMM yyyy, HH:mm", { locale: ru })}
+                           <CalendarIcon className="w-3 h-3 text-zinc-400" /> {lead.createdAt ? (
+                             (() => {
+                               try { return format(new Date(lead.createdAt), "d MMM yyyy, HH:mm", { locale: ru }); }
+                               catch { return ""; }
+                             })()
+                           ) : ""}
                          </span>
                       </div>
                     </div>
@@ -131,7 +136,10 @@ export function LeadList({ leads, selectedLeadId, onSelect }: LeadListProps) {
                     {lead.nextActionDate && activeTab === "active" && (
                       <span className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg font-bold border border-orange-100">
                          <Clock className="w-3.5 h-3.5" />
-                         {format(new Date(lead.nextActionDate), "d MMM, HH:mm", { locale: ru })}
+                         {(() => {
+                           try { return format(new Date(lead.nextActionDate), "d MMM, HH:mm", { locale: ru }); }
+                           catch { return "Некорректная дата"; }
+                         })()}
                       </span>
                     )}
                   </div>
