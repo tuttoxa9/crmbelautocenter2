@@ -122,16 +122,16 @@ export default function LeadsPage() {
 
         {/* Mobile Details Overlay */}
         {selectedLead && (
-          <div className="fixed inset-0 z-50 bg-zinc-50 lg:hidden flex flex-col animate-in slide-in-from-bottom-full">
-             <div className="px-6 py-4 border-b border-zinc-200 flex justify-between items-center bg-white shadow-sm z-20">
+          <div className="fixed inset-0 z-50 bg-zinc-50 lg:hidden flex flex-col animate-in slide-in-from-right-full duration-300">
+             <div className="px-4 py-4 border-b border-zinc-200 flex justify-between items-center bg-white shadow-sm z-20">
                 <button
                    onClick={() => setSelectedLeadId(null)}
-                   className="font-semibold text-zinc-600 px-5 py-2 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors"
+                   className="font-semibold text-zinc-600 px-5 py-2 bg-zinc-100 hover:bg-zinc-200 rounded-xl transition-colors text-sm"
                 >
                   Назад к списку
                 </button>
              </div>
-             <div className="flex-1 overflow-y-auto bg-zinc-50">
+             <div className="flex-1 overflow-hidden bg-zinc-50 relative">
                 <LeadDetails key={selectedLead.id} lead={selectedLead} onClose={() => setSelectedLeadId(null)} />
              </div>
           </div>

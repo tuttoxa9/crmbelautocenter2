@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Phone, Calendar as CalendarIcon, Clock, MapPin, FileText, Smartphone, Globe, Trash2, Search } from "lucide-react";
+import { Phone, Calendar as CalendarIcon, Clock, MapPin, FileText, Smartphone, Globe, Trash2, Search, CheckCircle2, Copy } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { InstagramIcon, TikTokIcon, TelegramIcon } from "./Icons";
 
@@ -84,6 +84,7 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
     status: lead.status,
     nextActionDate: lead.nextActionDate,
   });
+  const [copied, setCopied] = useState(false);
 
   const handleSave = async () => {
     try {
@@ -151,35 +152,55 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
     name: lead.name, phone: lead.phone, car: lead.car || "", notes: lead.notes || "", status: lead.status, nextActionDate: lead.nextActionDate
   });
 
+  const handlePhoneClick = () => {
+    if (!formData.phone) return;
+
+    // Check if device is mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      window.location.href = `tel:${formData.phone.replace(/[^0-9+]/g, '')}`;
+    } else {
+      navigator.clipboard.writeText(formData.phone).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-white rounded-3xl shadow-sm border border-zinc-200/60 overflow-hidden relative">
       {/* Header Info */}
-      <div className="px-8 py-6 border-b border-zinc-100 bg-white z-10 flex-shrink-0 flex justify-between items-start">
-        <div className="flex-1 min-w-0 pr-4">
+      <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-zinc-100 bg-white z-10 flex-shrink-0 flex justify-between items-start">
+        <div className="flex-1 min-w-0 pr-2 sm:pr-4">
           <Input
             value={formData.name}
             onChange={e => setFormData(prev => ({...prev, name: e.target.value}))}
-            className="text-3xl font-extrabold text-zinc-900 border-none shadow-none px-0 h-auto focus-visible:ring-0 w-full truncate"
+            className="text-xl sm:text-3xl font-extrabold text-zinc-900 border-none shadow-none px-0 h-auto focus-visible:ring-0 w-full truncate"
           />
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3">
              {formData.phone ? (
-               <div className="flex items-center gap-2 text-zinc-600 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-100">
-                 <Phone className="w-4 h-4 text-zinc-400" />
-                 <Input
-                   value={formData.phone}
-                   onChange={e => setFormData(prev => ({...prev, phone: e.target.value}))}
-                   className="text-sm font-medium border-none shadow-none px-0 h-auto focus-visible:ring-0 w-[140px] bg-transparent"
-                 />
+               <div
+                 onClick={handlePhoneClick}
+                 className="flex items-center gap-2 text-zinc-600 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-100 cursor-pointer hover:bg-zinc-100 transition-colors group relative shrink-0"
+                 title="Нажмите, чтобы скопировать или позвонить"
+               >
+                 <Phone className="w-4 h-4 text-zinc-400 group-hover:text-blue-500 transition-colors" />
+                 <span className="text-sm font-medium whitespace-nowrap">
+                   {formData.phone}
+                 </span>
+                 {copied ? (
+                   <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-1" />
+                 ) : (
+                   <Copy className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+                 )}
+                 {copied && (
+                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                     Скопировано
+                   </div>
+                 )}
                </div>
-             ) : (
-               <div className="flex items-center gap-2 text-zinc-600">
-                 <Input
-                   value={formData.phone}
-                   onChange={e => setFormData(prev => ({...prev, phone: e.target.value}))}
-                   className="text-sm font-medium border-none shadow-none px-0 h-auto focus-visible:ring-0 w-[140px] bg-transparent"
-                 />
-               </div>
-             )}
+             ) : null}
              <SourceBadge source={lead.source} />
           </div>
         </div>
@@ -192,11 +213,11 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
       </div>
 
       {/* Main Content Scrollable Area */}
-      <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-zinc-50/30">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar bg-zinc-50/30">
         <div className="max-w-3xl space-y-8">
 
           {/* Main Form Fields */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
