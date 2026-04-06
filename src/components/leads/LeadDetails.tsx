@@ -18,7 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Phone, Calendar as CalendarIcon, Clock, MapPin, FileText, Smartphone, Globe, Trash2, Search, CheckCircle2, Copy } from "lucide-react";
+import { Phone, Calendar as CalendarIcon, Clock, MapPin, FileText, Smartphone, Globe, Trash2, Search, CheckCircle2, Copy, X } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { InstagramIcon, TikTokIcon, TelegramIcon } from "./Icons";
 
@@ -207,6 +207,11 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
         </div>
 
         <div className="flex flex-col gap-2 shrink-0">
+          {onClose && (
+            <Button variant="ghost" size="icon" onClick={onClose} className="ml-auto text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-full mb-2">
+              <X className="w-5 h-5" />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" onClick={handleDelete} className="ml-auto text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-full">
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -226,7 +231,7 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                 </label>
                 <Select value={formData.status} onValueChange={(val) => setFormData(prev => ({...prev, status: val as LeadStatus}))}>
                   <SelectTrigger className={`w-full !h-[48px] box-border rounded-2xl font-semibold text-sm ${getStatusColor(formData.status)} border-transparent shadow-sm focus:ring-blue-500`}>
-                    <SelectValue>{getStatusLabel(formData.status)}</SelectValue>
+                    <SelectValue>{LEAD_STATUSES.find(s => s.value === formData.status)?.label || formData.status}</SelectValue>
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
                     {LEAD_STATUSES.map((s) => (

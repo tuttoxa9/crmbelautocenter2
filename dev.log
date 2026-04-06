@@ -5,1068 +5,219 @@
 ▲ Next.js 16.2.2 (Turbopack)
 - Local:         http://localhost:3000
 - Network:       http://192.168.0.2:3000
-✓ Ready in 1366ms
-
- GET / 307 in 2.5s (next.js: 937ms, application-code: 1525ms)
- GET /leads 200 in 538ms (next.js: 56ms, application-code: 482ms)
- GET /login 200 in 139ms (next.js: 69ms, application-code: 70ms)
- GET /leads 200 in 364ms (next.js: 7ms, application-code: 357ms)
- GET /login 200 in 32ms (next.js: 5ms, application-code: 27ms)
- GET / 307 in 149ms (next.js: 5ms, application-code: 143ms)
- GET /leads 200 in 66ms (next.js: 3ms, application-code: 63ms)
- GET /login 200 in 106ms (next.js: 8ms, application-code: 99ms)
- GET / 307 in 198ms (next.js: 3ms, application-code: 194ms)
- GET /leads 200 in 94ms (next.js: 6ms, application-code: 88ms)
- GET /login 200 in 38ms (next.js: 4ms, application-code: 34ms)
-  Reload env: .env.local
-○ Compiling /files ...
- GET /files 200 in 10.5s (next.js: 7.9s, application-code: 2.6s)
- GET /login 200 in 79ms (next.js: 37ms, application-code: 43ms)
- GET /login 200 in 153ms (next.js: 5ms, application-code: 148ms)
- GET /login 200 in 73ms (next.js: 3ms, application-code: 69ms)
-[browser] FirebaseError: Firebase: Error (auth/invalid-credential).
-    at async handleLogin (src/app/login/page.tsx:40:7)
-  38 |
-  39 |     try {
-> 40 |       await signInWithEmailAndPassword(auth, email, password);
-     |       ^
-  41 |       router.push("/leads");
-  42 |     } catch (err: unknown) {
-  43 |       setError("Неверный email или пароль."); (src/app/login/page.tsx:44:15)
- GET /files 200 in 65ms (next.js: 4ms, application-code: 61ms)
- GET /login 200 in 35ms (next.js: 3ms, application-code: 32ms)
- GET /files 200 in 82ms (next.js: 4ms, application-code: 77ms)
- GET /login 200 in 48ms (next.js: 6ms, application-code: 42ms)
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/card.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/card.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/card.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/card.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/card.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/card.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/card.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Client Component Browser]
-    ./src/app/login/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/card.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Client Component SSR]
-    ./src/app/login/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/badge.tsx:3:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m1 |[0m [36mimport[0m { mergeProps } [36mfrom[0m [32m"@base-ui/react/merge-props"[0m
-  [90m2 |[0m [36mimport[0m { useRender } [36mfrom[0m [32m"@base-ui/react/use-render"[0m
-[31m[1m>[0m [90m3 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m4 |[0m
-  [90m5 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m6 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/badge.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/badge.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/badge.tsx:3:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m1 |[0m [36mimport[0m { mergeProps } [36mfrom[0m [32m"@base-ui/react/merge-props"[0m
-  [90m2 |[0m [36mimport[0m { useRender } [36mfrom[0m [32m"@base-ui/react/use-render"[0m
-[31m[1m>[0m [90m3 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m4 |[0m
-  [90m5 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m6 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/badge.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/badge.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/badge.tsx:3:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m1 |[0m [36mimport[0m { mergeProps } [36mfrom[0m [32m"@base-ui/react/merge-props"[0m
-  [90m2 |[0m [36mimport[0m { useRender } [36mfrom[0m [32m"@base-ui/react/use-render"[0m
-[31m[1m>[0m [90m3 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m4 |[0m
-  [90m5 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m6 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/badge.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/badge.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/badge.tsx:3:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m1 |[0m [36mimport[0m { mergeProps } [36mfrom[0m [32m"@base-ui/react/merge-props"[0m
-  [90m2 |[0m [36mimport[0m { useRender } [36mfrom[0m [32m"@base-ui/react/use-render"[0m
-[31m[1m>[0m [90m3 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m4 |[0m
-  [90m5 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m6 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/badge.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/badge.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #2 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #3 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #2 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #3 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #2 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #3 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #2 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #3 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/tabs.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mTabs[0m [36mas[0m [33mTabsPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/tabs"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/tabs.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/tabs.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/tabs.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mTabs[0m [36mas[0m [33mTabsPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/tabs"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/tabs.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/tabs.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/tabs.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mTabs[0m [36mas[0m [33mTabsPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/tabs"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/tabs.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/tabs.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/tabs.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mTabs[0m [36mas[0m [33mTabsPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/tabs"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  Client Component Browser:
-    ./src/components/ui/tabs.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  Client Component SSR:
-    ./src/components/ui/tabs.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #2 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/select.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #3 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/select.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #2 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/select.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #3 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/select.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #2 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/select.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #3 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/select.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #2 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/select.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-  #3 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/select.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/leads/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #2 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #3 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #2 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #3 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #2 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #3 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/components/ui/button.tsx:4:1
-Module not found: Can't resolve 'class-variance-authority'
-  [90m2 |[0m
-  [90m3 |[0m [36mimport[0m { [33mButton[0m [36mas[0m [33mButtonPrimitive[0m } [36mfrom[0m [32m"@base-ui/react/button"[0m
-[31m[1m>[0m [90m4 |[0m [36mimport[0m { cva, [36mtype[0m [33mVariantProps[0m } [36mfrom[0m [32m"class-variance-authority"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m5 |[0m
-  [90m6 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m
-  [90m7 |[0m
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #2 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #3 [Client Component Browser]:
-    ./src/components/ui/button.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/components/ui/button.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #2 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/input.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #3 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/input.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #2 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/input.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #3 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/input.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #2 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/input.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #3 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/input.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-⨯ ./src/lib/utils.ts:1:1
-Module not found: Can't resolve 'clsx'
-[31m[1m>[0m [90m1 |[0m [36mimport[0m { clsx, [36mtype[0m [33mClassValue[0m } [36mfrom[0m [32m"clsx"[0m
-  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
-  [90m2 |[0m [36mimport[0m { twMerge } [36mfrom[0m [32m"tailwind-merge"[0m
-  [90m3 |[0m
-  [90m4 |[0m [36mexport[0m [36mfunction[0m cn(...inputs: [33mClassValue[0m[]) {
-
-
-
-Import traces:
-  #1 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Client Component Browser]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #2 [Client Component Browser]:
-    ./src/lib/utils.ts [Client Component Browser]
-    ./src/components/ui/input.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Client Component Browser]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-  #3 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Client Component SSR]
-    ./src/components/layout/DashboardLayout.tsx [Server Component]
-    ./src/app/(dashboard)/layout.tsx [Server Component]
-
-  #4 [Client Component SSR]:
-    ./src/lib/utils.ts [Client Component SSR]
-    ./src/components/ui/input.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Client Component SSR]
-    ./src/app/(dashboard)/files/page.tsx [Server Component]
-
-https://nextjs.org/docs/messages/module-not-found
-
-
-✓ Compiled in 1804ms
-✓ Compiled in 7.3s
- GET /files 200 in 3.5s (next.js: 2.1s, application-code: 1348ms)
- GET /login 200 in 113ms (next.js: 53ms, application-code: 60ms)
-✓ Compiled in 690ms
-✓ Compiled in 5.7s
-✓ Compiled in 365ms
- GET /login 200 in 2.2s (next.js: 731ms, application-code: 1449ms)
-[?25h
+✓ Ready in 546ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+○ Compiling / ...
+ GET / 307 in 6.7s (next.js: 5.7s, application-code: 962ms)
+○ Compiling /leads ...
+ GET /leads 200 in 6.2s (next.js: 5.6s, application-code: 626ms)
+ GET /leads 200 in 163ms (next.js: 22ms, application-code: 141ms)
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
+      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+          <LoadingBoundary name="/" loading={null}>
+            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
+                <RedirectBoundary>
+                  <RedirectErrorBoundary router={{...}}>
+                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
+                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
+                        <SegmentTrieNode>
+                        <script>
+                        <script>
+                        <script>
+                        <LeadsLayout>
+                          <AuthGuard>
+                            <DashboardLayout>
+                              <div
++                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
+-                               className="min-h-screen flex items-center justify-center bg-zinc-50"
+                              >
+                                <Sidebar>
++                                 <div
++                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
++                                 >
+-                                 <svg
+-                                   xmlns="http://www.w3.org/2000/svg"
+-                                   width="24"
+-                                   height="24"
+-                                   viewBox="0 0 24 24"
+-                                   fill="none"
+-                                   stroke="currentColor"
+-                                   stroke-width="2"
+-                                   stroke-linecap="round"
+-                                   stroke-linejoin="round"
+-                                   className="animate-spin text-zinc-900/20 dark:text-zinc-50/20 h-8 w-8"
+-                                 >
+                                ...
+                    ...
+        ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at div (<anonymous>)
+    at Sidebar (src/components/layout/Sidebar.tsx:32:5)
+    at DashboardLayout (src/components/layout/DashboardLayout.tsx:50:7)
+    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
+  30 |
+  31 |   return (
+> 32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
+     |     ^
+  33 |       <div className="p-6 border-b border-zinc-800">
+  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
+  35 |       </div>
+ GET / 307 in 149ms (next.js: 5ms, application-code: 144ms)
+ GET /leads 200 in 83ms (next.js: 5ms, application-code: 79ms)
+ GET /leads 200 in 92ms (next.js: 4ms, application-code: 88ms)
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
+      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+          <LoadingBoundary name="/" loading={null}>
+            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
+                <RedirectBoundary>
+                  <RedirectErrorBoundary router={{...}}>
+                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
+                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
+                        <SegmentTrieNode>
+                        <script>
+                        <script>
+                        <script>
+                        <LeadsLayout>
+                          <AuthGuard>
+                            <DashboardLayout>
+                              <div
++                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
+-                               className="min-h-screen flex items-center justify-center bg-zinc-50"
+                              >
+                                <Sidebar>
++                                 <div
++                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
++                                 >
+-                                 <svg
+-                                   xmlns="http://www.w3.org/2000/svg"
+-                                   width="24"
+-                                   height="24"
+-                                   viewBox="0 0 24 24"
+-                                   fill="none"
+-                                   stroke="currentColor"
+-                                   stroke-width="2"
+-                                   stroke-linecap="round"
+-                                   stroke-linejoin="round"
+-                                   className="animate-spin text-zinc-900/20 dark:text-zinc-50/20 h-8 w-8"
+-                                 >
+                                ...
+                    ...
+        ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at div (<anonymous>)
+    at Sidebar (src/components/layout/Sidebar.tsx:32:5)
+    at DashboardLayout (src/components/layout/DashboardLayout.tsx:50:7)
+    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
+  30 |
+  31 |   return (
+> 32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
+     |     ^
+  33 |       <div className="p-6 border-b border-zinc-800">
+  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
+  35 |       </div>
+ GET / 307 in 132ms (next.js: 4ms, application-code: 128ms)
+ GET /leads 200 in 77ms (next.js: 6ms, application-code: 71ms)
+ GET /leads 200 in 99ms (next.js: 6ms, application-code: 92ms)
+[browser] Uncaught Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ScrollAndMaybeFocusHandler cacheNode={{rsc:{...}, ...}}>
+      <InnerScrollAndFocusHandlerOld focusAndScrollRef={{scrollRef:null, ...}} cacheNode={{rsc:{...}, ...}}>
+        <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
+          <LoadingBoundary name="/" loading={null}>
+            <HTTPAccessFallbackBoundary notFound={{...}} forbidden={undefined} unauthorized={undefined}>
+              <HTTPAccessFallbackErrorBoundary pathname="/leads" notFound={{...}} forbidden={undefined} ...>
+                <RedirectBoundary>
+                  <RedirectErrorBoundary router={{...}}>
+                    <InnerLayoutRouter url="/leads" tree={[...]} params={{}} cacheNode={{rsc:{...}, ...}} ...>
+                      <SegmentViewNode type="layout" pagePath="src/(dashb...">
+                        <SegmentTrieNode>
+                        <script>
+                        <script>
+                        <script>
+                        <LeadsLayout>
+                          <AuthGuard>
+                            <DashboardLayout>
+                              <div
++                               className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900"
+-                               className="min-h-screen flex items-center justify-center bg-zinc-50"
+                              >
+                                <Sidebar>
++                                 <div
++                                   className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-1..."
++                                 >
+-                                 <svg
+-                                   xmlns="http://www.w3.org/2000/svg"
+-                                   width="24"
+-                                   height="24"
+-                                   viewBox="0 0 24 24"
+-                                   fill="none"
+-                                   stroke="currentColor"
+-                                   stroke-width="2"
+-                                   stroke-linecap="round"
+-                                   stroke-linejoin="round"
+-                                   className="animate-spin text-zinc-900/20 dark:text-zinc-50/20 h-8 w-8"
+-                                 >
+                                ...
+                    ...
+        ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at div (<anonymous>)
+    at Sidebar (src/components/layout/Sidebar.tsx:32:5)
+    at DashboardLayout (src/components/layout/DashboardLayout.tsx:50:7)
+    at LeadsLayout (src/app/(dashboard)/layout.tsx:7:7)
+  30 |
+  31 |   return (
+> 32 |     <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-...
+     |     ^
+  33 |       <div className="p-6 border-b border-zinc-800">
+  34 |         <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
+  35 |       </div>

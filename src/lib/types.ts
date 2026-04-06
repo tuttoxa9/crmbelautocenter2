@@ -6,7 +6,9 @@ export type LeadStatus =
   | "bank_refusal"        // Отказ банка
   | "success"             // Оформился/купил
   | "no_answer"           // Недозвон
-  | "spam";               // Брак/Тест
+  | "spam"                // Брак/Тест
+  | "thinking"            // Думает
+  | "callback";           // Перезвонить
 
 export type LeadSource =
   | "site"
