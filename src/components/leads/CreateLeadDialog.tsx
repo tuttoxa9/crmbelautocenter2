@@ -118,7 +118,6 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
                     {source === "instagram" && "Instagram"}
                     {source === "tiktok" && "TikTok"}
                     {source === "call" && "Звонок"}
-                    {source === "zapier" && "Zapier/Avito"}
                     {source === "walk_in" && "С улицы"}
                   </SelectValue>
                 </SelectTrigger>
@@ -127,7 +126,6 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
                   <SelectItem value="instagram">Instagram</SelectItem>
                   <SelectItem value="tiktok">TikTok</SelectItem>
                   <SelectItem value="call">Звонок</SelectItem>
-                  <SelectItem value="zapier">Zapier/Avito</SelectItem>
                   <SelectItem value="walk_in">С улицы</SelectItem>
                 </SelectContent>
               </Select>
