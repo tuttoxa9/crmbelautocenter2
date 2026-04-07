@@ -73,9 +73,14 @@ const SourceBadge = ({ source }: { source: string }) => {
 };
 
 
+import { Pencil } from "lucide-react";
+
 export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void }) {
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
+
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
 
   const [formData, setFormData] = useState({
     name: lead.name,
@@ -174,34 +179,79 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
       {/* Header Info */}
       <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-zinc-100 bg-white z-10 flex-shrink-0 flex justify-between items-start">
         <div className="flex-1 min-w-0 pr-2 sm:pr-4">
-          <Input
-            value={formData.name}
-            onChange={e => setFormData(prev => ({...prev, name: e.target.value}))}
-            className="text-xl sm:text-3xl font-extrabold text-zinc-900 border-none shadow-none px-0 h-auto focus-visible:ring-0 w-full truncate"
-          />
+          <div className="flex items-center gap-3 w-full group">
+            {isEditingName ? (
+              <Input
+                value={formData.name}
+                onChange={e => setFormData(prev => ({...prev, name: e.target.value}))}
+                onBlur={() => setIsEditingName(false)}
+                onKeyDown={(e) => { if (e.key === 'Enter') setIsEditingName(false); }}
+                autoFocus
+                className="text-xl sm:text-3xl font-extrabold text-zinc-900 px-2 h-auto w-full"
+              />
+            ) : (
+              <>
+                <h2 className="text-xl sm:text-3xl font-extrabold text-zinc-900 truncate">
+                  {formData.name || "Без имени"}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-zinc-400 hover:text-zinc-700"
+                  onClick={() => setIsEditingName(true)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3">
-             {formData.phone ? (
-               <div
-                 onClick={handlePhoneClick}
-                 className="flex items-center gap-2 text-zinc-600 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-100 cursor-pointer hover:bg-zinc-100 transition-colors group relative shrink-0"
-                 title="Нажмите, чтобы скопировать или позвонить"
-               >
-                 <Phone className="w-4 h-4 text-zinc-400 group-hover:text-blue-500 transition-colors" />
-                 <span className="text-sm font-medium whitespace-nowrap">
-                   {formData.phone}
-                 </span>
-                 {copied ? (
-                   <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-1" />
-                 ) : (
-                   <Copy className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
-                 )}
-                 {copied && (
-                   <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap">
-                     Скопировано
-                   </div>
-                 )}
-               </div>
-             ) : null}
+             <div className="flex items-center group/phone relative">
+               {isEditingPhone ? (
+                 <Input
+                   value={formData.phone}
+                   onChange={e => setFormData(prev => ({...prev, phone: e.target.value}))}
+                   onBlur={() => setIsEditingPhone(false)}
+                   onKeyDown={(e) => { if (e.key === 'Enter') setIsEditingPhone(false); }}
+                   autoFocus
+                   placeholder="+375..."
+                   className="h-8 text-sm w-40"
+                 />
+               ) : (
+                 <div
+                   onClick={handlePhoneClick}
+                   className="flex items-center gap-2 text-zinc-600 bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-100 cursor-pointer hover:bg-zinc-100 transition-colors shrink-0"
+                   title="Нажмите, чтобы скопировать или позвонить"
+                 >
+                   <Phone className="w-4 h-4 text-zinc-400 group-hover/phone:text-blue-500 transition-colors" />
+                   <span className="text-sm font-medium whitespace-nowrap">
+                     {formData.phone || "Без телефона"}
+                   </span>
+                   {copied ? (
+                     <CheckCircle2 className="w-3.5 h-3.5 text-green-500 ml-1" />
+                   ) : (
+                     <Copy className="w-3.5 h-3.5 text-zinc-300 opacity-0 group-hover/phone:opacity-100 transition-opacity ml-1" />
+                   )}
+                   {copied && (
+                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap z-50">
+                       Скопировано
+                     </div>
+                   )}
+                 </div>
+               )}
+               {!isEditingPhone && (
+                 <Button
+                   variant="ghost"
+                   size="icon"
+                   className="opacity-0 group-hover/phone:opacity-100 transition-opacity h-8 w-8 ml-1 text-zinc-400 hover:text-zinc-700"
+                   onClick={() => setIsEditingPhone(true)}
+                   title="Редактировать телефон"
+                 >
+                   <Pencil className="h-3.5 w-3.5" />
+                 </Button>
+               )}
+             </div>
+
              <SourceBadge source={lead.source} />
           </div>
         </div>

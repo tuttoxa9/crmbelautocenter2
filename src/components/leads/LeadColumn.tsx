@@ -50,7 +50,7 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
   };
 
   return (
-    <div className="flex flex-col h-full w-full min-w-[280px] sm:min-w-[320px] xl:min-w-[180px] max-w-[350px] xl:max-w-[calc(100%/6)] flex-1 shrink-0 xl:shrink">
+    <div className="flex flex-col h-full w-full min-w-[280px] lg:min-w-0">
       {title && (
         <div className="flex items-center gap-2 mb-4 shrink-0">
           <h2 className="text-lg font-bold text-zinc-800 tracking-tight">{title}</h2>
@@ -87,7 +87,7 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 className={`
-                  w-full shrink-0 rounded-2xl bg-white shadow-sm border overflow-hidden cursor-pointer
+                  w-full shrink-0 min-w-0 rounded-2xl bg-white shadow-sm border overflow-hidden cursor-pointer
                   hover:shadow-md transition-all relative
                   ${isOverdue ? 'border-red-300 ring-1 ring-red-300/50' : 'border-zinc-200/80'}
                 `}
@@ -115,23 +115,23 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
                   </div>
 
                   {/* Body: Name & Info */}
-                  <div className="space-y-0.5">
+                  <div className="space-y-0.5 min-w-0">
                     <h3 className="text-base font-bold text-zinc-900 leading-tight truncate">
                       {lead.name || "Без имени"}
                     </h3>
 
-                    <div className="flex items-center justify-between mt-1">
-                      <div className="flex items-center gap-1.5 text-zinc-600">
-                         <Phone className="w-3.5 h-3.5 text-zinc-400" />
-                         <span className="text-xs font-medium">{lead.phone}</span>
+                    <div className="flex items-center justify-between mt-1 w-full min-w-0 gap-2">
+                      <div className="flex items-center gap-1.5 text-zinc-600 min-w-0">
+                         <Phone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                         <span className="text-xs font-medium whitespace-nowrap truncate">{lead.phone}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] font-medium text-zinc-400">
+                      <div className="flex items-center gap-1 text-[10px] font-medium text-zinc-400 shrink-0 text-right">
                          {formatTimeAgo(lead.status === "new" ? lead.createdAt : (lead.history[lead.history.length-1]?.changedAt || lead.updatedAt))}
                       </div>
                     </div>
 
                     {lead.car && (
-                      <div className="flex items-center gap-1.5 text-zinc-500 mt-1">
+                      <div className="flex items-center gap-1.5 text-zinc-500 mt-1 min-w-0">
                          <Car className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                          <span className="text-xs font-medium truncate">{lead.car}</span>
                       </div>
