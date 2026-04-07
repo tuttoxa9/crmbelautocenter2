@@ -332,24 +332,25 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
           {/* Timeline and Payload */}
           <div className="space-y-6 mt-8">
 
-            {/* Horizontal Timeline */}
+            {/* Vertical Timeline */}
             {lead.history && lead.history.length > 0 && (
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
                   <Clock className="w-4 h-4 text-zinc-400" /> История
                 </h3>
-                <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                <div className="flex flex-col gap-3">
                   {lead.history.map((event, i) => (
-                    <div key={i} className="flex-shrink-0 w-[180px] bg-white rounded-lg border border-zinc-100 p-2.5 shadow-sm flex flex-col relative">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full ${getStatusColor(event.status)}`}>
+                    <div key={i} className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm flex flex-col relative">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={`text-xs uppercase font-bold tracking-wider px-2.5 py-1 rounded-full ${getStatusColor(event.status)}`}>
                           {getStatusLabel(event.status)}
                         </span>
-                        <span className="text-zinc-400 text-[9px] font-bold">{safeFormatDate(event.changedAt).split(',')[0]}</span>
+                        <span className="text-zinc-400 text-xs font-bold">{safeFormatDate(event.changedAt)}</span>
                       </div>
-                      <span className="text-zinc-500 text-[10px] mt-0.5 font-medium">{safeFormatDate(event.changedAt).split(', ')[1]}</span>
                       {event.comment && (
-                        <p className="text-[11px] text-zinc-600 leading-tight mt-1 line-clamp-2" title={event.comment}>{event.comment}</p>
+                        <p className="text-sm text-zinc-600 leading-relaxed mt-2 bg-zinc-50 p-3 rounded-xl border border-zinc-100">
+                          {event.comment}
+                        </p>
                       )}
                     </div>
                   ))}
