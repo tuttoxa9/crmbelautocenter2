@@ -1,7 +1,7 @@
 "use client";
 
 import { Lead, LeadStatus } from "@/lib/types";
-import { formatDistanceToNow } from "date-fns";
+import { format, isToday, isYesterday } from "date-fns";
 import { ru } from "date-fns/locale";
 import { motion, AnimatePresence } from "framer-motion";
 import { InstagramIcon, TikTokIcon, TelegramIcon } from "./Icons";
@@ -30,9 +30,24 @@ const getSourceIcon = (source: string) => {
 const formatTimeAgo = (timestamp: number | null | undefined) => {
   if (!timestamp) return "";
   try {
-    return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: ru });
+    const date = new Date(timestamp);
+    if (isToday(date)) return format(date, "HH:mm");
+    if (isYesterday(date)) return "Вчера, " + format(date, "HH:mm");
+    return format(date, "d MMM, HH:mm", { locale: ru });
   } catch (e) {
     return "";
+  }
+};
+
+const getLeadDateGroup = (timestamp: number | null | undefined) => {
+  if (!timestamp) return "Неизвестно";
+  try {
+    const date = new Date(timestamp);
+    if (isToday(date)) return "Сегодня";
+    if (isYesterday(date)) return "Вчера";
+    return format(date, "d MMMM yyyy", { locale: ru });
+  } catch (e) {
+    return "Неизвестно";
   }
 };
 
@@ -74,106 +89,139 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
             </motion.div>
           )}
 
-          {(leads || []).map((lead) => {
-            const isApproaching = lead.nextActionDate && (lead.nextActionDate - now) > 0 && (lead.nextActionDate - now) < 2 * 60 * 60 * 1000;
-            const isOverdue = lead.nextActionDate && (now - lead.nextActionDate) > 0;
+          {(() => {
+            const groups: { [key: string]: Lead[] } = {};
+            (leads || []).forEach(lead => {
+              const group = getLeadDateGroup(lead.status === "new" ? lead.createdAt : (lead.history[lead.history.length-1]?.changedAt || lead.updatedAt));
+              if (!groups[group]) groups[group] = [];
+              groups[group].push(lead);
+            });
 
-            return (
-              <motion.div
-                key={lead.id}
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                className={`
-                  w-full shrink-0 min-w-0 rounded-2xl bg-white shadow-sm border overflow-hidden cursor-pointer
-                  hover:shadow-md transition-all relative
-                  ${isOverdue ? 'border-red-300 ring-1 ring-red-300/50' : 'border-zinc-200/80'}
-                `}
-                onClick={(e) => {
-                  if ((e.target as HTMLElement).closest('button')) return;
-                  if (onSelectLead) onSelectLead(lead);
-                }}
-              >
-                {/* Approaching Highlight */}
-                {isApproaching && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 to-red-500 animate-pulse" />
-                )}
+            // Define order for "Сегодня" and "Вчера"
+            const groupOrder = ["Сегодня", "Вчера"];
+            const sortedGroups = Object.keys(groups).sort((a, b) => {
+              const aIndex = groupOrder.indexOf(a);
+              const bIndex = groupOrder.indexOf(b);
+              if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+              if (aIndex !== -1) return -1;
+              if (bIndex !== -1) return 1;
+              // Simple string sort for other dates (ideally parse and sort by date, but string is okay for now since we usually filter by today)
+              return b.localeCompare(a);
+            });
 
-                <div className="p-3 flex flex-col gap-2.5">
-                  {/* Header: Status Badge & Source */}
-                  <div className="flex justify-between items-start">
-                     <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${getStatusColor(lead.status)}`}>
-                       {getStatusLabel(lead.status)}
-                     </span>
-
-                     <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded-md">
-                       {getSourceIcon(lead.source)}
-                       <span className="truncate max-w-[80px]">{getSourceLabel(lead.source)}</span>
-                     </div>
-                  </div>
-
-                  {/* Body: Name & Info */}
-                  <div className="space-y-0.5 min-w-0">
-                    <h3 className="text-base font-bold text-zinc-900 leading-tight truncate">
-                      {lead.name || "Без имени"}
-                    </h3>
-
-                    <div className="flex items-center justify-between mt-1 w-full min-w-0 gap-2">
-                      <div className="flex items-center gap-1.5 text-zinc-600 min-w-0">
-                         <Phone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                         <span className="text-xs font-medium whitespace-nowrap truncate">{lead.phone}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-[10px] font-medium text-zinc-400 shrink-0 text-right">
-                         {formatTimeAgo(lead.status === "new" ? lead.createdAt : (lead.history[lead.history.length-1]?.changedAt || lead.updatedAt))}
-                      </div>
-                    </div>
-
-                    {lead.car && (
-                      <div className="flex items-center gap-1.5 text-zinc-500 mt-1 min-w-0">
-                         <Car className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                         <span className="text-xs font-medium truncate">{lead.car}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action Date (Approaching/Overdue) */}
-                  {lead.nextActionDate && (
-                    <div className={`
-                      flex items-center gap-1.5 px-2 py-1.5 rounded-xl w-full mt-1
-                      ${isOverdue ? 'bg-red-50 text-red-700' : isApproaching ? 'bg-orange-50 text-orange-700' : 'bg-zinc-50 text-zinc-600'}
-                    `}>
-                      {isOverdue ? <AlertCircle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-                      <span className="text-[11px] font-bold">
-                        {isOverdue ? 'Просрочено: ' : 'Назначено: '}
-                        {new Date(lead.nextActionDate).toLocaleString('ru', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Quick Actions */}
-                  {lead.status === "new" && (
-                    <div className="flex gap-2 mt-2 pt-3 border-t border-zinc-100">
-                       <button
-                         className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                         onClick={(e) => { e.stopPropagation(); handleStatusChange(lead.id!, "in_progress"); }}
-                       >
-                         <Play className="w-3.5 h-3.5" /> В работу
-                       </button>
-                       <button
-                         className="flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                         onClick={(e) => { e.stopPropagation(); handleStatusChange(lead.id!, "no_answer"); }}
-                       >
-                         <XCircle className="w-3.5 h-3.5" /> Недозвон
-                       </button>
-                    </div>
-                  )}
-
+            return sortedGroups.map(group => (
+              <div key={group} className="flex flex-col gap-3 w-full">
+                <div className="flex items-center justify-center pt-2 pb-1">
+                  <span className="bg-zinc-100 text-zinc-500 text-[10px] uppercase font-bold px-3 py-1 rounded-full tracking-wider">
+                    {group}
+                  </span>
                 </div>
-              </motion.div>
-            );
-          })}
+                {groups[group].map(lead => {
+                  const isApproaching = lead.nextActionDate && (lead.nextActionDate - now) > 0 && (lead.nextActionDate - now) < 2 * 60 * 60 * 1000;
+                  const isOverdue = lead.nextActionDate && (now - lead.nextActionDate) > 0;
+
+                  return (
+                    <motion.div
+                      key={lead.id}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      className={`
+                        w-full shrink-0 min-w-0 rounded-2xl bg-white shadow-sm border overflow-hidden cursor-pointer
+                        hover:shadow-md transition-all relative
+                        ${isOverdue ? 'border-red-300 ring-1 ring-red-300/50' : 'border-zinc-200/80'}
+                      `}
+                      onClick={(e) => {
+                        if ((e.target as HTMLElement).closest('button')) return;
+                        if (onSelectLead) onSelectLead(lead);
+                      }}
+                    >
+                      {/* Approaching Highlight */}
+                      {isApproaching && (
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-400 to-red-500 animate-pulse" />
+                      )}
+
+                      <div className="p-3 flex flex-col gap-2.5">
+                        {/* Header: Status Badge & Source */}
+                        <div className="flex justify-between items-start">
+                           <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${getStatusColor(lead.status)}`}>
+                             {getStatusLabel(lead.status)}
+                           </span>
+
+                           <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded-md">
+                             {getSourceIcon(lead.source)}
+                             <span className="truncate max-w-[80px]">{getSourceLabel(lead.source)}</span>
+                           </div>
+                        </div>
+
+                        {/* Body: Name & Info */}
+                        <div className="space-y-0.5 min-w-0">
+                          <h3 className="text-base font-bold text-zinc-900 leading-tight truncate">
+                            {lead.name || "Без имени"}
+                          </h3>
+
+                          <div className="flex items-center justify-between mt-1 w-full min-w-0 gap-2">
+                            <div className="flex items-center gap-1.5 text-zinc-600 min-w-0">
+                               <Phone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                               <span className="text-xs font-medium whitespace-nowrap truncate">{lead.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] font-medium text-zinc-400 shrink-0 text-right">
+                               {formatTimeAgo(lead.status === "new" ? lead.createdAt : (lead.history[lead.history.length-1]?.changedAt || lead.updatedAt))}
+                            </div>
+                          </div>
+
+                          {lead.car && (
+                            <div className="flex items-center gap-1.5 text-zinc-500 mt-1 min-w-0">
+                               <Car className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                               <span className="text-xs font-medium truncate">{lead.car}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Date (Approaching/Overdue) */}
+                        {lead.nextActionDate && (
+                          <div className={`
+                            flex items-center gap-1.5 px-2 py-1.5 rounded-xl w-full mt-1
+                            ${isOverdue ? 'bg-red-50 text-red-700' : isApproaching ? 'bg-orange-50 text-orange-700' : 'bg-zinc-50 text-zinc-600'}
+                          `}>
+                            {isOverdue ? <AlertCircle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                            <span className="text-[11px] font-bold">
+                              {isOverdue ? 'Просрочено: ' : 'Назначено: '}
+                              {new Date(lead.nextActionDate).toLocaleString('ru', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Quick Actions */}
+                        {lead.status === "new" && (
+                          <div className="flex gap-2 mt-2 pt-3 border-t border-zinc-100">
+                             <button
+                               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 if (onSelectLead) onSelectLead(lead);
+                               }}
+                             >
+                               <Play className="w-3.5 h-3.5" /> В работу
+                             </button>
+                             <button
+                               className="flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                               onClick={(e) => { e.stopPropagation(); handleStatusChange(lead.id!, "no_answer"); }}
+                             >
+                               <XCircle className="w-3.5 h-3.5" /> Недозвон
+                             </button>
+                          </div>
+                        )}
+
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ));
+          })()}
         </AnimatePresence>
       </div>
     </div>

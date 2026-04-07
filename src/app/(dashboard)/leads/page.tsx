@@ -181,23 +181,23 @@ export default function LeadsPage() {
             </div>
 
             {/* Pipeline Columns - Horizontal Scroll */}
-            <div className="flex-1 flex overflow-x-auto gap-4 lg:gap-4 hide-scrollbar pb-4 snap-x snap-mandatory xl:snap-none xl:justify-between xl:overflow-hidden">
-              <div className="flex h-full snap-center pl-2 lg:pl-0 xl:flex-1 xl:min-w-0">
+            <div className="flex-1 flex overflow-x-auto gap-4 lg:gap-6 hide-scrollbar pb-4 snap-x snap-mandatory">
+              <div className="flex h-full snap-center pl-2 lg:pl-0">
                 <LeadColumn leads={newLeads} title="Новые" onSelectLead={setSelectedLead} />
               </div>
-              <div className="flex h-full snap-center xl:flex-1 xl:min-w-0">
+              <div className="flex h-full snap-center">
                 <LeadColumn leads={inProgressLeads} title="В работе" onSelectLead={setSelectedLead} />
               </div>
-              <div className="flex h-full snap-center xl:flex-1 xl:min-w-0">
+              <div className="flex h-full snap-center">
                 <LeadColumn leads={callbackLeads} title="Перезвонить" onSelectLead={setSelectedLead} />
               </div>
-              <div className="flex h-full snap-center xl:flex-1 xl:min-w-0">
+              <div className="flex h-full snap-center">
                 <LeadColumn leads={noAnswerLeads} title="Недозвон" onSelectLead={setSelectedLead} />
               </div>
-              <div className="flex h-full snap-center xl:flex-1 xl:min-w-0">
+              <div className="flex h-full snap-center">
                 <LeadColumn leads={thinkingLeads} title="Думает" onSelectLead={setSelectedLead} />
               </div>
-              <div className="flex h-full snap-center pr-2 lg:pr-0 xl:flex-1 xl:min-w-0">
+              <div className="flex h-full snap-center pr-4 lg:pr-0">
                 <LeadColumn leads={visitLeads} title="Приезд" onSelectLead={setSelectedLead} />
               </div>
             </div>
