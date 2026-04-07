@@ -92,7 +92,8 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
           {(() => {
             const groups: { [key: string]: Lead[] } = {};
             (leads || []).forEach(lead => {
-              const group = getLeadDateGroup(lead.status === "new" ? lead.createdAt : (lead.history[lead.history.length-1]?.changedAt || lead.updatedAt));
+              const timestampToUse = lead.nextActionDate || (lead.status === "new" ? lead.createdAt : (lead.history[lead.history.length-1]?.changedAt || lead.updatedAt));
+              const group = getLeadDateGroup(timestampToUse);
               if (!groups[group]) groups[group] = [];
               groups[group].push(lead);
             });
