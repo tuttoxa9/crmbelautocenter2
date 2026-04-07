@@ -33,6 +33,17 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
   const { user } = useAuth();
   const [source, setSource] = useState<string>("walk_in");
   const [status, setStatus] = useState<string>("new");
+  const [phone, setPhone] = useState<string>("+375");
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    if (!val.startsWith("+375")) {
+      val = "+375";
+    }
+    // Allow +375 and up to 9 digits
+    const digitsOnly = val.slice(4).replace(/\D/g, "").slice(0, 9);
+    setPhone(`+375${digitsOnly}`);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -83,8 +94,14 @@ export function CreateLeadDialog({ children, onSuccess }: { children: ReactEleme
             <Input id="name" name="name" required />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="phone">Телефон</Label>
-            <Input id="phone" name="phone" required />
+            <Label htmlFor="phone">Телефон (необязательно)</Label>
+            <Input
+              id="phone"
+              name="phone"
+              value={phone}
+              onChange={handlePhoneChange}
+              placeholder="+375"
+            />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="car">Интересующее авто (если есть)</Label>
