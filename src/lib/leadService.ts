@@ -18,15 +18,23 @@ export const subscribeToLeads = (callback: (leads: Lead[]) => void, statuses?: L
   const leadsRef = collection(db, LEADS_COLLECTION);
   let q = query(leadsRef, orderBy("createdAt", "desc"));
   if (statuses && statuses.length > 0) {
-    // Firestore "in" query allows up to 10 items
-    q = query(leadsRef, where("status", "in", statuses), orderBy("createdAt", "desc"));
+    // Firestore "in" query allows up to 10 items.
+    // We remove orderBy here to prevent requiring a composite index,
+    // we can sort the results client-side in the callback instead.
+    q = query(leadsRef, where("status", "in", statuses));
   }
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    const leads = snapshot.docs.map(doc => ({
+    let leads = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Lead[];
+
+    // Sort client-side if we removed orderBy to avoid index requirement
+    if (statuses && statuses.length > 0) {
+      leads = leads.sort((a, b) => b.createdAt - a.createdAt);
+    }
+
     callback(leads);
   }, (error) => {
     console.error("Error listening to leads:", error);
