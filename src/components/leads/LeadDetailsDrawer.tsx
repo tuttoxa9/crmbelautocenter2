@@ -15,7 +15,7 @@ export function LeadDetailsDrawer({ lead, open, onOpenChange }: LeadDetailsDrawe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-[65vw] lg:max-w-[800px] p-0 bg-zinc-50 border-l border-zinc-200">
+      <SheetContent side="right" showCloseButton={false} className="w-full sm:max-w-[45vw] p-0 bg-zinc-50 border-l border-zinc-200">
         <LeadDetails lead={lead} key={lead.id} onClose={() => onOpenChange(false)} />
       </SheetContent>
     </Sheet>

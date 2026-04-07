@@ -111,3 +111,6 @@ https://react.dev/link/hydration-mismatch
  GET /leads 200 in 954ms (next.js: 134ms, application-code: 820ms)
  GET /login 200 in 74ms (next.js: 8ms, application-code: 66ms)
  GET /leads 200 in 131ms (next.js: 6ms, application-code: 125ms)
+✓ Compiled in 1217ms
+ GET /login 200 in 954ms (next.js: 226ms, application-code: 728ms)
+ GET /leads 200 in 345ms (next.js: 33ms, application-code: 312ms)
