@@ -1,10 +1,14 @@
-import { collection, addDoc, updateDoc, doc, getDocs, query, orderBy, deleteDoc, onSnapshot } from "firebase/firestore";
+import {
+  collection, addDoc, updateDoc, doc, getDocs, query, orderBy, deleteDoc,
+  onSnapshot, limit, startAfter, getCountFromServer, DocumentData,
+  QueryDocumentSnapshot, where, getDoc
+} from "firebase/firestore";
 import { db } from "./firebase";
 import { Lead, LeadStatus, StatusHistoryEntry } from "./types";
 
 const LEADS_COLLECTION = "leads";
 
-export const subscribeToLeads = (callback: (leads: Lead[]) => void) => {
+export const subscribeToLeads = (callback: (leads: Lead[]) => void, statuses?: LeadStatus[]) => {
   if (!db) {
     console.error("Firestore is not initialized");
     callback([]);
@@ -12,7 +16,11 @@ export const subscribeToLeads = (callback: (leads: Lead[]) => void) => {
   }
 
   const leadsRef = collection(db, LEADS_COLLECTION);
-  const q = query(leadsRef, orderBy("createdAt", "desc"));
+  let q = query(leadsRef, orderBy("createdAt", "desc"));
+  if (statuses && statuses.length > 0) {
+    // Firestore "in" query allows up to 10 items
+    q = query(leadsRef, where("status", "in", statuses), orderBy("createdAt", "desc"));
+  }
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
     const leads = snapshot.docs.map(doc => ({
@@ -84,7 +92,6 @@ export const updateLeadStatus = async (
   // and we don't have atomic array operations for complex appending easily without full object,
   // let's fetch it:
 
-  const { getDoc } = await import("firebase/firestore");
   const leadSnap = await getDoc(leadRef);
 
   if (!leadSnap.exists()) throw new Error("Lead not found");
@@ -129,4 +136,55 @@ export const deleteLead = async (leadId: string) => {
   if (!db) throw new Error("Firestore is not initialized");
   const leadRef = doc(db, LEADS_COLLECTION, leadId);
   await deleteDoc(leadRef);
+};
+
+export const getPaginatedLeads = async (
+  limitCount: number,
+  lastDocSnap?: QueryDocumentSnapshot<DocumentData, DocumentData> | null,
+  statuses?: LeadStatus[]
+) => {
+  if (!db) return { leads: [], lastDoc: null };
+  const leadsRef = collection(db, LEADS_COLLECTION);
+
+  let qArgs: any[] = [leadsRef];
+
+  if (statuses && statuses.length > 0) {
+    qArgs.push(where("status", "in", statuses));
+  }
+
+  qArgs.push(orderBy("createdAt", "desc"));
+
+  if (lastDocSnap) {
+    qArgs.push(startAfter(lastDocSnap));
+  }
+
+  qArgs.push(limit(limitCount));
+
+  const q = query.apply(null, qArgs as any);
+  const snapshot = await getDocs(q);
+
+  const leads = snapshot.docs.map(d => {
+    const data = d.data();
+    return {
+      id: d.id,
+      ...(typeof data === 'object' && data !== null ? data : {})
+    } as Lead;
+  });
+
+  const lastVisible = snapshot.docs[snapshot.docs.length - 1];
+
+  return { leads, lastDoc: lastVisible };
+};
+
+export const getLeadsCount = async (statuses?: LeadStatus[]) => {
+  if (!db) return 0;
+  const leadsRef = collection(db, LEADS_COLLECTION);
+  let q = query(leadsRef);
+
+  if (statuses && statuses.length > 0) {
+    q = query(leadsRef, where("status", "in", statuses));
+  }
+
+  const snapshot = await getCountFromServer(q);
+  return snapshot.data().count;
 };

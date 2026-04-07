@@ -37,10 +37,14 @@ export default function LeadsPage() {
   }, [leads, selectedLead]);
 
   useEffect(() => {
+    // Only subscribe to active pipeline statuses. Archive tabs fetch their own data.
+    const activeStatuses: import("@/lib/types").LeadStatus[] = [
+      "new", "in_progress", "visit", "no_answer", "thinking", "callback"
+    ];
     const unsubscribe = subscribeToLeads((fetchedLeads) => {
       setLeads(fetchedLeads);
       setIsLoading(false);
-    });
+    }, activeStatuses);
     return () => unsubscribe();
   }, []);
 
