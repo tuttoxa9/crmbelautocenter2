@@ -1,7 +1,7 @@
 "use client";
 
 import { Lead, LeadStatus } from "@/lib/types";
-import { getStatusColor, getStatusLabel } from "@/lib/displayUtils";
+import { getStatusColor, getStatusLabel, getSourceLabel } from "@/lib/displayUtils";
 import { LEAD_STATUSES } from "@/constants/leadStatuses";
 import { format, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
