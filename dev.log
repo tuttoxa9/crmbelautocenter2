@@ -17,3 +17,6 @@ https://nextjs.org/telemetry
 ○ Compiling /leads ...
  GET /leads 200 in 6.8s (next.js: 6.2s, application-code: 647ms)
  GET /leads 200 in 182ms (next.js: 13ms, application-code: 169ms)
+ GET / 307 in 2.2s (next.js: 921ms, application-code: 1245ms)
+ GET /leads 200 in 435ms (next.js: 125ms, application-code: 310ms)
+ GET /leads 200 in 256ms (next.js: 10ms, application-code: 246ms)

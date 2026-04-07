@@ -125,7 +125,7 @@ export default function LeadsPage() {
   const handleToday = () => setSelectedDate(startOfDay(new Date()));
 
   return (
-    <div className="h-full flex flex-col bg-zinc-50/30">
+    <div className="h-full flex flex-col bg-[#F9FAFB]">
       {/* Header */}
       <header className="flex-none px-4 sm:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 bg-white/50 backdrop-blur-md sticky top-0 z-10">
         <div>
