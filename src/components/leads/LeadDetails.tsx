@@ -1,7 +1,7 @@
 "use client";
 
 import { Lead, LeadStatus } from "@/lib/types";
-import { getStatusColor, getStatusLabel } from "@/lib/displayUtils";
+import { getStatusColor, getStatusLabel, getSourceLabel } from "@/lib/displayUtils";
 import { LEAD_STATUSES } from "@/constants/leadStatuses";
 import { format, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -42,7 +42,7 @@ const safeFormatDate = (timestamp: unknown) => {
 
 const SourceBadge = ({ source }: { source: string }) => {
   let icon = <Search className="w-3.5 h-3.5" />;
-  let label = source;
+  let label = getSourceLabel(source);
   let bgClass = "bg-zinc-100 text-zinc-700";
 
   switch (source) {
