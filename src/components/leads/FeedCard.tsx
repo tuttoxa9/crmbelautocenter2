@@ -47,12 +47,12 @@ export function FeedCard({ lead }: FeedCardProps) {
       if ((newStatus === "visit" || newStatus === "callback") && actionDate) {
         // Parse the local datetime string into a timestamp
         const nextActionTimestamp = new Date(actionDate).getTime();
-        await updateLeadDetails(
-          lead.id,
-          { status: newStatus, nextActionDate: nextActionTimestamp },
-          user.email,
-          note.trim() || undefined
-        );
+
+        // updateLeadDetails only accepts id and updates object.
+        // It does not accept user.email or note directly in its signature for appending history natively.
+        // So we update the details, and then we MUST call updateLeadStatus to log the history entry and comment.
+        await updateLeadDetails(lead.id, { nextActionDate: nextActionTimestamp });
+        await updateLeadStatus(lead.id, newStatus, user.email, note.trim() || undefined);
       } else {
         await updateLeadStatus(lead.id, newStatus, user.email, note.trim() || undefined);
       }
