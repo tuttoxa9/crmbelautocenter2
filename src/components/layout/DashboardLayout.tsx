@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 
 const navItems = [
-  { name: "Лиды", href: "/leads", icon: ClipboardList },
-  { name: "AWS S3", href: "/files", icon: Folder },
+  { name: "Рабочий стол", href: "/leads", icon: ClipboardList },
+  { name: "База лидов", href: "/database", icon: Folder },
   { name: "Настройки", href: "/settings", icon: Settings },
 ];
 
@@ -46,14 +46,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900">
+    <div className="flex h-screen bg-[#F4F5F7] overflow-hidden text-gray-900">
       <Sidebar />
 
       {/* Mobile Sidebar overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
-          <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div>
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-zinc-950 text-zinc-100 shadow-2xl">
+          <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div>
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#F4F5F7] text-gray-900 shadow-2xl">
             <div className="absolute top-0 right-0 -mr-12 pt-2">
               <button
                 type="button"
@@ -66,7 +66,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex-1 h-0 pt-6 pb-4 overflow-y-auto">
               <div className="flex-shrink-0 flex items-center px-6">
-                <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
+                <h1 className="text-lg font-bold tracking-tight">Белавтоцентр CRM</h1>
               </div>
               <nav className="mt-8 px-4 space-y-1">
                 {navItems.map((item) => {
@@ -78,7 +78,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       onClick={() => setMobileMenuOpen(false)}
                       className={cn(
                         "group flex items-center px-3 py-2.5 text-base font-medium rounded-md transition-colors",
-                        isActive ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100"
+                        isActive ? "bg-white text-gray-900 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
                       )}
                     >
                       <item.icon className="mr-4 h-5 w-5" aria-hidden="true" />
@@ -88,12 +88,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 })}
               </nav>
             </div>
-            <div className="flex-shrink-0 flex border-t border-zinc-800 p-4">
+            <div className="flex-shrink-0 flex border-t border-gray-200 p-4">
               <div className="flex items-center w-full justify-between">
-                <div className="text-sm font-medium text-zinc-400 truncate">
+                <div className="text-sm font-medium text-gray-500 truncate">
                   {user?.email || "Пользователь"}
                 </div>
-                <Button variant="ghost" size="icon" onClick={handleLogout} className="text-zinc-400 hover:text-white hover:bg-zinc-800">
+                <Button variant="ghost" size="icon" onClick={handleLogout} className="text-gray-400 hover:text-gray-900 hover:bg-gray-200">
                   <LogOut className="h-5 w-5" />
                 </Button>
               </div>
@@ -104,21 +104,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
-        <div className="md:hidden flex items-center justify-between bg-zinc-950 border-b border-zinc-800 px-4 py-3">
-          <h1 className="text-base font-semibold text-zinc-100 tracking-tight">Белавтоцентр CRM</h1>
+        <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-200 px-4 py-3">
+          <h1 className="text-base font-bold text-gray-900 tracking-tight">Белавтоцентр CRM</h1>
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="text-zinc-400 hover:text-zinc-100 focus:outline-none"
+            className="text-gray-500 hover:text-gray-900 focus:outline-none"
           >
             <Menu className="h-6 w-6" />
           </button>
         </div>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-zinc-50 p-4 md:p-6 lg:p-8">
-          <div className="max-w-[1920px] mx-auto h-full w-full">
-            {children}
-          </div>
+        <main className="flex-1 bg-[#F4F5F7] overflow-hidden flex flex-col h-full w-full">
+          {children}
         </main>
       </div>
     </div>

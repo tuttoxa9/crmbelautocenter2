@@ -4,27 +4,24 @@ import React, { useState, useEffect } from "react";
 import { subscribeToLeads } from "@/lib/leadService";
 import { Lead } from "@/lib/types";
 import { Spinner } from "@/components/ui/spinner";
-import { DailyFeed } from "@/components/leads/DailyFeed";
-import { DataTable } from "@/components/leads/DataTable";
 import { CreateLeadDialog } from "@/components/leads/CreateLeadDialog";
 import { Plus } from "lucide-react";
+import { LeadsQueue } from "@/components/leads/LeadsQueue";
+import { LeadWorkspace } from "@/components/leads/LeadWorkspace";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"feed" | "database">("feed");
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Подписываемся на всех лидов, чтобы База Лидов (DataTable) отображала полную историю,
-    // включая терминальные статусы (success, refusal, spam). Фильтрация происходит локально.
-    // (В будущем здесь понадобится серверная пагинация для DataTable)
-    const allStatuses: import("@/lib/types").LeadStatus[] = [
-      "new", "in_progress", "visit", "no_answer", "thinking", "callback", "success", "refusal", "bank_refusal", "spam"
+    const activeStatuses: import("@/lib/types").LeadStatus[] = [
+      "new", "in_progress", "visit", "no_answer", "thinking", "callback"
     ];
     const unsubscribe = subscribeToLeads((fetchedLeads) => {
       setLeads(fetchedLeads);
       setIsLoading(false);
-    }, allStatuses);
+    }, activeStatuses);
     return () => unsubscribe();
   }, []);
 
@@ -36,53 +33,39 @@ export default function LeadsPage() {
     );
   }
 
-  return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-background">
-      {/* Top Navigation */}
-      <header className="flex-none px-6 py-4 flex items-center justify-between border-b border-zinc-200/50 bg-white shadow-sm z-10">
-        <div>
-          <h1 className="text-xl font-bold text-zinc-900 tracking-tight">Задачи</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex bg-zinc-100 p-1 rounded-lg">
-            <button
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                activeTab === "feed" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"
-              }`}
-              onClick={() => setActiveTab("feed")}
-            >
-              Рабочий стол
-            </button>
-            <button
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                activeTab === "database" ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700"
-              }`}
-              onClick={() => setActiveTab("database")}
-            >
-              База Лидов
-            </button>
-          </div>
+  const selectedLead = leads.find(l => l.id === selectedLeadId) || null;
 
+  return (
+    <div className="h-full w-full flex overflow-hidden">
+      {/* Middle Column (Queue) */}
+      <div className="w-[380px] flex-shrink-0 border-r border-gray-200 bg-[#F4F5F7] flex flex-col overflow-hidden">
+        <header className="flex-none p-4 border-b border-gray-200 bg-white flex justify-between items-center">
+          <h1 className="text-lg font-bold text-gray-900">Задачи</h1>
           <CreateLeadDialog>
-            <button className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg shadow-soft px-4 py-1.5 text-sm font-semibold transition-all flex items-center gap-1.5">
-              <Plus className="w-4 h-4" /> Добавить
+            <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-md transition-colors">
+              <Plus className="w-5 h-5" />
             </button>
           </CreateLeadDialog>
+        </header>
+        <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
+          <LeadsQueue
+            leads={leads}
+            selectedLeadId={selectedLeadId}
+            onSelectLead={setSelectedLeadId}
+          />
         </div>
-      </header>
+      </div>
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-hidden relative">
-        {activeTab === "feed" ? (
-          <div className="h-full overflow-hidden p-0">
-            <DailyFeed leads={leads} />
-          </div>
+      {/* Right Column (Workspace) */}
+      <div className="flex-1 bg-white flex flex-col overflow-hidden min-w-0">
+        {selectedLead ? (
+          <LeadWorkspace key={selectedLead.id} lead={selectedLead} />
         ) : (
-          <div className="h-full overflow-hidden p-6">
-            <DataTable leads={leads} />
+          <div className="flex-1 flex items-center justify-center text-gray-400">
+            <p>Выберите лида для работы</p>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

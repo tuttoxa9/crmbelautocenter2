@@ -10,8 +10,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { name: "Лиды", href: "/leads", icon: ClipboardList },
-  { name: "AWS S3", href: "/files", icon: Folder },
+  { name: "Рабочий стол", href: "/leads", icon: ClipboardList },
+  { name: "База лидов", href: "/database", icon: Folder },
   { name: "Настройки", href: "/settings", icon: Settings },
 ];
 
@@ -29,9 +29,9 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-100 w-64 flex-shrink-0 hidden md:flex">
-      <div className="p-6 border-b border-zinc-800">
-        <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
+    <div className="flex h-screen flex-col bg-[#F4F5F7] border-r border-gray-200 text-gray-900 w-64 flex-shrink-0 hidden md:flex">
+      <div className="p-6 border-b border-gray-200">
+        <h1 className="text-lg font-bold tracking-tight">Белавтоцентр CRM</h1>
       </div>
       
       <nav className="flex-1 px-3 py-6 space-y-1">
@@ -43,7 +43,7 @@ export function Sidebar() {
               href={item.href}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100"
+                isActive ? "bg-white text-gray-900 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
               )}
             >
               <item.icon className="h-4 w-4" />
@@ -53,12 +53,12 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-zinc-800">
+      <div className="p-4 border-t border-gray-200">
         <div className="flex items-center justify-between">
-          <div className="text-xs font-medium text-zinc-400 truncate pr-2">
+          <div className="text-xs font-medium text-gray-500 truncate pr-2">
             {user?.email || "Пользователь"}
           </div>
-          <Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800" title="Выйти">
+          <Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 text-gray-400 hover:text-gray-900 hover:bg-gray-200" title="Выйти">
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

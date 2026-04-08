@@ -671,3 +671,942 @@ Import traces:
  GET / 307 in 572ms (next.js: 20ms, application-code: 553ms)
  GET /leads 200 in 239ms (next.js: 11ms, application-code: 228ms)
  GET /leads 200 in 203ms (next.js: 19ms, application-code: 184ms)
+⨯ ./src/app/(dashboard)/leads/page.tsx:10:1
+Module not found: Can't resolve '@/components/leads/LeadWorkspace'
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+  [90m13 |[0m   [36mconst[0m [leads, setLeads] = useState<[33mLead[0m[]>([]);
+
+Import map: aliased to relative './src/components/leads/LeadWorkspace' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:10:1
+Module not found: Can't resolve '@/components/leads/LeadWorkspace'
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+  [90m13 |[0m   [36mconst[0m [leads, setLeads] = useState<[33mLead[0m[]>([]);
+
+Import map: aliased to relative './src/components/leads/LeadWorkspace' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:10:1
+Module not found: Can't resolve '@/components/leads/LeadWorkspace'
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+  [90m13 |[0m   [36mconst[0m [leads, setLeads] = useState<[33mLead[0m[]>([]);
+
+Import map: aliased to relative './src/components/leads/LeadWorkspace' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:10:1
+Module not found: Can't resolve '@/components/leads/LeadWorkspace'
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+  [90m13 |[0m   [36mconst[0m [leads, setLeads] = useState<[33mLead[0m[]>([]);
+
+Import map: aliased to relative './src/components/leads/LeadWorkspace' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:9:1
+Module not found: Can't resolve '@/components/leads/LeadsQueue'
+  [90m 7 |[0m [36mimport[0m { [33mCreateLeadDialog[0m } [36mfrom[0m [32m"@/components/leads/CreateLeadDialog"[0m;
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+
+Import map: aliased to relative './src/components/leads/LeadsQueue' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:9:1
+Module not found: Can't resolve '@/components/leads/LeadsQueue'
+  [90m 7 |[0m [36mimport[0m { [33mCreateLeadDialog[0m } [36mfrom[0m [32m"@/components/leads/CreateLeadDialog"[0m;
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+
+Import map: aliased to relative './src/components/leads/LeadsQueue' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:9:1
+Module not found: Can't resolve '@/components/leads/LeadsQueue'
+  [90m 7 |[0m [36mimport[0m { [33mCreateLeadDialog[0m } [36mfrom[0m [32m"@/components/leads/CreateLeadDialog"[0m;
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+
+Import map: aliased to relative './src/components/leads/LeadsQueue' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:9:1
+Module not found: Can't resolve '@/components/leads/LeadsQueue'
+  [90m 7 |[0m [36mimport[0m { [33mCreateLeadDialog[0m } [36mfrom[0m [32m"@/components/leads/CreateLeadDialog"[0m;
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+[31m[1m>[0m [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+
+Import map: aliased to relative './src/components/leads/LeadsQueue' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:10:1
+Module not found: Can't resolve '@/components/leads/LeadWorkspace'
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+  [90m13 |[0m   [36mconst[0m [leads, setLeads] = useState<[33mLead[0m[]>([]);
+
+Import map: aliased to relative './src/components/leads/LeadWorkspace' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:10:1
+Module not found: Can't resolve '@/components/leads/LeadWorkspace'
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+  [90m13 |[0m   [36mconst[0m [leads, setLeads] = useState<[33mLead[0m[]>([]);
+
+Import map: aliased to relative './src/components/leads/LeadWorkspace' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:10:1
+Module not found: Can't resolve '@/components/leads/LeadWorkspace'
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+  [90m13 |[0m   [36mconst[0m [leads, setLeads] = useState<[33mLead[0m[]>([]);
+
+Import map: aliased to relative './src/components/leads/LeadWorkspace' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/app/(dashboard)/leads/page.tsx:10:1
+Module not found: Can't resolve '@/components/leads/LeadWorkspace'
+  [90m 8 |[0m [36mimport[0m { [33mPlus[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mLeadsQueue[0m } [36mfrom[0m [32m"@/components/leads/LeadsQueue"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mLeadWorkspace[0m } [36mfrom[0m [32m"@/components/leads/LeadWorkspace"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36mexport[0m [36mdefault[0m [36mfunction[0m [33mLeadsPage[0m() {
+  [90m13 |[0m   [36mconst[0m [leads, setLeads] = useState<[33mLead[0m[]>([]);
+
+Import map: aliased to relative './src/components/leads/LeadWorkspace' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/LeadWorkspace.tsx:10:1
+Module not found: Can't resolve './DatePickerButton'
+  [90m 8 |[0m [36mimport[0m { [33mCopy[0m, [33mCheckCircle2[0m, [33mXCircle[0m, [33mCalendarClock[0m, [33mCar[0m, [33mDollarSign[0m, [33mRefreshCcw[0m } [36mfrom[0m [32m"l...[0m
+  [90m 9 |[0m [36mimport[0m { getSourceIcon } [36mfrom[0m [32m"./Icons"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mDatePickerButton[0m } [36mfrom[0m [32m"./DatePickerButton"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36minterface[0m [33mLeadWorkspaceProps[0m {
+  [90m13 |[0m   lead: [33mLead[0m;
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/LeadWorkspace.tsx:10:1
+Module not found: Can't resolve './DatePickerButton'
+  [90m 8 |[0m [36mimport[0m { [33mCopy[0m, [33mCheckCircle2[0m, [33mXCircle[0m, [33mCalendarClock[0m, [33mCar[0m, [33mDollarSign[0m, [33mRefreshCcw[0m } [36mfrom[0m [32m"l...[0m
+  [90m 9 |[0m [36mimport[0m { getSourceIcon } [36mfrom[0m [32m"./Icons"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mDatePickerButton[0m } [36mfrom[0m [32m"./DatePickerButton"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36minterface[0m [33mLeadWorkspaceProps[0m {
+  [90m13 |[0m   lead: [33mLead[0m;
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/LeadWorkspace.tsx:10:1
+Module not found: Can't resolve './DatePickerButton'
+  [90m 8 |[0m [36mimport[0m { [33mCopy[0m, [33mCheckCircle2[0m, [33mXCircle[0m, [33mCalendarClock[0m, [33mCar[0m, [33mDollarSign[0m, [33mRefreshCcw[0m } [36mfrom[0m [32m"l...[0m
+  [90m 9 |[0m [36mimport[0m { getSourceIcon } [36mfrom[0m [32m"./Icons"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mDatePickerButton[0m } [36mfrom[0m [32m"./DatePickerButton"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36minterface[0m [33mLeadWorkspaceProps[0m {
+  [90m13 |[0m   lead: [33mLead[0m;
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/LeadWorkspace.tsx:10:1
+Module not found: Can't resolve './DatePickerButton'
+  [90m 8 |[0m [36mimport[0m { [33mCopy[0m, [33mCheckCircle2[0m, [33mXCircle[0m, [33mCalendarClock[0m, [33mCar[0m, [33mDollarSign[0m, [33mRefreshCcw[0m } [36mfrom[0m [32m"l...[0m
+  [90m 9 |[0m [36mimport[0m { getSourceIcon } [36mfrom[0m [32m"./Icons"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mDatePickerButton[0m } [36mfrom[0m [32m"./DatePickerButton"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m
+  [90m12 |[0m [36minterface[0m [33mLeadWorkspaceProps[0m {
+  [90m13 |[0m   lead: [33mLead[0m;
+
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:10:1
+Module not found: Can't resolve '@/components/ui/calendar'
+  [90m 8 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m {
+  [90m12 |[0m   [33mPopover[0m,
+  [90m13 |[0m   [33mPopoverContent[0m,
+
+Import map: aliased to relative './src/components/ui/calendar' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:10:1
+Module not found: Can't resolve '@/components/ui/calendar'
+  [90m 8 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m {
+  [90m12 |[0m   [33mPopover[0m,
+  [90m13 |[0m   [33mPopoverContent[0m,
+
+Import map: aliased to relative './src/components/ui/calendar' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:10:1
+Module not found: Can't resolve '@/components/ui/calendar'
+  [90m 8 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m {
+  [90m12 |[0m   [33mPopover[0m,
+  [90m13 |[0m   [33mPopoverContent[0m,
+
+Import map: aliased to relative './src/components/ui/calendar' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:10:1
+Module not found: Can't resolve '@/components/ui/calendar'
+  [90m 8 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m {
+  [90m12 |[0m   [33mPopover[0m,
+  [90m13 |[0m   [33mPopoverContent[0m,
+
+Import map: aliased to relative './src/components/ui/calendar' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:11:1
+Module not found: Can't resolve '@/components/ui/popover'
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m12 |[0m   [33mPopover[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mPopoverContent[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mPopoverTrigger[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m } [36mfrom[0m [32m"@/components/ui/popover"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m16 |[0m [36mimport[0m { [33mInput[0m } [36mfrom[0m [32m"@/components/ui/input"[0m;
+  [90m17 |[0m
+  [90m18 |[0m [36minterface[0m [33mDatePickerButtonProps[0m {
+
+Import map: aliased to relative './src/components/ui/popover' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:11:1
+Module not found: Can't resolve '@/components/ui/popover'
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m12 |[0m   [33mPopover[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mPopoverContent[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mPopoverTrigger[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m } [36mfrom[0m [32m"@/components/ui/popover"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m16 |[0m [36mimport[0m { [33mInput[0m } [36mfrom[0m [32m"@/components/ui/input"[0m;
+  [90m17 |[0m
+  [90m18 |[0m [36minterface[0m [33mDatePickerButtonProps[0m {
+
+Import map: aliased to relative './src/components/ui/popover' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:11:1
+Module not found: Can't resolve '@/components/ui/popover'
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m12 |[0m   [33mPopover[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mPopoverContent[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mPopoverTrigger[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m } [36mfrom[0m [32m"@/components/ui/popover"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m16 |[0m [36mimport[0m { [33mInput[0m } [36mfrom[0m [32m"@/components/ui/input"[0m;
+  [90m17 |[0m
+  [90m18 |[0m [36minterface[0m [33mDatePickerButtonProps[0m {
+
+Import map: aliased to relative './src/components/ui/popover' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:11:1
+Module not found: Can't resolve '@/components/ui/popover'
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m12 |[0m   [33mPopover[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mPopoverContent[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mPopoverTrigger[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m } [36mfrom[0m [32m"@/components/ui/popover"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m16 |[0m [36mimport[0m { [33mInput[0m } [36mfrom[0m [32m"@/components/ui/input"[0m;
+  [90m17 |[0m
+  [90m18 |[0m [36minterface[0m [33mDatePickerButtonProps[0m {
+
+Import map: aliased to relative './src/components/ui/popover' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:11:1
+Module not found: Can't resolve '@/components/ui/popover'
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m12 |[0m   [33mPopover[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mPopoverContent[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mPopoverTrigger[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m } [36mfrom[0m [32m"@/components/ui/popover"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m16 |[0m [36mimport[0m { [33mInput[0m } [36mfrom[0m [32m"@/components/ui/input"[0m;
+  [90m17 |[0m
+  [90m18 |[0m [36minterface[0m [33mDatePickerButtonProps[0m {
+
+Import map: aliased to relative './src/components/ui/popover' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:11:1
+Module not found: Can't resolve '@/components/ui/popover'
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m12 |[0m   [33mPopover[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mPopoverContent[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mPopoverTrigger[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m } [36mfrom[0m [32m"@/components/ui/popover"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m16 |[0m [36mimport[0m { [33mInput[0m } [36mfrom[0m [32m"@/components/ui/input"[0m;
+  [90m17 |[0m
+  [90m18 |[0m [36minterface[0m [33mDatePickerButtonProps[0m {
+
+Import map: aliased to relative './src/components/ui/popover' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:11:1
+Module not found: Can't resolve '@/components/ui/popover'
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m12 |[0m   [33mPopover[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mPopoverContent[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mPopoverTrigger[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m } [36mfrom[0m [32m"@/components/ui/popover"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m16 |[0m [36mimport[0m { [33mInput[0m } [36mfrom[0m [32m"@/components/ui/input"[0m;
+  [90m17 |[0m
+  [90m18 |[0m [36minterface[0m [33mDatePickerButtonProps[0m {
+
+Import map: aliased to relative './src/components/ui/popover' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:11:1
+Module not found: Can't resolve '@/components/ui/popover'
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+  [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+[31m[1m>[0m [90m11 |[0m [36mimport[0m {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m12 |[0m   [33mPopover[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^[0m
+[31m[1m>[0m [90m13 |[0m   [33mPopoverContent[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m14 |[0m   [33mPopoverTrigger[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m15 |[0m } [36mfrom[0m [32m"@/components/ui/popover"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m16 |[0m [36mimport[0m { [33mInput[0m } [36mfrom[0m [32m"@/components/ui/input"[0m;
+  [90m17 |[0m
+  [90m18 |[0m [36minterface[0m [33mDatePickerButtonProps[0m {
+
+Import map: aliased to relative './src/components/ui/popover' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:10:1
+Module not found: Can't resolve '@/components/ui/calendar'
+  [90m 8 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m {
+  [90m12 |[0m   [33mPopover[0m,
+  [90m13 |[0m   [33mPopoverContent[0m,
+
+Import map: aliased to relative './src/components/ui/calendar' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:10:1
+Module not found: Can't resolve '@/components/ui/calendar'
+  [90m 8 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m {
+  [90m12 |[0m   [33mPopover[0m,
+  [90m13 |[0m   [33mPopoverContent[0m,
+
+Import map: aliased to relative './src/components/ui/calendar' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:10:1
+Module not found: Can't resolve '@/components/ui/calendar'
+  [90m 8 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m {
+  [90m12 |[0m   [33mPopover[0m,
+  [90m13 |[0m   [33mPopoverContent[0m,
+
+Import map: aliased to relative './src/components/ui/calendar' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+⨯ ./src/components/leads/DatePickerButton.tsx:10:1
+Module not found: Can't resolve '@/components/ui/calendar'
+  [90m 8 |[0m [36mimport[0m { cn } [36mfrom[0m [32m"@/lib/utils"[0m;
+  [90m 9 |[0m [36mimport[0m { [33mButton[0m } [36mfrom[0m [32m"@/components/ui/button"[0m;
+[31m[1m>[0m [90m10 |[0m [36mimport[0m { [33mCalendar[0m } [36mfrom[0m [32m"@/components/ui/calendar"[0m;
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m11 |[0m [36mimport[0m {
+  [90m12 |[0m   [33mPopover[0m,
+  [90m13 |[0m   [33mPopoverContent[0m,
+
+Import map: aliased to relative './src/components/ui/calendar' inside of [project]/
+
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/DatePickerButton.tsx [Client Component Browser]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/DatePickerButton.tsx [Client Component SSR]
+    ./src/components/leads/LeadWorkspace.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+✓ Compiled in 1077ms
+ GET /leads 200 in 3.7s (next.js: 2.1s, application-code: 1552ms)
+ GET /leads 200 in 192ms (next.js: 16ms, application-code: 175ms)
+○ Compiling /database ...
+ GET /leads 200 in 151ms (next.js: 7ms, application-code: 145ms)
+ GET /leads 200 in 111ms (next.js: 4ms, application-code: 107ms)
+ GET /database 200 in 68ms (next.js: 4ms, application-code: 64ms)
