@@ -1,0 +1,673 @@
+
+> temp_app@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.2 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 709ms
+
+ GET / 307 in 948ms (next.js: 307ms, application-code: 641ms)
+⨯ ./src/components/leads/Icons.tsx:25:10
+the name `Globe` is defined multiple times
+  [90m23 |[0m );
+  [90m24 |[0m
+[31m[1m>[0m [90m25 |[0m [36mimport[0m { [33mGlobe[0m, [33mPhone[0m, [33mZap[0m, [33mUser[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m   |[0m          [31m[1m^^^^^[0m
+  [90m26 |[0m
+  [90m27 |[0m [36mexport[0m [36mconst[0m getSourceIcon = (source: string) => {
+  [90m28 |[0m   [36mswitch[0m (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+
+
+./src/components/leads/Icons.tsx:25:17
+the name `Phone` is defined multiple times
+  [90m23 |[0m );
+  [90m24 |[0m
+[31m[1m>[0m [90m25 |[0m [36mimport[0m { [33mGlobe[0m, [33mPhone[0m, [33mZap[0m, [33mUser[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m   |[0m                 [31m[1m^^^^^[0m
+  [90m26 |[0m
+  [90m27 |[0m [36mexport[0m [36mconst[0m getSourceIcon = (source: string) => {
+  [90m28 |[0m   [36mswitch[0m (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+
+
+./src/components/leads/Icons.tsx:25:29
+the name `User` is defined multiple times
+  [90m23 |[0m );
+  [90m24 |[0m
+[31m[1m>[0m [90m25 |[0m [36mimport[0m { [33mGlobe[0m, [33mPhone[0m, [33mZap[0m, [33mUser[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m   |[0m                             [31m[1m^^^^[0m
+  [90m26 |[0m
+  [90m27 |[0m [36mexport[0m [36mconst[0m getSourceIcon = (source: string) => {
+  [90m28 |[0m   [36mswitch[0m (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+
+
+./src/components/leads/Icons.tsx:25:24
+the name `Zap` is defined multiple times
+  [90m23 |[0m );
+  [90m24 |[0m
+[31m[1m>[0m [90m25 |[0m [36mimport[0m { [33mGlobe[0m, [33mPhone[0m, [33mZap[0m, [33mUser[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m   |[0m                        [31m[1m^^^[0m
+  [90m26 |[0m
+  [90m27 |[0m [36mexport[0m [36mconst[0m getSourceIcon = (source: string) => {
+  [90m28 |[0m   [36mswitch[0m (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+
+ GET /leads 500 in 313ms (next.js: 116ms, application-code: 197ms)
+[browser] Uncaught Error: ./src/components/leads/Icons.tsx:25:10
+the name `Globe` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |          ^^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./src/components/leads/Icons.tsx:25:10)
+    at <unknown> (Error: (./src/components/leads/Icons.tsx:25:10)
+⨯ ./src/components/leads/Icons.tsx:25:10
+the name `Globe` is defined multiple times
+  [90m23 |[0m );
+  [90m24 |[0m
+[31m[1m>[0m [90m25 |[0m [36mimport[0m { [33mGlobe[0m, [33mPhone[0m, [33mZap[0m, [33mUser[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m   |[0m          [31m[1m^^^^^[0m
+  [90m26 |[0m
+  [90m27 |[0m [36mexport[0m [36mconst[0m getSourceIcon = (source: string) => {
+  [90m28 |[0m   [36mswitch[0m (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+
+
+./src/components/leads/Icons.tsx:25:17
+the name `Phone` is defined multiple times
+  [90m23 |[0m );
+  [90m24 |[0m
+[31m[1m>[0m [90m25 |[0m [36mimport[0m { [33mGlobe[0m, [33mPhone[0m, [33mZap[0m, [33mUser[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m   |[0m                 [31m[1m^^^^^[0m
+  [90m26 |[0m
+  [90m27 |[0m [36mexport[0m [36mconst[0m getSourceIcon = (source: string) => {
+  [90m28 |[0m   [36mswitch[0m (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+
+
+./src/components/leads/Icons.tsx:25:29
+the name `User` is defined multiple times
+  [90m23 |[0m );
+  [90m24 |[0m
+[31m[1m>[0m [90m25 |[0m [36mimport[0m { [33mGlobe[0m, [33mPhone[0m, [33mZap[0m, [33mUser[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m   |[0m                             [31m[1m^^^^[0m
+  [90m26 |[0m
+  [90m27 |[0m [36mexport[0m [36mconst[0m getSourceIcon = (source: string) => {
+  [90m28 |[0m   [36mswitch[0m (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+
+
+./src/components/leads/Icons.tsx:25:24
+the name `Zap` is defined multiple times
+  [90m23 |[0m );
+  [90m24 |[0m
+[31m[1m>[0m [90m25 |[0m [36mimport[0m { [33mGlobe[0m, [33mPhone[0m, [33mZap[0m, [33mUser[0m } [36mfrom[0m [32m"lucide-react"[0m;
+  [90m   |[0m                        [31m[1m^^^[0m
+  [90m26 |[0m
+  [90m27 |[0m [36mexport[0m [36mconst[0m getSourceIcon = (source: string) => {
+  [90m28 |[0m   [36mswitch[0m (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+
+ GET /leads 500 in 46ms (next.js: 26ms, application-code: 20ms)
+[browser] Uncaught Error: ./src/components/leads/Icons.tsx:25:10
+the name `Globe` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |          ^^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+
+    at <unknown> (Error: ./src/components/leads/Icons.tsx:25:10)
+    at <unknown> (Error: (./src/components/leads/Icons.tsx:25:10)
+[browser] ./src/components/leads/Icons.tsx:25:10
+the name `Globe` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |          ^^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:17
+the name `Phone` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                 ^^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:29
+the name `User` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                             ^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:24
+the name `Zap` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                        ^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:10
+the name `Globe` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |          ^^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:17
+the name `Phone` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                 ^^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:29
+the name `User` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                             ^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:24
+the name `Zap` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                        ^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:10
+the name `Globe` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |          ^^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:17
+the name `Phone` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                 ^^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:29
+the name `User` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                             ^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:24
+the name `Zap` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                        ^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:10
+the name `Globe` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |          ^^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:17
+the name `Phone` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                 ^^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:29
+the name `User` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                             ^^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+[browser] ./src/components/leads/Icons.tsx:25:24
+the name `Zap` is defined multiple times
+  23 | );
+  24 |
+> 25 | import { Globe, Phone, Zap, User } from "lucide-react";
+     |                        ^^^
+  26 |
+  27 | export const getSourceIcon = (source: string) => {
+  28 |   switch (source) {
+
+Ecmascript file had an error
+
+Import traces:
+  Client Component Browser:
+    ./src/components/leads/Icons.tsx [Client Component Browser]
+    ./src/components/leads/DataTable.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component Browser]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+
+  Client Component SSR:
+    ./src/components/leads/Icons.tsx [Client Component SSR]
+    ./src/components/leads/DataTable.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Client Component SSR]
+    ./src/app/(dashboard)/leads/page.tsx [Server Component]
+✓ Compiled in 699ms
+ GET / 307 in 368ms (next.js: 7ms, application-code: 360ms)
+ GET /leads 200 in 282ms (next.js: 29ms, application-code: 252ms)
+ GET /leads 200 in 113ms (next.js: 7ms, application-code: 106ms)
+ GET / 307 in 572ms (next.js: 20ms, application-code: 553ms)
+ GET /leads 200 in 239ms (next.js: 11ms, application-code: 228ms)
+ GET /leads 200 in 203ms (next.js: 19ms, application-code: 184ms)
