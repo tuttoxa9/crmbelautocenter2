@@ -1,4 +1,5 @@
 import React from 'react';
+import { Globe, Phone, Zap, User } from "lucide-react";
 
 export const InstagramIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -20,3 +21,16 @@ export const TelegramIcon = ({ className }: { className?: string }) => (
     <path d="M22 2 11 13"/>
   </svg>
 );
+
+export const getSourceIcon = (source: string) => {
+  switch (source) {
+    case "instagram": return <InstagramIcon className="w-4 h-4 text-pink-600" />;
+    case "tiktok": return <TikTokIcon className="w-4 h-4 text-black" />;
+    case "telegram": return <TelegramIcon className="w-4 h-4 text-blue-500" />;
+    case "site": return <Globe className="w-4 h-4 text-zinc-500" />;
+    case "call": return <Phone className="w-4 h-4 text-green-600" />;
+    case "zapier": return <Zap className="w-4 h-4 text-orange-500" />;
+    case "walk_in": return <User className="w-4 h-4 text-purple-500" />;
+    default: return <Globe className="w-4 h-4 text-zinc-400" />;
+  }
+};
