@@ -15,7 +15,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 const navItems = [
   { name: "Лиды", href: "/leads", icon: ClipboardList },
-  { name: "AWS S3", href: "/files", icon: Folder },
+  { name: "Файлы", href: "/files", icon: Folder },
   { name: "Настройки", href: "/settings", icon: Settings },
 ];
 

@@ -564,7 +564,7 @@ export default function FilesPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-900">AWS S3</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Файлы</h2>
           <p className="text-sm text-zinc-500 mt-1">Файловый менеджер S3</p>
         </div>
       </div>

@@ -129,7 +129,7 @@ export default function LeadsPage() {
       {/* Header */}
       <header className="flex-none px-4 sm:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 bg-white/50 backdrop-blur-md sticky top-0 z-10">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-zinc-900">Zero Inbox</h1>
+          <h1 className="text-2xl font-black tracking-tight text-zinc-900">Лиды</h1>
           <p className="text-sm text-zinc-500 font-medium">Контроль заявок</p>
         </div>
 
