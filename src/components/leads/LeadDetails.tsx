@@ -268,73 +268,45 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
         </div>
       </div>
 
-      {/* Main Content Scrollable Area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar bg-zinc-50/30">
-        <div className="max-w-3xl space-y-8">
+      {/* Main Content Area - 2 Column Dashboard */}
+      <div className="flex-1 overflow-hidden flex flex-col sm:flex-row bg-zinc-50/30">
 
-          {/* Main Form Fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+        {/* Left Column - History & Metadata */}
+        <div className="w-full sm:w-[35%] lg:w-[30%] border-r border-zinc-200 flex flex-col overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
+                <MapPin className="h-4 w-4 text-blue-500" /> Статус заявки
+              </label>
+              <Select value={formData.status} onValueChange={(val) => setFormData(prev => ({...prev, status: val as LeadStatus}))}>
+                <SelectTrigger className={`w-full !h-[48px] box-border rounded-2xl font-semibold text-sm ${getStatusColor(formData.status)} border-transparent shadow-sm focus:ring-blue-500`}>
+                  <SelectValue>{LEAD_STATUSES.find(s => s.value === formData.status)?.label || formData.status}</SelectValue>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {LEAD_STATUSES.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
-                  <MapPin className="h-4 w-4 text-blue-500" /> Статус заявки
-                </label>
-                <Select value={formData.status} onValueChange={(val) => setFormData(prev => ({...prev, status: val as LeadStatus}))}>
-                  <SelectTrigger className={`w-full !h-[48px] box-border rounded-2xl font-semibold text-sm ${getStatusColor(formData.status)} border-transparent shadow-sm focus:ring-blue-500`}>
-                    <SelectValue>{LEAD_STATUSES.find(s => s.value === formData.status)?.label || formData.status}</SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {LEAD_STATUSES.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
-                  <CalendarIcon className="h-4 w-4 text-purple-500" /> След. контакт
-                </label>
-                <input
-                  type="datetime-local"
-                  disabled={isTerminal}
-                  className="flex h-[48px] box-border w-full rounded-2xl border-0 bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-200 transition-all focus:ring-2 focus:ring-inset focus:ring-purple-500 disabled:opacity-50"
-                  value={formattedActionDate}
-                  onChange={handleDateChange}
-                />
-              </div>
-
-              <div className="space-y-2 col-span-1">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
-                   Желаемое авто
-                </label>
-                <Textarea
-                  value={formData.car}
-                  onChange={(e) => setFormData(prev => ({...prev, car: e.target.value}))}
-                  className="h-[80px] min-h-[80px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-3 resize-none text-base"
-                />
-              </div>
-
-              <div className="space-y-2 col-span-1 sm:col-span-2">
-                <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
-                  <FileText className="h-4 w-4 text-amber-500" /> Заметки
-                </label>
-                <Textarea
-                  className="h-[250px] min-h-[250px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-4 resize-y text-base"
-                  value={formData.notes}
-                  onChange={(e) => setFormData(prev => ({...prev, notes: e.target.value}))}
-                />
-              </div>
-          </div>
-
-          {/* Timeline and Payload */}
-          <div className="space-y-6 mt-8">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
+                <CalendarIcon className="h-4 w-4 text-purple-500" /> След. контакт
+              </label>
+              <input
+                type="datetime-local"
+                disabled={isTerminal}
+                className="flex h-[48px] box-border w-full rounded-2xl border-0 bg-white px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm ring-1 ring-inset ring-zinc-200 transition-all focus:ring-2 focus:ring-inset focus:ring-purple-500 disabled:opacity-50"
+                value={formattedActionDate}
+                onChange={handleDateChange}
+              />
+            </div>
 
             {/* Vertical Timeline */}
             {lead.history && lead.history.length > 0 && (
-              <div className="space-y-3">
+              <div className="space-y-3 pt-4 border-t border-zinc-200">
                 <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
                   <Clock className="w-4 h-4 text-zinc-400" /> История
                 </h3>
@@ -342,13 +314,13 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                   {lead.history.map((event, i) => (
                     <div key={i} className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm flex flex-col relative">
                       <div className="flex items-center justify-between mb-2">
-                        <span className={`text-xs uppercase font-bold tracking-wider px-2.5 py-1 rounded-full ${getStatusColor(event.status)}`}>
+                        <span className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full ${getStatusColor(event.status)}`}>
                           {getStatusLabel(event.status)}
                         </span>
-                        <span className="text-zinc-400 text-xs font-bold">{safeFormatDate(event.changedAt)}</span>
+                        <span className="text-zinc-400 text-[10px] font-bold">{safeFormatDate(event.changedAt)}</span>
                       </div>
                       {event.comment && (
-                        <p className="text-sm text-zinc-600 leading-relaxed mt-2 bg-zinc-50 p-3 rounded-xl border border-zinc-100">
+                        <p className="text-xs text-zinc-600 leading-relaxed mt-2 bg-zinc-50 p-2.5 rounded-xl border border-zinc-100">
                           {event.comment}
                         </p>
                       )}
@@ -360,12 +332,12 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
 
             {/* Unstructured Payload */}
             {lead.payload && Object.keys(lead.payload).filter(k => !["name", "phone", "car", "source", "notes"].includes(k)).length > 0 && (
-              <div className="space-y-3">
+              <div className="space-y-3 pt-4 border-t border-zinc-200">
                 <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
                   <Smartphone className="w-4 h-4 text-zinc-400" /> Данные интеграции
                 </h3>
                 <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm overflow-hidden">
-                   <pre className="text-[11px] font-mono text-zinc-500 overflow-x-auto custom-scrollbar pb-2">
+                   <pre className="text-[10px] font-mono text-zinc-500 overflow-x-auto custom-scrollbar pb-2">
                      {JSON.stringify(Object.fromEntries(
                         Object.entries(lead.payload).filter(([k]) => !["name", "phone", "car", "source", "notes"].includes(k))
                      ), null, 2)}
@@ -373,10 +345,33 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                 </div>
               </div>
             )}
-
-          </div>
-
         </div>
+
+        {/* Right Column - Work Area */}
+        <div className="flex-1 flex flex-col overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <div className="space-y-2 shrink-0">
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
+                 Желаемое авто
+              </label>
+              <Textarea
+                value={formData.car}
+                onChange={(e) => setFormData(prev => ({...prev, car: e.target.value}))}
+                className="h-[80px] min-h-[80px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-3 resize-none text-base"
+              />
+            </div>
+
+            <div className="space-y-2 flex-1 flex flex-col pb-10">
+              <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
+                <FileText className="h-4 w-4 text-amber-500" /> Заметки
+              </label>
+              <Textarea
+                className="flex-1 min-h-[150px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-4 resize-none text-base w-full h-full"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({...prev, notes: e.target.value}))}
+              />
+            </div>
+        </div>
+
       </div>
 
       {/* Footer Action Bar */}
