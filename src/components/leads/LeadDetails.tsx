@@ -317,12 +317,12 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                 />
               </div>
 
-              <div className="space-y-2 col-span-1">
+              <div className="space-y-2 col-span-1 sm:col-span-2">
                 <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
                   <FileText className="h-4 w-4 text-amber-500" /> Заметки
                 </label>
                 <Textarea
-                  className="h-[80px] min-h-[80px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-3 resize-none text-base"
+                  className="h-[250px] min-h-[250px] rounded-2xl border-zinc-200 bg-white shadow-sm font-medium focus-visible:ring-zinc-400 p-4 resize-y text-base"
                   value={formData.notes}
                   onChange={(e) => setFormData(prev => ({...prev, notes: e.target.value}))}
                 />

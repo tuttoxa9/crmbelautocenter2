@@ -10,7 +10,7 @@ import { subscribeToLeads } from "@/lib/leadService";
 import { LeadColumn } from "@/components/leads/LeadColumn";
 import { VisitTimeline } from "@/components/leads/VisitTimeline";
 import { Spinner } from "@/components/ui/spinner";
-import { LeadDetailsDrawer } from "@/components/leads/LeadDetailsDrawer";
+import { LeadDetailsModal } from "@/components/leads/LeadDetailsModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeadList } from "@/components/leads/LeadList";
 import { format, isSameDay, startOfDay, addDays, subDays } from "date-fns";
@@ -219,7 +219,7 @@ export default function LeadsPage() {
         </Tabs>
       </div>
 
-      <LeadDetailsDrawer
+      <LeadDetailsModal
         lead={selectedLead}
         open={!!selectedLead}
         onOpenChange={(open) => {
