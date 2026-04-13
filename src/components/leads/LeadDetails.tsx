@@ -269,10 +269,10 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
       </div>
 
       {/* Main Content Area - 2 Column Dashboard */}
-      <div className="flex-1 overflow-hidden flex flex-col sm:flex-row bg-zinc-50/30">
+      <div className="flex-1 sm:overflow-hidden overflow-y-auto custom-scrollbar flex flex-col sm:flex-row bg-zinc-50/30">
 
         {/* Left Column - History & Metadata */}
-        <div className="w-full sm:w-[35%] lg:w-[30%] border-r border-zinc-200 flex flex-col overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6">
+        <div className="w-full sm:w-[35%] lg:w-[30%] sm:border-r border-b sm:border-b-0 border-zinc-200 flex flex-col sm:overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-6">
             <div className="space-y-2">
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
                 <MapPin className="h-4 w-4 text-blue-500" /> Статус заявки
@@ -348,7 +348,7 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
         </div>
 
         {/* Right Column - Work Area */}
-        <div className="flex-1 flex flex-col overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="flex-1 flex flex-col sm:overflow-hidden p-4 sm:p-6 space-y-4 sm:space-y-6">
             <div className="space-y-2 shrink-0">
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
                  Желаемое авто
