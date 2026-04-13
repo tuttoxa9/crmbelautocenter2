@@ -304,47 +304,49 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
               />
             </div>
 
-            {/* Vertical Timeline */}
-            {lead.history && lead.history.length > 0 && (
-              <div className="space-y-3 pt-4 border-t border-zinc-200">
-                <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
-                  <Clock className="w-4 h-4 text-zinc-400" /> История
-                </h3>
-                <div className="flex flex-col gap-3">
-                  {lead.history.map((event, i) => (
-                    <div key={i} className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm flex flex-col relative">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full ${getStatusColor(event.status)}`}>
-                          {getStatusLabel(event.status)}
-                        </span>
-                        <span className="text-zinc-400 text-[10px] font-bold">{safeFormatDate(event.changedAt)}</span>
+            <div className="hidden sm:block space-y-6">
+              {/* Vertical Timeline */}
+              {lead.history && lead.history.length > 0 && (
+                <div className="space-y-3 pt-4 border-t border-zinc-200">
+                  <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
+                    <Clock className="w-4 h-4 text-zinc-400" /> История
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    {lead.history.map((event, i) => (
+                      <div key={i} className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm flex flex-col relative">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full ${getStatusColor(event.status)}`}>
+                            {getStatusLabel(event.status)}
+                          </span>
+                          <span className="text-zinc-400 text-[10px] font-bold">{safeFormatDate(event.changedAt)}</span>
+                        </div>
+                        {event.comment && (
+                          <p className="text-xs text-zinc-600 leading-relaxed mt-2 bg-zinc-50 p-2.5 rounded-xl border border-zinc-100">
+                            {event.comment}
+                          </p>
+                        )}
                       </div>
-                      {event.comment && (
-                        <p className="text-xs text-zinc-600 leading-relaxed mt-2 bg-zinc-50 p-2.5 rounded-xl border border-zinc-100">
-                          {event.comment}
-                        </p>
-                      )}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Unstructured Payload */}
-            {lead.payload && Object.keys(lead.payload).filter(k => !["name", "phone", "car", "source", "notes"].includes(k)).length > 0 && (
-              <div className="space-y-3 pt-4 border-t border-zinc-200">
-                <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
-                  <Smartphone className="w-4 h-4 text-zinc-400" /> Данные интеграции
-                </h3>
-                <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm overflow-hidden">
-                   <pre className="text-[10px] font-mono text-zinc-500 overflow-x-auto custom-scrollbar pb-2">
-                     {JSON.stringify(Object.fromEntries(
-                        Object.entries(lead.payload).filter(([k]) => !["name", "phone", "car", "source", "notes"].includes(k))
-                     ), null, 2)}
-                   </pre>
+              {/* Unstructured Payload */}
+              {lead.payload && Object.keys(lead.payload).filter(k => !["name", "phone", "car", "source", "notes"].includes(k)).length > 0 && (
+                <div className="space-y-3 pt-4 border-t border-zinc-200">
+                  <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
+                    <Smartphone className="w-4 h-4 text-zinc-400" /> Данные интеграции
+                  </h3>
+                  <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm overflow-hidden">
+                     <pre className="text-[10px] font-mono text-zinc-500 overflow-x-auto custom-scrollbar pb-2">
+                       {JSON.stringify(Object.fromEntries(
+                          Object.entries(lead.payload).filter(([k]) => !["name", "phone", "car", "source", "notes"].includes(k))
+                       ), null, 2)}
+                     </pre>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
         </div>
 
         {/* Right Column - Work Area */}
@@ -360,7 +362,7 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
               />
             </div>
 
-            <div className="space-y-2 flex-1 flex flex-col pb-10">
+            <div className="space-y-2 flex-1 flex flex-col pb-4 sm:pb-10">
               <label className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2 ml-1">
                 <FileText className="h-4 w-4 text-amber-500" /> Заметки
               </label>
@@ -370,6 +372,51 @@ export function LeadDetails({ lead, onClose }: { lead: Lead; onClose: () => void
                 onChange={(e) => setFormData(prev => ({...prev, notes: e.target.value}))}
               />
             </div>
+
+            <div className="block sm:hidden space-y-6 pt-2">
+              {/* Vertical Timeline */}
+              {lead.history && lead.history.length > 0 && (
+                <div className="space-y-3 pt-4 border-t border-zinc-200">
+                  <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
+                    <Clock className="w-4 h-4 text-zinc-400" /> История
+                  </h3>
+                  <div className="flex flex-col gap-3">
+                    {lead.history.map((event, i) => (
+                      <div key={i} className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm flex flex-col relative">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 rounded-full ${getStatusColor(event.status)}`}>
+                            {getStatusLabel(event.status)}
+                          </span>
+                          <span className="text-zinc-400 text-[10px] font-bold">{safeFormatDate(event.changedAt)}</span>
+                        </div>
+                        {event.comment && (
+                          <p className="text-xs text-zinc-600 leading-relaxed mt-2 bg-zinc-50 p-2.5 rounded-xl border border-zinc-100">
+                            {event.comment}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Unstructured Payload */}
+              {lead.payload && Object.keys(lead.payload).filter(k => !["name", "phone", "car", "source", "notes"].includes(k)).length > 0 && (
+                <div className="space-y-3 pt-4 border-t border-zinc-200 pb-10">
+                  <h3 className="text-sm font-bold text-zinc-800 flex items-center gap-2 ml-1">
+                    <Smartphone className="w-4 h-4 text-zinc-400" /> Данные интеграции
+                  </h3>
+                  <div className="bg-white rounded-2xl border border-zinc-100 p-4 shadow-sm overflow-hidden">
+                     <pre className="text-[10px] font-mono text-zinc-500 overflow-x-auto custom-scrollbar pb-2">
+                       {JSON.stringify(Object.fromEntries(
+                          Object.entries(lead.payload).filter(([k]) => !["name", "phone", "car", "source", "notes"].includes(k))
+                       ), null, 2)}
+                     </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+
         </div>
 
       </div>
