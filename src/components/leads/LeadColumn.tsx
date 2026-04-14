@@ -1,5 +1,6 @@
 "use client";
 
+import React, { memo } from "react";
 import { Lead, LeadStatus } from "@/lib/types";
 import { format, isToday, isYesterday } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -51,7 +52,7 @@ const getLeadDateGroup = (timestamp: number | null | undefined) => {
   }
 };
 
-export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
+export const LeadColumn = memo(function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
   const { user } = useAuth();
   const now = new Date().getTime();
 
@@ -227,4 +228,4 @@ export function LeadColumn({ leads, title, onSelectLead }: LeadColumnProps) {
       </div>
     </div>
   );
-}
+});
