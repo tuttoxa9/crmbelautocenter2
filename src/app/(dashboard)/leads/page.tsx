@@ -1,26 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { Plus, Search, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
-import { CreateLeadDialog } from "@/components/leads/CreateLeadDialog";
 import { Button } from "@/components/ui/button";
+import { useDebounce } from "use-debounce";
 import { Input } from "@/components/ui/input";
 import { Lead } from "@/lib/types";
 import { subscribeToLeads } from "@/lib/leadService";
 import { LeadColumn } from "@/components/leads/LeadColumn";
-import { VisitTimeline } from "@/components/leads/VisitTimeline";
 import { Spinner } from "@/components/ui/spinner";
-import { LeadDetailsDrawer } from "@/components/leads/LeadDetailsDrawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeadList } from "@/components/leads/LeadList";
 import { format, isSameDay, startOfDay, addDays, subDays } from "date-fns";
 import { ru } from "date-fns/locale";
+
+const CreateLeadDialog = dynamic(() => import("@/components/leads/CreateLeadDialog").then(mod => mod.CreateLeadDialog), {
+  ssr: false,
+});
+
+const LeadDetailsDrawer = dynamic(() => import("@/components/leads/LeadDetailsDrawer").then(mod => mod.LeadDetailsDrawer), {
+  ssr: false,
+});
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
 
   // Sync selectedLead when leads change
@@ -50,67 +58,72 @@ export default function LeadsPage() {
 
   const isTodayDate = isSameDay(selectedDate, new Date());
 
-  const filteredLeads = leads.filter(lead => {
-    if (!searchQuery.trim()) return true;
-    const query = searchQuery.toLowerCase();
-    const matchesName = lead.name?.toLowerCase().includes(query) || false;
-    const matchesPhone = lead.phone?.toLowerCase().includes(query) || false;
-    const matchesCar = lead.car?.toLowerCase().includes(query) || false;
-    return matchesName || matchesPhone || matchesCar;
-  });
+  const filteredLeads = useMemo(() => {
+    return leads.filter(lead => {
+      if (!debouncedSearchQuery.trim()) return true;
+      const query = debouncedSearchQuery.toLowerCase();
+      const matchesName = lead.name?.toLowerCase().includes(query) || false;
+      const matchesPhone = lead.phone?.toLowerCase().includes(query) || false;
+      const matchesCar = lead.car?.toLowerCase().includes(query) || false;
+      return matchesName || matchesPhone || matchesCar;
+    });
+  }, [leads, debouncedSearchQuery]);
 
   // Date Filtering Logic
-  const dateFilteredLeads = filteredLeads.filter(lead => {
-    // New leads are ALWAYS visible on ANY date (until they are taken in progress)
-    if (lead.status === "new") return true;
+  const dateFilteredLeads = useMemo(() => {
+    return filteredLeads.filter(lead => {
+      // New leads are ALWAYS visible on ANY date (until they are taken in progress)
+      if (lead.status === "new") return true;
 
-    // Terminal statuses are hidden from the pipeline (shown only in Base)
-    if (["refusal", "bank_refusal", "success", "spam"].includes(lead.status)) return false;
+      // Terminal statuses are hidden from the pipeline (shown only in Base)
+      if (["refusal", "bank_refusal", "success", "spam"].includes(lead.status)) return false;
 
-    // If a lead has a nextActionDate, check if it belongs to the selected date
-    if (lead.nextActionDate) {
-      const actionDate = new Date(lead.nextActionDate);
-      const isSameAsSelected = isSameDay(actionDate, selectedDate);
+      // If a lead has a nextActionDate, check if it belongs to the selected date
+      if (lead.nextActionDate) {
+        const actionDate = new Date(lead.nextActionDate);
+        const isSameAsSelected = isSameDay(actionDate, selectedDate);
 
-      // If today is selected, also show overdue leads (actionDate < today)
-      if (isTodayDate && actionDate < startOfDay(new Date())) {
-        return true;
+        // If today is selected, also show overdue leads (actionDate < today)
+        if (isTodayDate && actionDate < startOfDay(new Date())) {
+          return true;
+        }
+
+        return isSameAsSelected;
       }
 
-      return isSameAsSelected;
-    }
-
-    // If no action date is set, show them only on "Today"
-    return isTodayDate;
-  });
+      // If no action date is set, show them only on "Today"
+      return isTodayDate;
+    });
+  }, [filteredLeads, selectedDate, isTodayDate]);
 
   // Pipeline Columns
-  const newLeads = dateFilteredLeads.filter(l => l.status === "new").sort((a, b) => b.createdAt - a.createdAt);
-
-  const inProgressLeads = dateFilteredLeads.filter(l => l.status === "in_progress").sort((a, b) => {
-    const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
-    const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
-    return bTime - aTime;
-  });
-
-  const callbackLeads = dateFilteredLeads.filter(l => l.status === "callback").sort((a, b) => (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity));
-
-  const noAnswerLeads = dateFilteredLeads.filter(l => l.status === "no_answer").sort((a, b) => {
-    const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
-    const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
-    return bTime - aTime;
-  });
-
-  const thinkingLeads = dateFilteredLeads.filter(l => l.status === "thinking").sort((a, b) => {
-    const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
-    const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
-    return bTime - aTime;
-  });
-
-  const visitLeads = dateFilteredLeads.filter(l => l.status === "visit").sort((a, b) => (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity));
+  const { newLeads, inProgressLeads, callbackLeads, noAnswerLeads, thinkingLeads, visitLeads } = useMemo(() => {
+    return {
+      newLeads: dateFilteredLeads.filter(l => l.status === "new").sort((a, b) => b.createdAt - a.createdAt),
+      inProgressLeads: dateFilteredLeads.filter(l => l.status === "in_progress").sort((a, b) => {
+        const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
+        const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
+        return bTime - aTime;
+      }),
+      callbackLeads: dateFilteredLeads.filter(l => l.status === "callback").sort((a, b) => (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity)),
+      noAnswerLeads: dateFilteredLeads.filter(l => l.status === "no_answer").sort((a, b) => {
+        const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
+        const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
+        return bTime - aTime;
+      }),
+      thinkingLeads: dateFilteredLeads.filter(l => l.status === "thinking").sort((a, b) => {
+        const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
+        const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
+        return bTime - aTime;
+      }),
+      visitLeads: dateFilteredLeads.filter(l => l.status === "visit").sort((a, b) => (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity)),
+    };
+  }, [dateFilteredLeads]);
 
   // All Leads sorted by creation date
-  const allLeadsSorted = [...filteredLeads].sort((a, b) => b.createdAt - a.createdAt);
+  const allLeadsSorted = useMemo(() => {
+    return [...filteredLeads].sort((a, b) => b.createdAt - a.createdAt);
+  }, [filteredLeads]);
 
   if (isLoading) {
     return (

@@ -1,5 +1,6 @@
 "use client";
 
+import React, { memo } from "react";
 import { Lead, LeadStatus } from "@/lib/types";
 import { getPaginatedLeads, getLeadsCount } from "@/lib/leadService";
 import { DocumentData, QueryDocumentSnapshot } from "firebase/firestore";
@@ -39,7 +40,7 @@ const formatTime = (timestamp: number) => {
   return format(date, "d MMM", { locale: ru });
 };
 
-export function LeadList({ leads: initialLeadsProp, selectedLeadId, onSelect }: LeadListProps) {
+export const LeadList = memo(function LeadList({ leads: initialLeadsProp, selectedLeadId, onSelect }: LeadListProps) {
   const [activeTab, setActiveTab] = useState<TabValue>("all");
   const [paginatedLeads, setPaginatedLeads] = useState<Lead[]>([]);
   const [lastDoc, setLastDoc] = useState<any | null>(null);
@@ -212,4 +213,4 @@ export function LeadList({ leads: initialLeadsProp, selectedLeadId, onSelect }: 
       </div>
     </div>
   );
-}
+});
