@@ -1,175 +1,100 @@
 "use client";
 
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LeadSource } from "@/lib/types";
 import { createLead } from "@/lib/leadService";
 import { useAuth } from "@/contexts/AuthContext";
-import { LeadSource, LeadStatus } from "@/lib/types";
-import { LEAD_STATUSES } from "@/constants/leadStatuses";
-import { ReactElement } from "react";
+import { Spinner } from "@/components/ui/spinner";
+import { Plus } from "lucide-react";
 
-export function CreateLeadDialog({ children, onSuccess }: { children: ReactElement, onSuccess?: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+export function CreateLeadDialog() {
   const { user } = useAuth();
-  const [source, setSource] = useState<string>("walk_in");
-  const [status, setStatus] = useState<string>("new");
-  const [phone, setPhone] = useState<string>("+375");
+  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value;
-    if (!val.startsWith("+375")) {
-      val = "+375";
-    }
-    // Allow +375 and up to 9 digits
-    const digitsOnly = val.slice(4).replace(/\D/g, "").slice(0, 9);
-    setPhone(`+375${digitsOnly}`);
-  };
+  const [formData, setFormData] = useState({
+    name: "",
+    phone: "",
+    source: "call" as LeadSource,
+  });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
 
-    setIsLoading(true);
-    const formData = new FormData(e.currentTarget);
-
+    setIsSubmitting(true);
     try {
-      const nextActionDateRaw = formData.get("nextActionDate") as string;
-      const nextActionDate = nextActionDateRaw ? new Date(nextActionDateRaw).getTime() : null;
-
-      await createLead(
-        {
-          name: formData.get("name") as string,
-          phone: formData.get("phone") as string,
-          car: formData.get("car") as string,
-          source: formData.get("source") as LeadSource,
-          status: formData.get("status") as LeadStatus,
-          notes: formData.get("notes") as string,
-          nextActionDate: nextActionDate,
-        },
-        user.email || "Unknown"
-      );
+      await createLead({
+        name: formData.name,
+        phone: formData.phone,
+        source: formData.source,
+        status: "new",
+        car: "",
+        notes: "",
+      }, user.email || 'unknown');
       setOpen(false);
-      if (onSuccess) onSuccess();
+      setFormData({ name: "", phone: "", source: "call" });
     } catch (error) {
-      console.error("Error creating lead:", error);
-      alert("Ошибка при создании лида");
+      console.error("Failed to create lead:", error);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={children} />
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogTrigger render={<Button className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl h-12 px-6 font-bold shadow-sm"><Plus className="w-5 h-5 mr-2" /> Добавить лида</Button>} />
+      <DialogContent className="sm:max-w-[425px] p-6 rounded-3xl">
         <DialogHeader>
-          <DialogTitle>Добавить клиента</DialogTitle>
-          <DialogDescription>
-            Заполните данные для создания новой заявки или записи клиента.
-          </DialogDescription>
+          <DialogTitle className="text-xl font-black mb-4">Новый лид</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Имя</Label>
-            <Input id="name" name="name" required />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="phone">Телефон (необязательно)</Label>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-zinc-500 uppercase">Имя</label>
             <Input
-              id="phone"
-              name="phone"
-              value={phone}
-              onChange={handlePhoneChange}
+              value={formData.name}
+              onChange={e => setFormData(prev => ({...prev, name: e.target.value}))}
+              className="h-12 rounded-xl bg-zinc-50 border-zinc-200 font-medium"
+              placeholder="Имя клиента"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-zinc-500 uppercase">Телефон</label>
+            <Input
+              required
+              value={formData.phone}
+              onChange={e => setFormData(prev => ({...prev, phone: e.target.value}))}
+              className="h-12 rounded-xl bg-zinc-50 border-zinc-200 font-mono text-lg"
               placeholder="+375"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="car">Интересующее авто (если есть)</Label>
-            <Input id="car" name="car" />
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-zinc-500 uppercase">Источник</label>
+            <Select value={formData.source} onValueChange={(v) => setFormData(prev => ({...prev, source: v as LeadSource}))}>
+              <SelectTrigger className="h-12 rounded-xl bg-zinc-50 border-zinc-200 font-medium">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="call">Звонок</SelectItem>
+                <SelectItem value="walk_in">С улицы</SelectItem>
+                <SelectItem value="site">Сайт</SelectItem>
+                <SelectItem value="instagram">Instagram</SelectItem>
+                <SelectItem value="tiktok">TikTok</SelectItem>
+                <SelectItem value="telegram">Telegram</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
-              <Label htmlFor="source">Источник</Label>
-              <Select name="source" value={source} onValueChange={(val: string | null) => setSource(val || "walk_in")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите">
-                    {source === "site" && "Сайт"}
-                    {source === "instagram" && "Instagram"}
-                    {source === "tiktok" && "TikTok"}
-                    {source === "call" && "Звонок"}
-                    {source === "walk_in" && "С улицы"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="site">Сайт</SelectItem>
-                  <SelectItem value="instagram">Instagram</SelectItem>
-                  <SelectItem value="tiktok">TikTok</SelectItem>
-                  <SelectItem value="call">Звонок</SelectItem>
-                  <SelectItem value="walk_in">С улицы</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="status">Статус</Label>
-              <Select name="status" value={status} onValueChange={(val: string | null) => setStatus(val || "new")}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите">
-                    {LEAD_STATUSES.find(s => s.value === status)?.label}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {LEAD_STATUSES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="nextActionDate">Дата следующего действия (необязательно)</Label>
-            <Input id="nextActionDate" name="nextActionDate" type="datetime-local" />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="notes">Заметки</Label>
-            <Textarea
-              id="notes"
-              name="notes"
-              className="resize-none"
-            />
-          </div>
-
-          <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Отмена</Button>
-            <Button type="submit" disabled={isLoading} className="bg-zinc-900 hover:bg-zinc-800 text-white">
-              {isLoading ? "Сохранение..." : "Сохранить"}
-            </Button>
-          </DialogFooter>
+          <Button type="submit" disabled={isSubmitting} className="w-full h-12 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl font-bold mt-6">
+            {isSubmitting ? <Spinner className="w-5 h-5" /> : "Создать"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

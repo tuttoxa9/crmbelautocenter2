@@ -154,7 +154,7 @@ export const getPaginatedLeads = async (
   if (!db) return { leads: [], lastDoc: null };
   const leadsRef = collection(db, LEADS_COLLECTION);
 
-  let qArgs: any[] = [leadsRef];
+  const qArgs: unknown[] = [leadsRef];
 
   if (statuses && statuses.length > 0) {
     qArgs.push(where("status", "in", statuses));
@@ -168,6 +168,7 @@ export const getPaginatedLeads = async (
 
   qArgs.push(limit(limitCount));
 
+  // eslint-disable-next-line prefer-spread, @typescript-eslint/no-explicit-any
   const q = query.apply(null, qArgs as any);
   const snapshot = await getDocs(q);
 

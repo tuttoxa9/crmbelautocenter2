@@ -1,0 +1,27 @@
+
+> temp_app@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.2 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+✓ Ready in 547ms
+
+○ Compiling /leads ...
+ GET /leads 200 in 8.3s (next.js: 7.3s, application-code: 976ms)
+ GET /leads 200 in 271ms (next.js: 19ms, application-code: 252ms)
+[browser] Failed to create lead: FirebaseError: Missing or insufficient permissions.
+FirebaseError: Missing or insufficient permissions. (src/components/leads/CreateLeadDialog.tsx:42:15)
+ GET /leads 200 in 85ms (next.js: 5ms, application-code: 80ms)
+ GET /login 200 in 34ms (next.js: 5ms, application-code: 29ms)
+ GET /login 200 in 113ms (next.js: 3ms, application-code: 109ms)
+ GET /leads 200 in 69ms (next.js: 4ms, application-code: 65ms)
+ GET /login 200 in 47ms (next.js: 4ms, application-code: 43ms)
+ GET /login 200 in 81ms (next.js: 5ms, application-code: 76ms)
+ GET /leads 200 in 64ms (next.js: 4ms, application-code: 60ms)
+ GET /login 200 in 35ms (next.js: 4ms, application-code: 31ms)
+ GET /login 200 in 66ms (next.js: 3ms, application-code: 62ms)
+ GET /leads 200 in 90ms (next.js: 5ms, application-code: 85ms)
+ GET /leads 200 in 96ms (next.js: 6ms, application-code: 91ms)
+ GET /leads 200 in 82ms (next.js: 4ms, application-code: 78ms)
+ GET /leads 200 in 68ms (next.js: 4ms, application-code: 64ms)
