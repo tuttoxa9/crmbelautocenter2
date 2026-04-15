@@ -19,9 +19,10 @@ export default function LeadsPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>("active");
 
   useEffect(() => {
-    // Fetch all leads (or adjust if you want pagination for 'all', but for this view we need them)
+    // Fetch active leads. Avoid subscribing to all terminal statuses (like 'success', 'refusal', 'spam') to avoid unbounded memory leaks on large histories.
+    // The main leads workspace is for active pipeline management. The 'Database Table' view is for the full historical archive.
     const activeStatuses: import("@/lib/types").LeadStatus[] = [
-      "new", "in_progress", "visit", "no_answer", "thinking", "callback", "success", "refusal", "bank_refusal", "spam"
+      "new", "in_progress", "visit", "no_answer", "thinking", "callback"
     ];
 
     const unsubscribe = subscribeToLeads((fetchedLeads) => {
@@ -126,6 +127,7 @@ export default function LeadsPage() {
             leads={filteredLeads}
             selectedLeadId={selectedLead?.id || null}
             onSelectLead={setSelectedLead}
+            dateFilterKey={activeTab === "scheduled" ? "nextActionDate" : "createdAt"}
           />
         </div>
 

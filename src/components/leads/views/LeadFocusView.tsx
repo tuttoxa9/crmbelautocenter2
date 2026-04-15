@@ -145,23 +145,17 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
               <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5" /> Статус
               </label>
-              <div className="flex flex-wrap gap-2">
-                {LEAD_STATUSES.map(s => {
-                  const isActive = formData.status === s;
-                  const conf = getStatusConfig(s);
-                  return (
-                    <button
-                      key={s}
-                      onClick={() => setFormData(prev => ({...prev, status: s}))}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-md border transition-all duration-200 ${
-                        isActive ? `${conf.bg} ${conf.text} ${conf.border} shadow-sm ring-1 ring-${conf.text.split('-')[1]}-500/20` : 'bg-white border-zinc-200 text-zinc-500 hover:bg-zinc-50 hover:border-zinc-300'
-                      }`}
-                    >
-                      {getStatusLabel(s)}
-                    </button>
-                  );
-                })}
-              </div>
+              <select
+                value={formData.status}
+                onChange={e => setFormData(prev => ({...prev, status: e.target.value as import("@/lib/types").LeadStatus}))}
+                className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+              >
+                {LEAD_STATUSES.map(s => (
+                  <option key={s} value={s}>
+                    {getStatusLabel(s)}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
