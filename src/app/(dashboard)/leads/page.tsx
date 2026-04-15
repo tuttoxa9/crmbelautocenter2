@@ -1,244 +1,209 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import dynamic from "next/dynamic";
-import { Plus, Search, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useDebounce } from "use-debounce";
-import { Input } from "@/components/ui/input";
-import { Lead } from "@/lib/types";
 import { subscribeToLeads } from "@/lib/leadService";
-import { LeadColumn } from "@/components/leads/LeadColumn";
-import { Spinner } from "@/components/ui/spinner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LeadList } from "@/components/leads/LeadList";
-import { format, isSameDay, startOfDay, addDays, subDays } from "date-fns";
-import { ru } from "date-fns/locale";
+import { Lead } from "@/lib/types";
+import { Search, Inbox, LayoutGrid, Clock, PhoneOff, CalendarDays, BrainCircuit, PhoneForwarded } from "lucide-react";
+import { useDebounce } from "use-debounce";
+import { LeadDataGrid } from "@/components/leads/views/LeadDataGrid";
+import { LeadFocusView } from "@/components/leads/views/LeadFocusView";
+import { QuickAddLead } from "@/components/leads/ui/QuickAddLead";
+import { getPaginatedLeads } from "@/lib/leadService";
+import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 
-const CreateLeadDialog = dynamic(() => import("@/components/leads/CreateLeadDialog").then(mod => mod.CreateLeadDialog), {
-  ssr: false,
-});
-
-const LeadDetailsDrawer = dynamic(() => import("@/components/leads/LeadDetailsDrawer").then(mod => mod.LeadDetailsDrawer), {
-  ssr: false,
-});
+type FilterTab = "new" | "in_progress" | "visit" | "no_answer" | "thinking" | "callback" | "all";
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
-  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
+  const [activeTab, setActiveTab] = useState<FilterTab>("in_progress");
 
-  // Sync selectedLead when leads change
-  useEffect(() => {
-    if (selectedLead) {
-      const updatedSelectedLead = leads.find(l => l.id === selectedLead.id);
-      if (updatedSelectedLead) {
-        setSelectedLead(updatedSelectedLead);
-      } else {
-        // If the lead was deleted, close the drawer
-        setSelectedLead(null);
-      }
-    }
-  }, [leads, selectedLead]);
+  // History Pagination State
+  const [historyLeads, setHistoryLeads] = useState<Lead[]>([]);
+  const [historyLastDoc, setHistoryLastDoc] = useState<QueryDocumentSnapshot<DocumentData, DocumentData> | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [hasMoreHistory, setHasMoreHistory] = useState(true);
 
+  // Active leads subscription
   useEffect(() => {
-    // Only subscribe to active pipeline statuses. Archive tabs fetch their own data.
     const activeStatuses: import("@/lib/types").LeadStatus[] = [
       "new", "in_progress", "visit", "no_answer", "thinking", "callback"
     ];
+
     const unsubscribe = subscribeToLeads((fetchedLeads) => {
       setLeads(fetchedLeads);
-      setIsLoading(false);
+      setSelectedLead((prevSelected) => {
+        if (prevSelected) {
+          const updated = fetchedLeads.find(l => l.id === prevSelected.id);
+          return updated || null;
+        }
+        return prevSelected;
+      });
     }, activeStatuses);
+
     return () => unsubscribe();
   }, []);
 
-  const isTodayDate = isSameDay(selectedDate, new Date());
+  // History fetch logic
+  const loadHistory = async (isLoadMore = false) => {
+    if (isHistoryLoading || (!hasMoreHistory && isLoadMore)) return;
+    setIsHistoryLoading(true);
+
+    try {
+      const { leads: newLeads, lastDoc } = await getPaginatedLeads(
+        50,
+        isLoadMore ? historyLastDoc : null
+      );
+
+      setHistoryLeads(prev => isLoadMore ? [...prev, ...newLeads] : newLeads);
+      setHistoryLastDoc(lastDoc as QueryDocumentSnapshot<DocumentData, DocumentData> | null);
+      setHasMoreHistory(newLeads.length === 50);
+    } catch (error) {
+      console.error("Failed to load history leads", error);
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "all" && historyLeads.length === 0) {
+      loadHistory();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const filteredLeads = useMemo(() => {
-    return leads.filter(lead => {
-      if (!debouncedSearchQuery.trim()) return true;
-      const query = debouncedSearchQuery.toLowerCase();
-      const matchesName = lead.name?.toLowerCase().includes(query) || false;
-      const matchesPhone = lead.phone?.toLowerCase().includes(query) || false;
-      const matchesCar = lead.car?.toLowerCase().includes(query) || false;
-      return matchesName || matchesPhone || matchesCar;
-    });
-  }, [leads, debouncedSearchQuery]);
+    const sourceLeads = activeTab === "all" ? historyLeads : leads;
 
-  // Date Filtering Logic
-  const dateFilteredLeads = useMemo(() => {
-    return filteredLeads.filter(lead => {
-      // New leads are ALWAYS visible on ANY date (until they are taken in progress)
-      if (lead.status === "new") return true;
+    return sourceLeads.filter(lead => {
+      // 1. Tab Filter
+      if (activeTab !== "all" && lead.status !== activeTab) return false;
 
-      // Terminal statuses are hidden from the pipeline (shown only in Base)
-      if (["refusal", "bank_refusal", "success", "spam"].includes(lead.status)) return false;
-
-      // If a lead has a nextActionDate, check if it belongs to the selected date
-      if (lead.nextActionDate) {
-        const actionDate = new Date(lead.nextActionDate);
-        const isSameAsSelected = isSameDay(actionDate, selectedDate);
-
-        // If today is selected, also show overdue leads (actionDate < today)
-        if (isTodayDate && actionDate < startOfDay(new Date())) {
-          return true;
-        }
-
-        return isSameAsSelected;
+      // 2. Search Filter
+      if (debouncedSearchQuery.trim()) {
+        const query = debouncedSearchQuery.toLowerCase();
+        const match = lead.name?.toLowerCase().includes(query) || lead.phone?.toLowerCase().includes(query) || lead.car?.toLowerCase().includes(query);
+        if (!match) return false;
       }
-
-      // If no action date is set, show them only on "Today"
-      return isTodayDate;
+      return true;
     });
-  }, [filteredLeads, selectedDate, isTodayDate]);
+  }, [leads, historyLeads, debouncedSearchQuery, activeTab]);
 
-  // Pipeline Columns
-  const { newLeads, inProgressLeads, callbackLeads, noAnswerLeads, thinkingLeads, visitLeads } = useMemo(() => {
-    return {
-      newLeads: dateFilteredLeads.filter(l => l.status === "new").sort((a, b) => b.createdAt - a.createdAt),
-      inProgressLeads: dateFilteredLeads.filter(l => l.status === "in_progress").sort((a, b) => {
-        const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
-        const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
-        return bTime - aTime;
-      }),
-      callbackLeads: dateFilteredLeads.filter(l => l.status === "callback").sort((a, b) => (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity)),
-      noAnswerLeads: dateFilteredLeads.filter(l => l.status === "no_answer").sort((a, b) => {
-        const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
-        const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
-        return bTime - aTime;
-      }),
-      thinkingLeads: dateFilteredLeads.filter(l => l.status === "thinking").sort((a, b) => {
-        const aTime = a.history[a.history.length - 1]?.changedAt || a.updatedAt;
-        const bTime = b.history[b.history.length - 1]?.changedAt || b.updatedAt;
-        return bTime - aTime;
-      }),
-      visitLeads: dateFilteredLeads.filter(l => l.status === "visit").sort((a, b) => (a.nextActionDate || Infinity) - (b.nextActionDate || Infinity)),
-    };
-  }, [dateFilteredLeads]);
+  const counts = {
+    new: leads.filter(l => l.status === "new").length,
+    in_progress: leads.filter(l => l.status === "in_progress").length,
+    visit: leads.filter(l => l.status === "visit").length,
+    no_answer: leads.filter(l => l.status === "no_answer").length,
+    thinking: leads.filter(l => l.status === "thinking").length,
+    callback: leads.filter(l => l.status === "callback").length,
+  };
 
-  // All Leads sorted by creation date
-  const allLeadsSorted = useMemo(() => {
-    return [...filteredLeads].sort((a, b) => b.createdAt - a.createdAt);
-  }, [filteredLeads]);
-
-  if (isLoading) {
-    return (
-      <div className="h-full flex items-center justify-center bg-zinc-50/50">
-        <Spinner className="w-8 h-8 text-blue-600" />
-      </div>
-    );
-  }
-
-  const handlePrevDay = () => setSelectedDate(prev => subDays(prev, 1));
-  const handleNextDay = () => setSelectedDate(prev => addDays(prev, 1));
-  const handleToday = () => setSelectedDate(startOfDay(new Date()));
+  const isDateTab = activeTab === "visit" || activeTab === "callback";
 
   return (
-    <div className="h-full flex flex-col bg-zinc-50/30">
-      {/* Header */}
-      <header className="flex-none px-4 sm:px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-zinc-100 bg-white/50 backdrop-blur-md sticky top-0 z-10">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-zinc-900">Лиды</h1>
-          <p className="text-sm text-zinc-500 font-medium">Контроль заявок</p>
+    <div className="h-full flex bg-[#F4F5F7] text-zinc-900 font-sans overflow-hidden">
+
+      {/* Left Sidebar - Inner Navigation */}
+      <div className="w-64 bg-zinc-50 border-r border-zinc-200 flex flex-col relative z-10 shrink-0">
+        <div className="p-4 relative">
+          <QuickAddLead />
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Поиск по имени, номеру..."
-              className="pl-9 h-[48px] rounded-2xl border-zinc-200 bg-white shadow-sm focus-visible:ring-blue-500 w-full"
-            />
-          </div>
+        <div className="px-3 pb-2 pt-2">
+          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-2">Фильтры</div>
+          <nav className="space-y-1">
+            <button
+              onClick={() => setActiveTab("new")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'new' ? 'bg-red-50 text-red-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
+            >
+              <span className="flex items-center gap-2"><Inbox className="w-4 h-4" /> Новые</span>
+              {counts.new > 0 && <span className="bg-red-100 text-red-700 py-0.5 px-2 rounded-full text-xs font-bold">{counts.new}</span>}
+            </button>
+            <button
+              onClick={() => setActiveTab("in_progress")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'in_progress' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
+            >
+              <span className="flex items-center gap-2"><LayoutGrid className="w-4 h-4" /> В работе</span>
+              {counts.in_progress > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.in_progress}</span>}
+            </button>
+            <button
+              onClick={() => setActiveTab("visit")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'visit' ? 'bg-purple-50 text-purple-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
+            >
+              <span className="flex items-center gap-2"><CalendarDays className="w-4 h-4" /> Приезд</span>
+              {counts.visit > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.visit}</span>}
+            </button>
+            <button
+              onClick={() => setActiveTab("callback")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'callback' ? 'bg-orange-50 text-orange-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
+            >
+              <span className="flex items-center gap-2"><PhoneForwarded className="w-4 h-4" /> Перезвонить</span>
+              {counts.callback > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.callback}</span>}
+            </button>
+            <button
+              onClick={() => setActiveTab("no_answer")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'no_answer' ? 'bg-zinc-200/50 text-zinc-900 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
+            >
+              <span className="flex items-center gap-2"><PhoneOff className="w-4 h-4" /> Недозвон</span>
+              {counts.no_answer > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.no_answer}</span>}
+            </button>
+            <button
+              onClick={() => setActiveTab("thinking")}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'thinking' ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
+            >
+              <span className="flex items-center gap-2"><BrainCircuit className="w-4 h-4" /> Думает</span>
+              {counts.thinking > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.thinking}</span>}
+            </button>
 
-          <CreateLeadDialog>
-            <Button className="bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl shadow-lg shadow-zinc-900/20 px-6 h-[48px] font-semibold transition-all">
-              <Plus className="w-5 h-5 sm:mr-2" /> <span className="hidden sm:inline">Добавить</span>
-            </Button>
-          </CreateLeadDialog>
+            <div className="pt-4 mt-4 border-t border-zinc-200">
+              <button
+                onClick={() => setActiveTab("all")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'all' ? 'bg-zinc-200/50 text-zinc-900 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
+              >
+                <span className="flex items-center gap-2"><LayoutGrid className="w-4 h-4 opacity-50" /> Вся база</span>
+              </button>
+            </div>
+          </nav>
         </div>
-      </header>
-
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-hidden p-4 sm:p-8">
-        <Tabs defaultValue="pipeline" className="h-full flex flex-col max-w-[1600px] mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <TabsList className="grid w-[240px] grid-cols-2 p-1 bg-zinc-200/50 rounded-xl">
-              <TabsTrigger value="pipeline" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-sm font-semibold">Воронка</TabsTrigger>
-              <TabsTrigger value="all" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm text-sm font-semibold">База лидов</TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="pipeline" className="flex-1 flex flex-col mt-0 outline-none h-full overflow-hidden">
-            {/* Date Navigation */}
-            <div className="flex items-center justify-between bg-white px-4 py-2 rounded-2xl shadow-sm border border-zinc-100 mb-4 mx-auto w-full max-w-lg">
-              <Button variant="ghost" size="icon" onClick={handlePrevDay} className="hover:bg-zinc-100 text-zinc-600 rounded-xl">
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <div className="flex flex-col items-center cursor-pointer hover:bg-zinc-50 px-4 py-1 rounded-xl transition-colors" onClick={handleToday}>
-                <span className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">
-                  {isTodayDate ? "Сегодня" : "Выбранная дата"}
-                </span>
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className={`w-4 h-4 ${isTodayDate ? 'text-blue-500' : 'text-zinc-600'}`} />
-                  <span className={`text-base font-bold ${isTodayDate ? 'text-blue-600' : 'text-zinc-800'}`}>
-                    {format(selectedDate, "d MMMM yyyy", { locale: ru })}
-                  </span>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={handleNextDay} className="hover:bg-zinc-100 text-zinc-600 rounded-xl">
-                <ChevronRight className="w-5 h-5" />
-              </Button>
-            </div>
-
-            {/* Pipeline Columns - Horizontal Scroll */}
-            <div className="flex-1 flex overflow-x-auto gap-4 lg:gap-6 hide-scrollbar pb-4 snap-x snap-mandatory">
-              <div className="flex h-full snap-center pl-2 lg:pl-0">
-                <LeadColumn leads={newLeads} title="Новые" onSelectLead={setSelectedLead} />
-              </div>
-              <div className="flex h-full snap-center">
-                <LeadColumn leads={inProgressLeads} title="В работе" onSelectLead={setSelectedLead} />
-              </div>
-              <div className="flex h-full snap-center">
-                <LeadColumn leads={callbackLeads} title="Перезвонить" onSelectLead={setSelectedLead} />
-              </div>
-              <div className="flex h-full snap-center">
-                <LeadColumn leads={noAnswerLeads} title="Недозвон" onSelectLead={setSelectedLead} />
-              </div>
-              <div className="flex h-full snap-center">
-                <LeadColumn leads={thinkingLeads} title="Думает" onSelectLead={setSelectedLead} />
-              </div>
-              <div className="flex h-full snap-center pr-4 lg:pr-0">
-                <LeadColumn leads={visitLeads} title="Приезд" onSelectLead={setSelectedLead} />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="all" className="flex-1 mt-0 outline-none h-full overflow-hidden bg-zinc-100/50 rounded-3xl border border-zinc-200/50 p-4 sm:p-6">
-            <div className="max-w-2xl mx-auto h-full">
-              <LeadList
-                leads={allLeadsSorted}
-                selectedLeadId={selectedLead?.id || null}
-                onSelect={setSelectedLead}
-              />
-            </div>
-          </TabsContent>
-        </Tabs>
       </div>
 
-      <LeadDetailsDrawer
-        lead={selectedLead}
-        open={!!selectedLead}
-        onOpenChange={(open) => {
-          if (!open) setSelectedLead(null);
-        }}
-      />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col relative min-w-0 bg-[#FBFBFC]">
+        {/* Top Search Bar */}
+        <div className="h-14 border-b border-zinc-200 flex items-center px-6 bg-white shrink-0">
+          <div className="flex-1 flex items-center gap-3">
+            <Search className="w-4 h-4 text-zinc-400" />
+            <input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Поиск по имени, номеру, авто..."
+              className="w-full h-full bg-transparent border-none outline-none text-sm placeholder:text-zinc-400 font-medium"
+            />
+          </div>
+        </div>
+
+        {/* Data Grid */}
+        <div className="flex-1 p-6 overflow-hidden flex flex-col">
+          <LeadDataGrid
+            leads={filteredLeads}
+            selectedLeadId={selectedLead?.id || null}
+            onSelectLead={setSelectedLead}
+            dateFilterKey={isDateTab ? "nextActionDate" : "createdAt"}
+            isHistoryTab={activeTab === "all"}
+            hasMoreHistory={hasMoreHistory}
+            isHistoryLoading={isHistoryLoading}
+            onLoadMore={() => loadHistory(true)}
+          />
+        </div>
+
+        {/* Focus View Overlay */}
+        {selectedLead && (
+          <LeadFocusView lead={selectedLead} onClose={() => setSelectedLead(null)} />
+        )}
+
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { LeadStatus, LeadSource } from "@/lib/types";
+import { LeadStatus } from "@/lib/types";
 
 export const getStatusLabel = (status: LeadStatus) => {
   const map: Record<LeadStatus, string> = {

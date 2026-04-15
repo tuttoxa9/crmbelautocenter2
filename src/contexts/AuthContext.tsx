@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage.getItem("PLAYWRIGHT_TEST_BYPASS") === "true") {
-        setIsBypass(true);
+        setTimeout(() => setIsBypass(true), 0);
       }
     } catch (e) {
       // Ignore
