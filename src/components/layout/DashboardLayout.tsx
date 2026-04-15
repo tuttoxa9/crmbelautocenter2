@@ -46,7 +46,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50 overflow-hidden text-zinc-900">
+    <div className="flex h-screen bg-black overflow-hidden text-zinc-900">
       <Sidebar />
 
       {/* Mobile Sidebar overlay */}
@@ -115,8 +115,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-zinc-50 p-4 md:p-6 lg:p-8">
-          <div className="max-w-[1920px] mx-auto h-full w-full">
+        <main className="flex-1 overflow-hidden bg-black">
+          <div className="h-full w-full">
             {children}
           </div>
         </main>

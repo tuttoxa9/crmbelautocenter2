@@ -10,6 +10,19 @@ export type LeadStatus =
   | "thinking"            // Думает
   | "callback";           // Перезвонить
 
+export const LEAD_STATUSES: LeadStatus[] = [
+  "new",
+  "in_progress",
+  "thinking",
+  "callback",
+  "visit",
+  "no_answer",
+  "success",
+  "refusal",
+  "bank_refusal",
+  "spam"
+];
+
 export type LeadSource =
   | "site"
   | "instagram"

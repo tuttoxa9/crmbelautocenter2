@@ -22,6 +22,7 @@ export default function LeadsPage() {
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [activeTab, setActiveTab] = useState<FilterTab>("in_progress");
   const [filterDate, setFilterDate] = useState<Date>(startOfDay(new Date()));
+  const [mobileView, setMobileView] = useState<"menu" | "list">("menu");
 
   // History Pagination State
   const [historyLeads, setHistoryLeads] = useState<Lead[]>([]);
@@ -131,66 +132,44 @@ export default function LeadsPage() {
   const isDateTab = activeTab !== "new";
 
   return (
-    <div className="h-full flex bg-[#F4F5F7] text-zinc-900 font-sans overflow-hidden">
+    <div className="h-full bg-zinc-950 text-zinc-900 font-sans overflow-hidden relative">
 
-      {/* Left Sidebar - Inner Navigation */}
-      <div className="w-64 bg-zinc-50 border-r border-zinc-200 flex flex-col relative z-10 shrink-0">
-        <div className="p-4 relative">
+      {/* Scalable Main App Container */}
+      <div className={`absolute inset-0 flex flex-col md:flex-row bg-[#FAFAFA] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] origin-center z-10 ${selectedLead ? 'md:scale-[0.95] md:rounded-[32px] md:opacity-40 md:shadow-2xl md:overflow-hidden pointer-events-none' : ''}`}>
+
+      {/* Top/Left Sidebar - Inner Navigation */}
+      <div className={`w-full md:w-[240px] bg-[#FAFAFA] border-b md:border-b-0 md:border-r border-zinc-200/60 relative shrink-0 ${mobileView === 'menu' ? 'flex flex-col flex-1 md:flex-none' : 'hidden md:flex md:flex-col md:flex-none'}`}>
+        <div className="p-4 md:p-3 relative">
           <QuickAddLead />
         </div>
 
-        <div className="px-3 pb-2 pt-2">
-          <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-2">Фильтры</div>
-          <nav className="space-y-1">
-            <button
-              onClick={() => { setActiveTab("new"); setSelectedLead(null); }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'new' ? 'bg-red-50 text-red-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
-            >
-              <span className="flex items-center gap-2"><Inbox className="w-4 h-4" /> Новые</span>
-              {counts.new > 0 && <span className="bg-red-100 text-red-700 py-0.5 px-2 rounded-full text-xs font-bold">{counts.new}</span>}
-            </button>
-            <button
-              onClick={() => { setActiveTab("in_progress"); setSelectedLead(null); }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'in_progress' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
-            >
-              <span className="flex items-center gap-2"><LayoutGrid className="w-4 h-4" /> В работе</span>
-              {counts.in_progress > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.in_progress}</span>}
-            </button>
-            <button
-              onClick={() => { setActiveTab("visit"); setSelectedLead(null); }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'visit' ? 'bg-purple-50 text-purple-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
-            >
-              <span className="flex items-center gap-2"><CalendarDays className="w-4 h-4" /> Приезд</span>
-              {counts.visit > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.visit}</span>}
-            </button>
-            <button
-              onClick={() => { setActiveTab("callback"); setSelectedLead(null); }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'callback' ? 'bg-orange-50 text-orange-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
-            >
-              <span className="flex items-center gap-2"><PhoneForwarded className="w-4 h-4" /> Перезвонить</span>
-              {counts.callback > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.callback}</span>}
-            </button>
-            <button
-              onClick={() => { setActiveTab("no_answer"); setSelectedLead(null); }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'no_answer' ? 'bg-zinc-200/50 text-zinc-900 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
-            >
-              <span className="flex items-center gap-2"><PhoneOff className="w-4 h-4" /> Недозвон</span>
-              {counts.no_answer > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.no_answer}</span>}
-            </button>
-            <button
-              onClick={() => { setActiveTab("thinking"); setSelectedLead(null); }}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'thinking' ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
-            >
-              <span className="flex items-center gap-2"><BrainCircuit className="w-4 h-4" /> Думает</span>
-              {counts.thinking > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.thinking}</span>}
-            </button>
-
-            <div className="pt-4 mt-4 border-t border-zinc-200">
+        <div className="px-0 md:px-3 pb-2 pt-0 flex flex-col flex-1 min-h-0">
+          <div className="hidden md:block text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-2">Фильтры</div>
+          <nav className="flex flex-col gap-2 md:gap-0.5 overflow-y-auto px-4 md:px-0 pb-6 md:pb-0 scrollbar-hide">
+            {[
+              { id: "new", label: "Новые", icon: Inbox, count: counts.new },
+              { id: "in_progress", label: "В работе", icon: LayoutGrid, count: counts.in_progress },
+              { id: "visit", label: "Приезд", icon: CalendarDays, count: counts.visit },
+              { id: "callback", label: "Перезвон", icon: PhoneForwarded, count: counts.callback },
+              { id: "no_answer", label: "Недозвон", icon: PhoneOff, count: counts.no_answer },
+              { id: "thinking", label: "Думает", icon: BrainCircuit, count: counts.thinking },
+            ].map(tab => (
               <button
-                onClick={() => { setActiveTab("all"); setSelectedLead(null); }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'all' ? 'bg-zinc-200/50 text-zinc-900 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id as FilterTab); setSelectedLead(null); setMobileView("list"); }}
+                className={`w-full flex items-center justify-between px-4 md:px-3 py-3 md:py-1.5 rounded-2xl md:rounded-lg text-[15px] md:text-[13px] transition-all border md:border-transparent ${activeTab === tab.id ? 'bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] border-zinc-200/50 text-zinc-900 font-semibold' : 'bg-transparent text-zinc-500 md:hover:bg-zinc-200/50 md:hover:text-zinc-800 font-medium'}`}
               >
-                <span className="flex items-center gap-2"><LayoutGrid className="w-4 h-4 opacity-50" /> Вся база</span>
+                <span className="flex items-center gap-3 md:gap-2"><tab.icon className={`w-5 h-5 md:w-3.5 md:h-3.5 ${activeTab === tab.id ? 'opacity-100 text-zinc-800' : 'opacity-60'}`} /> {tab.label}</span>
+                {tab.count > 0 && <span className={`px-2 py-0.5 rounded-full text-[10px] md:text-[10px] font-bold ${activeTab === tab.id ? 'bg-zinc-100 text-zinc-800' : 'text-zinc-400'}`}>{tab.count}</span>}
+              </button>
+            ))}
+
+            <div className="w-full md:pt-4 md:mt-2 md:border-t md:border-zinc-200/60 flex items-center pb-12 md:pb-0">
+              <button
+                onClick={() => { setActiveTab("all"); setSelectedLead(null); setMobileView("list"); }}
+                className={`w-full flex items-center justify-between px-4 md:px-3 py-3 md:py-1.5 rounded-2xl md:rounded-lg text-[15px] md:text-[13px] transition-all border md:border-transparent ${activeTab === 'all' ? 'bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] border-zinc-200/50 text-zinc-900 font-semibold' : 'bg-transparent text-zinc-500 md:hover:bg-zinc-200/50 md:hover:text-zinc-800 font-medium'}`}
+              >
+                <span className="flex items-center gap-3 md:gap-2"><LayoutGrid className="w-5 h-5 md:w-3.5 md:h-3.5 opacity-50" /> Вся база</span>
               </button>
             </div>
           </nav>
@@ -198,20 +177,29 @@ export default function LeadsPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col relative min-w-0 bg-[#FBFBFC]">
+      <div className={`flex-1 relative min-w-0 bg-[#FBFBFC] ${mobileView === 'list' || selectedLead ? 'flex flex-col animate-in slide-in-from-right-8 fade-in-0 duration-300 md:animate-none' : 'hidden md:flex flex-col'}`}>
         {/* Top Search Bar & Filters */}
-        <div className="h-14 border-b border-zinc-200 flex items-center px-6 bg-white shrink-0 justify-between">
-          <div className="flex-1 flex items-center gap-3">
-            <Search className="w-4 h-4 text-zinc-400" />
-            <input
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Поиск по имени, номеру, авто..."
-              className="w-full h-full bg-transparent border-none outline-none text-sm placeholder:text-zinc-400 font-medium"
-            />
+        <div className="min-h-14 py-2 border-b border-zinc-200 flex flex-col sm:flex-row items-center px-4 md:px-6 bg-white shrink-0 gap-3 justify-between sticky top-0 z-10 md:static p-3 md:p-3 shadow-sm md:shadow-none">
+          <div className="w-full sm:flex-1 flex items-center gap-3">
+            <button 
+              onClick={() => setMobileView("menu")}
+              className="md:hidden flex items-center gap-1 text-zinc-500 hover:text-zinc-900 pr-2 border-r border-zinc-200 shrink-0"
+            >
+              <ChevronLeft className="w-6 h-6 -ml-1 -my-1" />
+              <span className="text-sm font-medium mr-1">Статусы</span>
+            </button>
+            <div className="flex-1 flex items-center gap-2 bg-zinc-50 sm:bg-transparent p-2.5 sm:p-0 rounded-lg border border-zinc-200 sm:border-none">
+              <Search className="w-4 h-4 text-zinc-400 shrink-0" />
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Поиск по имени, номеру, авто..."
+                className="w-full bg-transparent border-none outline-none text-[15px] sm:text-sm placeholder:text-zinc-400 font-medium"
+              />
+            </div>
           </div>
           {activeTab !== "all" && activeTab !== "new" && (
-            <div className="flex items-center gap-1 bg-zinc-50 border border-zinc-200 rounded-md p-1">
+            <div className="w-full sm:w-auto flex items-center justify-center gap-1 bg-zinc-50 border border-zinc-200 rounded-md p-1 shrink-0">
               <button
                 onClick={handlePrevDay}
                 className="p-1.5 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
@@ -222,7 +210,7 @@ export default function LeadsPage() {
 
               <button
                 onClick={handleResetToToday}
-                className={`px-3 py-1.5 text-sm font-medium min-w-[100px] text-center rounded transition-colors ${isToday(filterDate) ? 'text-blue-700 bg-blue-100/50' : 'text-zinc-700 hover:bg-zinc-200'}`}
+                className={`px-3 py-1.5 text-sm font-medium flex-1 sm:min-w-[100px] text-center rounded transition-colors ${isToday(filterDate) ? 'text-blue-700 bg-blue-100/50' : 'text-zinc-700 hover:bg-zinc-200'}`}
               >
                 {isToday(filterDate) ? "Сегодня" : format(filterDate, "d MMM, EEE", { locale: ru })}
               </button>
@@ -253,12 +241,15 @@ export default function LeadsPage() {
           />
         </div>
 
-        {/* Focus View Overlay */}
-        {selectedLead && (
-          <LeadFocusView lead={selectedLead} onClose={() => setSelectedLead(null)} />
-        )}
+      </div> {/* End Main Content Area */}
 
-      </div>
+      </div> {/* End Scalable Wrapper */}
+
+      {/* Focus View Overlay (Stays on Top) */}
+      {selectedLead && (
+        <LeadFocusView lead={selectedLead} onClose={() => setSelectedLead(null)} />
+      )}
+
     </div>
   );
 }

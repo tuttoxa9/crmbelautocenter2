@@ -6,30 +6,30 @@ import { InstagramIcon, TikTokIcon, TelegramIcon } from "./Icons";
 import { getStatusLabel } from "@/lib/displayUtils";
 import { Globe, Search, PhoneCall, User } from "lucide-react";
 
-export const getStatusConfig = (status: LeadStatus) => {
-  const config: Record<LeadStatus, { bg: string, text: string, border: string }> = {
-    new: { bg: "bg-blue-50/50", text: "text-blue-600", border: "border-blue-200" },
-    in_progress: { bg: "bg-amber-50/50", text: "text-amber-600", border: "border-amber-200" },
-    visit: { bg: "bg-purple-50/50", text: "text-purple-600", border: "border-purple-200" },
-    refusal: { bg: "bg-zinc-50", text: "text-zinc-500", border: "border-zinc-200" },
-    bank_refusal: { bg: "bg-red-50/50", text: "text-red-600", border: "border-red-200" },
-    success: { bg: "bg-emerald-50/50", text: "text-emerald-600", border: "border-emerald-200" },
-    no_answer: { bg: "bg-orange-50/50", text: "text-orange-600", border: "border-orange-200" },
-    spam: { bg: "bg-zinc-100", text: "text-zinc-400", border: "border-zinc-200" },
-    thinking: { bg: "bg-indigo-50/50", text: "text-indigo-600", border: "border-indigo-200" },
-    callback: { bg: "bg-yellow-50/50", text: "text-yellow-600", border: "border-yellow-200" },
+export const getStatusDotColor = (status: LeadStatus) => {
+  const config: Record<LeadStatus, string> = {
+    new: "bg-blue-500",
+    in_progress: "bg-amber-400",
+    visit: "bg-purple-500",
+    refusal: "bg-zinc-400",
+    bank_refusal: "bg-red-500",
+    success: "bg-emerald-500",
+    no_answer: "bg-orange-400",
+    spam: "bg-zinc-300",
+    thinking: "bg-indigo-400",
+    callback: "bg-yellow-400",
   };
   return config[status] || config.new;
 };
 
 export const StatusBadge = ({ status, className }: { status: LeadStatus, className?: string }) => {
-  const conf = getStatusConfig(status);
+  const dotColorClass = getStatusDotColor(status);
   return (
     <span className={cn(
-      "inline-flex items-center justify-center px-2 py-0.5 text-[10px] uppercase font-bold tracking-widest rounded-[4px] border",
-      conf.bg, conf.text, conf.border,
+      "inline-flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 bg-zinc-100 border border-zinc-200/60 rounded-md md:rounded-full text-zinc-700 font-medium text-[10px] md:text-[11px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-colors hover:bg-zinc-200/60",
       className
     )}>
+      <span className={cn("w-1.5 h-1.5 rounded-full shadow-sm", dotColorClass)} />
       {getStatusLabel(status)}
     </span>
   );

@@ -3,18 +3,17 @@
 import { Lead } from "@/lib/types";
 import { format, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
-import { Copy, CheckCircle2, Phone, Trash2, Clock, MapPin, Smartphone, FileText, LayoutList } from "lucide-react";
+import { Copy, CheckCircle2, Phone, Trash2, Clock, MapPin, Smartphone, FileText, LayoutList, ChevronLeft } from "lucide-react";
 import { useState, useEffect } from "react";
+import { formatPhone } from "@/lib/formatPhone";
 import { getSourceLabel, getStatusLabel } from "@/lib/displayUtils";
 import { SourceIcon, StatusBadge } from "../ui/LeadBadges";
+import { StatusDropdown } from "../ui/StatusDropdown";
 import { updateLeadStatus, updateLeadDetails, deleteLead } from "@/lib/leadService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-
-const LEAD_STATUSES: import("@/lib/types").LeadStatus[] = [
-  "new", "in_progress", "thinking", "callback", "visit", "no_answer", "success", "refusal", "bank_refusal", "spam"
-];
+import { LEAD_STATUSES } from "@/lib/types";
 
 interface LeadFocusViewProps {
   lead: Lead | null;
@@ -88,42 +87,33 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
 
   const actionDateObj = formData.nextActionDate ? new Date(formData.nextActionDate) : null;
   const isDateValid = actionDateObj && isValid(actionDateObj);
-  const datePart = isDateValid ? format(actionDateObj, "yyyy-MM-dd") : "";
-  const hoursPart = isDateValid ? format(actionDateObj, "HH") : "12";
-  const minutesPart = isDateValid ? format(actionDateObj, "mm") : "00";
-
-  const handleDatePartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dVal = e.target.value;
-    if (!dVal) { setFormData(prev => ({ ...prev, nextActionDate: null })); return; }
-    const newDate = new Date(`${dVal}T${hoursPart}:${minutesPart}`);
-    if (isValid(newDate)) setFormData(prev => ({ ...prev, nextActionDate: newDate.getTime() }));
-  };
-
-  const handleTimePartChange = (type: "h" | "m", val: string) => {
-    if (!datePart) return; // ignore if missing date
-    const hr = type === "h" ? val : hoursPart;
-    const min = type === "m" ? val : minutesPart;
-    const newDate = new Date(`${datePart}T${hr}:${min}`);
-    if (isValid(newDate)) setFormData(prev => ({ ...prev, nextActionDate: newDate.getTime() }));
-  };
 
   return (
-    <div className="absolute inset-0 bg-white z-20 flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="absolute inset-0 z-40 flex md:justify-end overflow-hidden">
+      {/* Desktop Backdrop */}
+      <div 
+        className="absolute inset-0 bg-zinc-900/20 backdrop-blur-sm animate-in fade-in duration-300 hidden md:block" 
+        onClick={onClose} 
+      />
+
+      {/* Main Sheet Container */}
+      <div className="relative w-full md:w-[900px] h-full bg-white md:shadow-2xl md:border-l border-white/20 z-50 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden animate-in fade-in-0 slide-in-from-right-8 duration-300 pb-20 md:pb-0 md:rounded-l-3xl">
 
       {/* Left Pane - Main Edit */}
-      <div className="flex-1 flex flex-col h-full bg-white border-r border-zinc-100 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 flex flex-col md:h-full bg-white md:border-r border-zinc-100 md:overflow-y-auto custom-scrollbar shrink-0">
 
         {/* Header Bar */}
-        <div className="flex-none h-14 border-b border-zinc-100 flex items-center justify-between px-6 bg-zinc-50/50">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={onClose} className="text-zinc-500 hover:text-zinc-900 -ml-2">
-              <LayoutList className="w-4 h-4 mr-1.5" /> Назад к списку
+        <div className="flex-none h-14 border-b border-zinc-100 flex items-center justify-between px-3 md:px-6 bg-zinc-50/50 sticky top-0 md:relative z-30">
+          <div className="flex items-center gap-2 md:gap-3">
+            <Button variant="ghost" onClick={onClose} className="text-zinc-500 hover:text-zinc-900 -ml-2 px-2 md:px-3 flex items-center gap-1 h-auto py-2">
+              <ChevronLeft className="w-6 h-6 -ml-1" />
+              <span className="text-[15px] font-medium md:text-sm">Назад</span>
             </Button>
-            <div className="w-px h-4 bg-zinc-200" />
-            <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded">
-              <SourceIcon source={lead.source} className="w-3.5 h-3.5" /> {getSourceLabel(lead.source)}
+            <div className="w-px h-4 bg-zinc-200 hidden md:block" />
+            <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded">
+              <SourceIcon source={lead.source} className="w-3 md:w-3.5 h-3 md:h-3.5" /> <span className="hidden sm:inline">{getSourceLabel(lead.source)}</span>
             </div>
-            <span className="text-xs text-zinc-400 font-mono">ID: {lead.id?.slice(-6)}</span>
+            <span className="text-[10px] md:text-xs text-zinc-400 font-mono">ID: {lead.id?.slice(-6)}</span>
           </div>
 
           <Button onClick={handleDelete} variant="ghost" size="icon-sm" className="text-zinc-400 hover:text-red-600" title="Удалить лида">
@@ -132,15 +122,14 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
         </div>
 
         {/* Content */}
-        <div className="p-8 max-w-3xl mx-auto w-full space-y-8">
+        <div className="p-4 md:p-8 max-w-3xl mx-auto w-full space-y-6 md:space-y-8">
 
           {/* Header Info */}
           <div>
             <input
               value={formData.name}
               onChange={e => setFormData(prev => ({...prev, name: e.target.value}))}
-              className="text-4xl font-black text-zinc-900 w-full bg-transparent border-none outline-none placeholder:text-zinc-300"
-              placeholder="Имя клиента"
+              className="text-[26px] sm:text-3xl md:text-4xl font-extrabold text-zinc-900 w-full bg-transparent border-none outline-none transition-colors"
             />
 
             <div className="mt-4 flex items-center gap-4">
@@ -156,9 +145,8 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
                 <Phone className="w-4 h-4 text-zinc-400 group-hover:text-blue-500" />
                 <input
                   value={formData.phone}
-                  onChange={e => setFormData(prev => ({...prev, phone: e.target.value}))}
-                  className="font-mono text-lg font-bold bg-transparent outline-none w-40 text-zinc-800 placeholder:text-zinc-300"
-                  placeholder="+375..."
+                  onChange={e => setFormData(prev => ({...prev, phone: formatPhone(e.target.value)}))}
+                  className="font-mono text-base md:text-lg font-bold bg-transparent outline-none w-32 md:w-40 text-zinc-800"
                 />
                 {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-zinc-300 opacity-0 group-hover:opacity-100" />}
               </div>
@@ -168,23 +156,16 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
           <div className="h-px bg-zinc-100 w-full" />
 
           {/* Core Fields Grid */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 md:gap-y-6">
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5" /> Статус
               </label>
-              <select
+              <StatusDropdown
                 value={formData.status}
-                onChange={e => setFormData(prev => ({...prev, status: e.target.value as import("@/lib/types").LeadStatus}))}
-                className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-              >
-                {LEAD_STATUSES.map(s => (
-                  <option key={s} value={s}>
-                    {getStatusLabel(s)}
-                  </option>
-                ))}
-              </select>
+                onChange={(status) => setFormData(prev => ({...prev, status}))}
+              />
             </div>
 
             <div className="space-y-2">
@@ -192,34 +173,17 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
                 <Clock className="w-3.5 h-3.5" /> Запланировано на
                 {requiresNextAction && <span className="text-red-500">*</span>}
               </label>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="date"
-                  className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                  value={datePart}
-                  onChange={handleDatePartChange}
-                />
-                <select
-                  value={hoursPart}
-                  onChange={e => handleTimePartChange("h", e.target.value)}
-                  className="flex h-10 rounded-md border border-zinc-200 bg-white px-2 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
-                >
-                  {Array.from({ length: 24 }).map((_, i) => {
-                    const h = i.toString().padStart(2, "0");
-                    return <option key={h} value={h}>{h}</option>;
-                  })}
-                </select>
-                <span className="text-zinc-400 font-bold">:</span>
-                <select
-                  value={minutesPart}
-                  onChange={e => handleTimePartChange("m", e.target.value)}
-                  className="flex h-10 rounded-md border border-zinc-200 bg-white px-2 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
-                >
-                  {["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"].map(m => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-              </div>
+              <input
+                type="datetime-local"
+                className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition-colors"
+                value={isDateValid ? format(actionDateObj, "yyyy-MM-dd'T'HH:mm") : ""}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (!val) { setFormData(prev => ({ ...prev, nextActionDate: null })); return; }
+                  const newDate = new Date(val);
+                  if (isValid(newDate)) setFormData(prev => ({ ...prev, nextActionDate: newDate.getTime() }));
+                }}
+              />
             </div>
 
             <div className="space-y-2 col-span-2">
@@ -228,7 +192,6 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
                 value={formData.car}
                 onChange={e => setFormData(prev => ({...prev, car: e.target.value}))}
                 className="flex h-10 w-full rounded-md border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-sm font-medium text-zinc-900 focus:bg-white focus:border-zinc-300 outline-none transition-colors"
-                placeholder="Марка, модель, бюджет..."
               />
             </div>
 
@@ -250,12 +213,12 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
       </div>
 
       {/* Right Pane - History & Meta */}
-      <div className="w-full md:w-[380px] bg-zinc-50 border-l border-zinc-200 flex flex-col">
+      <div className="w-full md:w-[380px] bg-zinc-50 border-t md:border-t-0 md:border-l border-zinc-200 flex flex-col md:h-full md:overflow-y-auto shrink-0 relative">
         <div className="flex-none p-4 border-b border-zinc-200 bg-zinc-100/50">
           <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Активность</h3>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <div className="flex-1 md:overflow-y-auto p-4 custom-scrollbar">
           {lead.history && lead.history.length > 0 ? (
             <div className="relative border-l border-zinc-200 ml-3 space-y-6 pb-4">
               {lead.history.map((event, i) => (
@@ -299,14 +262,14 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
 
         {/* Save Footer Action */}
         {hasChanges && (
-          <div className="p-4 bg-white border-t border-zinc-200 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] flex flex-col gap-2">
+          <div className="fixed bottom-0 left-0 right-0 p-3 md:p-5 bg-white/90 backdrop-blur-lg border-t border-zinc-200/50 shadow-[0_-15px_40px_-15px_rgba(0,0,0,0.1)] flex flex-col gap-2 z-[60] md:sticky md:bottom-0 md:mt-auto md:w-full md:rounded-br-none">
             {isNextActionMissing && (
-              <p className="text-xs text-red-600 font-medium text-center text-balance px-2">Выберите дату следующего действия (запланировано)</p>
+              <p className="text-[10px] md:text-xs text-red-600 font-medium text-center text-balance px-2 animate-in slide-in-from-bottom-2">Выберите дату (запланировано)</p>
             )}
             <Button
               onClick={handleSave}
               disabled={isSaveDisabled}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-semibold h-10 disabled:opacity-50"
+              className="w-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/20 font-bold h-11 md:h-12 rounded-xl disabled:opacity-50 transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               {isSaving ? "Сохранение..." : "Сохранить изменения"}
             </Button>
@@ -314,6 +277,7 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
         )}
       </div>
 
+    </div>
     </div>
   );
 }
