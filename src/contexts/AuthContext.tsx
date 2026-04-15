@@ -56,7 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       if (typeof window !== "undefined" && window.localStorage.getItem("PLAYWRIGHT_TEST_BYPASS") === "true") {
-        // use a timeout to avoid synchronous state updates during render
         setTimeout(() => setIsBypass(true), 0);
       }
     } catch (e) {
