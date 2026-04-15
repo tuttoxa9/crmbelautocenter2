@@ -143,42 +143,42 @@ export default function LeadsPage() {
           <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-2">Фильтры</div>
           <nav className="space-y-1">
             <button
-              onClick={() => setActiveTab("new")}
+              onClick={() => { setActiveTab("new"); setSelectedLead(null); }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'new' ? 'bg-red-50 text-red-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
             >
               <span className="flex items-center gap-2"><Inbox className="w-4 h-4" /> Новые</span>
               {counts.new > 0 && <span className="bg-red-100 text-red-700 py-0.5 px-2 rounded-full text-xs font-bold">{counts.new}</span>}
             </button>
             <button
-              onClick={() => setActiveTab("in_progress")}
+              onClick={() => { setActiveTab("in_progress"); setSelectedLead(null); }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'in_progress' ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
             >
               <span className="flex items-center gap-2"><LayoutGrid className="w-4 h-4" /> В работе</span>
               {counts.in_progress > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.in_progress}</span>}
             </button>
             <button
-              onClick={() => setActiveTab("visit")}
+              onClick={() => { setActiveTab("visit"); setSelectedLead(null); }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'visit' ? 'bg-purple-50 text-purple-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
             >
               <span className="flex items-center gap-2"><CalendarDays className="w-4 h-4" /> Приезд</span>
               {counts.visit > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.visit}</span>}
             </button>
             <button
-              onClick={() => setActiveTab("callback")}
+              onClick={() => { setActiveTab("callback"); setSelectedLead(null); }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'callback' ? 'bg-orange-50 text-orange-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
             >
               <span className="flex items-center gap-2"><PhoneForwarded className="w-4 h-4" /> Перезвонить</span>
               {counts.callback > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.callback}</span>}
             </button>
             <button
-              onClick={() => setActiveTab("no_answer")}
+              onClick={() => { setActiveTab("no_answer"); setSelectedLead(null); }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'no_answer' ? 'bg-zinc-200/50 text-zinc-900 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
             >
               <span className="flex items-center gap-2"><PhoneOff className="w-4 h-4" /> Недозвон</span>
               {counts.no_answer > 0 && <span className="text-zinc-500 text-xs font-bold">{counts.no_answer}</span>}
             </button>
             <button
-              onClick={() => setActiveTab("thinking")}
+              onClick={() => { setActiveTab("thinking"); setSelectedLead(null); }}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'thinking' ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
             >
               <span className="flex items-center gap-2"><BrainCircuit className="w-4 h-4" /> Думает</span>
@@ -187,7 +187,7 @@ export default function LeadsPage() {
 
             <div className="pt-4 mt-4 border-t border-zinc-200">
               <button
-                onClick={() => setActiveTab("all")}
+                onClick={() => { setActiveTab("all"); setSelectedLead(null); }}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors ${activeTab === 'all' ? 'bg-zinc-200/50 text-zinc-900 font-semibold' : 'text-zinc-600 hover:bg-zinc-100 font-medium'}`}
               >
                 <span className="flex items-center gap-2"><LayoutGrid className="w-4 h-4 opacity-50" /> Вся база</span>

@@ -46,6 +46,12 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
     formData.car !== lead.car || formData.notes !== lead.notes ||
     formData.status !== lead.status || formData.nextActionDate !== lead.nextActionDate;
 
+  // Per user request, setting the next action date is mandatory
+  const terminalStatuses = ["success", "refusal", "bank_refusal", "spam", "new"];
+  const requiresNextAction = !terminalStatuses.includes(formData.status);
+  const isNextActionMissing = requiresNextAction && !formData.nextActionDate;
+  const isSaveDisabled = isSaving || isNextActionMissing;
+
   const handleSave = async () => {
     if (!lead.id || !user) return;
     setIsSaving(true);
@@ -80,15 +86,26 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
     }
   };
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (!val) { setFormData(prev => ({ ...prev, nextActionDate: null })); return; }
-    const date = new Date(val);
-    if (isValid(date)) setFormData(prev => ({ ...prev, nextActionDate: date.getTime() }));
+  const actionDateObj = formData.nextActionDate ? new Date(formData.nextActionDate) : null;
+  const isDateValid = actionDateObj && isValid(actionDateObj);
+  const datePart = isDateValid ? format(actionDateObj, "yyyy-MM-dd") : "";
+  const hoursPart = isDateValid ? format(actionDateObj, "HH") : "12";
+  const minutesPart = isDateValid ? format(actionDateObj, "mm") : "00";
+
+  const handleDatePartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const dVal = e.target.value;
+    if (!dVal) { setFormData(prev => ({ ...prev, nextActionDate: null })); return; }
+    const newDate = new Date(`${dVal}T${hoursPart}:${minutesPart}`);
+    if (isValid(newDate)) setFormData(prev => ({ ...prev, nextActionDate: newDate.getTime() }));
   };
 
-  const formattedActionDate = formData.nextActionDate && isValid(new Date(formData.nextActionDate))
-    ? format(new Date(formData.nextActionDate), "yyyy-MM-dd'T'HH:mm") : "";
+  const handleTimePartChange = (type: "h" | "m", val: string) => {
+    if (!datePart) return; // ignore if missing date
+    const hr = type === "h" ? val : hoursPart;
+    const min = type === "m" ? val : minutesPart;
+    const newDate = new Date(`${datePart}T${hr}:${min}`);
+    if (isValid(newDate)) setFormData(prev => ({ ...prev, nextActionDate: newDate.getTime() }));
+  };
 
   return (
     <div className="absolute inset-0 bg-white z-20 flex flex-col md:flex-row overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -173,13 +190,36 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
             <div className="space-y-2">
               <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5" /> Запланировано на
+                {requiresNextAction && <span className="text-red-500">*</span>}
               </label>
-              <input
-                type="datetime-local"
-                className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-                value={formattedActionDate}
-                onChange={handleDateChange}
-              />
+              <div className="flex gap-2 items-center">
+                <input
+                  type="date"
+                  className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                  value={datePart}
+                  onChange={handleDatePartChange}
+                />
+                <select
+                  value={hoursPart}
+                  onChange={e => handleTimePartChange("h", e.target.value)}
+                  className="flex h-10 rounded-md border border-zinc-200 bg-white px-2 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
+                >
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const h = i.toString().padStart(2, "0");
+                    return <option key={h} value={h}>{h}</option>;
+                  })}
+                </select>
+                <span className="text-zinc-400 font-bold">:</span>
+                <select
+                  value={minutesPart}
+                  onChange={e => handleTimePartChange("m", e.target.value)}
+                  className="flex h-10 rounded-md border border-zinc-200 bg-white px-2 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
+                >
+                  {["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"].map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="space-y-2 col-span-2">
@@ -259,11 +299,14 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
 
         {/* Save Footer Action */}
         {hasChanges && (
-          <div className="p-4 bg-white border-t border-zinc-200 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)]">
+          <div className="p-4 bg-white border-t border-zinc-200 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] flex flex-col gap-2">
+            {isNextActionMissing && (
+              <p className="text-xs text-red-600 font-medium text-center text-balance px-2">Выберите дату следующего действия (запланировано)</p>
+            )}
             <Button
               onClick={handleSave}
-              disabled={isSaving}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-semibold h-10"
+              disabled={isSaveDisabled}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm font-semibold h-10 disabled:opacity-50"
             >
               {isSaving ? "Сохранение..." : "Сохранить изменения"}
             </Button>
