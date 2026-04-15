@@ -3,13 +3,15 @@
 import { useEffect, useState, useMemo } from "react";
 import { subscribeToLeads } from "@/lib/leadService";
 import { Lead } from "@/lib/types";
-import { Search, Inbox, LayoutGrid, Clock, PhoneOff, CalendarDays, BrainCircuit, PhoneForwarded } from "lucide-react";
+import { Search, Inbox, LayoutGrid, Clock, PhoneOff, CalendarDays, BrainCircuit, PhoneForwarded, ChevronLeft, ChevronRight } from "lucide-react";
 import { useDebounce } from "use-debounce";
 import { LeadDataGrid } from "@/components/leads/views/LeadDataGrid";
 import { LeadFocusView } from "@/components/leads/views/LeadFocusView";
 import { QuickAddLead } from "@/components/leads/ui/QuickAddLead";
 import { getPaginatedLeads } from "@/lib/leadService";
 import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
+import { format, addDays, subDays, startOfDay, isToday, isSameDay, isBefore, isAfter } from "date-fns";
+import { ru } from "date-fns/locale";
 
 type FilterTab = "new" | "in_progress" | "visit" | "no_answer" | "thinking" | "callback" | "all";
 
@@ -19,7 +21,7 @@ export default function LeadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [activeTab, setActiveTab] = useState<FilterTab>("in_progress");
-  const [filterDate, setFilterDate] = useState<string>("");
+  const [filterDate, setFilterDate] = useState<Date>(startOfDay(new Date()));
 
   // History Pagination State
   const [historyLeads, setHistoryLeads] = useState<Lead[]>([]);
@@ -78,6 +80,9 @@ export default function LeadsPage() {
   const filteredLeads = useMemo(() => {
     const sourceLeads = activeTab === "all" ? historyLeads : leads;
 
+    // We only apply strict date filtering on the active/working tabs (not "all" history usually, but user asked for date filter across table)
+    const isDateFilteredTab = activeTab !== "all" && activeTab !== "new";
+
     return sourceLeads.filter(lead => {
       // 1. Tab Filter
       if (activeTab !== "all" && lead.status !== activeTab) return false;
@@ -89,16 +94,28 @@ export default function LeadsPage() {
         if (!match) return false;
       }
 
-      // 3. Date Filter
-      if (filterDate) {
-        const targetDate = new Date(filterDate).setHours(0,0,0,0);
-        const leadDate = lead.nextActionDate ? new Date(lead.nextActionDate).setHours(0,0,0,0) : new Date(lead.createdAt).setHours(0,0,0,0);
-        if (targetDate !== leadDate) return false;
+      // 3. Date Filter (Strict Logic per User Request)
+      if (isDateFilteredTab && filterDate) {
+        const leadDate = lead.nextActionDate ? startOfDay(new Date(lead.nextActionDate)) : startOfDay(new Date(lead.createdAt));
+        const targetDate = startOfDay(filterDate);
+
+        if (isToday(targetDate)) {
+           // If "Today" is selected, show everything due Today AND past due (earlier than today)
+           if (isAfter(leadDate, targetDate)) return false;
+        } else {
+           // If any other specific day is selected, show EXACTLY that day
+           if (!isSameDay(leadDate, targetDate)) return false;
+        }
       }
 
       return true;
     });
   }, [leads, historyLeads, debouncedSearchQuery, activeTab, filterDate]);
+
+  // Date Stepper Handlers
+  const handlePrevDay = () => setFilterDate(prev => subDays(prev, 1));
+  const handleNextDay = () => setFilterDate(prev => addDays(prev, 1));
+  const handleResetToToday = () => setFilterDate(startOfDay(new Date()));
 
   const counts = {
     new: leads.filter(l => l.status === "new").length,
@@ -109,7 +126,9 @@ export default function LeadsPage() {
     callback: leads.filter(l => l.status === "callback").length,
   };
 
-  const isDateTab = activeTab === "visit" || activeTab === "callback";
+  // The user explicitly requested to always group by nextActionDate across the table for active tabs,
+  // so that tasks/leads don't get lost. We only fall back to createdAt for the "new" tab.
+  const isDateTab = activeTab !== "new";
 
   return (
     <div className="h-full flex bg-[#F4F5F7] text-zinc-900 font-sans overflow-hidden">
@@ -191,26 +210,32 @@ export default function LeadsPage() {
               className="w-full h-full bg-transparent border-none outline-none text-sm placeholder:text-zinc-400 font-medium"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <label htmlFor="dateFilter" className="text-xs font-medium text-zinc-500">
-              По дате:
-            </label>
-            <input
-              id="dateFilter"
-              type="date"
-              value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
-              className="border border-zinc-200 rounded-md px-2 py-1 text-sm text-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            {filterDate && (
+          {activeTab !== "all" && activeTab !== "new" && (
+            <div className="flex items-center gap-1 bg-zinc-50 border border-zinc-200 rounded-md p-1">
               <button
-                onClick={() => setFilterDate("")}
-                className="text-xs text-zinc-400 hover:text-zinc-600 font-medium"
+                onClick={handlePrevDay}
+                className="p-1.5 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
+                title="Предыдущий день"
               >
-                Сбросить
+                <ChevronLeft className="w-4 h-4" />
               </button>
-            )}
-          </div>
+
+              <button
+                onClick={handleResetToToday}
+                className={`px-3 py-1.5 text-sm font-medium min-w-[100px] text-center rounded transition-colors ${isToday(filterDate) ? 'text-blue-700 bg-blue-100/50' : 'text-zinc-700 hover:bg-zinc-200'}`}
+              >
+                {isToday(filterDate) ? "Сегодня" : format(filterDate, "d MMM, EEE", { locale: ru })}
+              </button>
+
+              <button
+                onClick={handleNextDay}
+                className="p-1.5 hover:bg-zinc-200 text-zinc-600 rounded transition-colors"
+                title="Следующий день"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Data Grid */}
@@ -224,6 +249,7 @@ export default function LeadsPage() {
             hasMoreHistory={hasMoreHistory}
             isHistoryLoading={isHistoryLoading}
             onLoadMore={() => loadHistory(true)}
+            targetDate={filterDate}
           />
         </div>
 
