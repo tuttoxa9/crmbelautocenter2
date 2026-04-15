@@ -6,8 +6,8 @@ import { ru } from "date-fns/locale";
 import { Copy, CheckCircle2, Phone, Trash2, Clock, MapPin, Smartphone, FileText, LayoutList } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getSourceLabel, getStatusLabel } from "@/lib/displayUtils";
-import { SourceIcon, StatusBadge, getStatusConfig } from "../ui/LeadBadges";
-import { updateLeadStatus, updateLeadDetails } from "@/lib/leadService";
+import { SourceIcon, StatusBadge } from "../ui/LeadBadges";
+import { updateLeadStatus, updateLeadDetails, deleteLead } from "@/lib/leadService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,6 +68,18 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!lead?.id) return;
+    if (window.confirm("Вы уверены, что хотите удалить этого лида? Это действие нельзя отменить.")) {
+      try {
+        await deleteLead(lead.id);
+        onClose();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     if (!val) { setFormData(prev => ({ ...prev, nextActionDate: null })); return; }
@@ -97,7 +109,7 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
             <span className="text-xs text-zinc-400 font-mono">ID: {lead.id?.slice(-6)}</span>
           </div>
 
-          <Button variant="ghost" size="icon-sm" className="text-zinc-400 hover:text-red-600">
+          <Button onClick={handleDelete} variant="ghost" size="icon-sm" className="text-zinc-400 hover:text-red-600" title="Удалить лида">
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
