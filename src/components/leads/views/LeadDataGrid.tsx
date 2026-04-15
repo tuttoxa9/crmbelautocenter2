@@ -1,7 +1,7 @@
 "use client";
 
 import { Lead } from "@/lib/types";
-import { format, isValid, isToday, isTomorrow, isYesterday, startOfDay, isBefore, isAfter, startOfWeek } from "date-fns";
+import { format, isValid, isToday, isTomorrow, isYesterday, startOfDay, isSameDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import { SourceIcon, StatusBadge } from "../ui/LeadBadges";
 import { Clock } from "lucide-react";
@@ -16,6 +16,7 @@ interface LeadDataGridProps {
   hasMoreHistory?: boolean;
   isHistoryLoading?: boolean;
   onLoadMore?: () => void;
+  targetDate?: Date; // The currently selected filter date
 }
 
 const formatSmartDate = (ts?: number | null) => {
@@ -30,28 +31,30 @@ const formatSmartDate = (ts?: number | null) => {
   return format(d, "d MMM, HH:mm", { locale: ru });
 };
 
-type GroupKey = "overdue" | "today" | "tomorrow" | "future" | "yesterday" | "this_week" | "older" | "no_date";
-
-const getGroupInfo = (dateValue: number | null | undefined, filterKey: "createdAt" | "nextActionDate"): { key: GroupKey, label: string, sortOrder: number, color: string } => {
+const getGroupInfo = (dateValue: number | null | undefined, filterKey: "createdAt" | "nextActionDate"): { key: string, label: string, sortOrder: number, color: string } => {
   if (!dateValue || !isValid(new Date(dateValue))) {
-    return { key: "no_date", label: filterKey === "nextActionDate" ? "Без даты следующего шага" : "Неизвестная дата", sortOrder: 99, color: "text-zinc-500 bg-zinc-100" };
+    return { key: "no_date", label: filterKey === "nextActionDate" ? "Без даты следующего шага" : "Неизвестная дата", sortOrder: 9999999999, color: "text-zinc-500 bg-zinc-100" };
   }
 
-  const d = new Date(dateValue);
-  const today = startOfDay(new Date());
+  const d = startOfDay(new Date(dateValue));
 
-  if (filterKey === "nextActionDate") {
-    if (isBefore(startOfDay(d), today)) return { key: "overdue", label: "Просроченные (Требуют внимания)", sortOrder: 1, color: "text-red-600 bg-red-50" };
-    if (isToday(d)) return { key: "today", label: "Сегодня", sortOrder: 2, color: "text-blue-600 bg-blue-50" };
-    if (isTomorrow(d)) return { key: "tomorrow", label: "Завтра", sortOrder: 3, color: "text-amber-600 bg-amber-50" };
-    return { key: "future", label: "Будущие", sortOrder: 4, color: "text-zinc-500 bg-zinc-50" };
-  } else {
-    // createdAt sorting
-    if (isToday(d)) return { key: "today", label: "Сегодня", sortOrder: 1, color: "text-blue-600 bg-blue-50" };
-    if (isYesterday(d)) return { key: "yesterday", label: "Вчера", sortOrder: 2, color: "text-amber-600 bg-amber-50" };
-    if (isAfter(d, startOfWeek(today, { weekStartsOn: 1 }))) return { key: "this_week", label: "На этой неделе", sortOrder: 3, color: "text-zinc-600 bg-zinc-50" };
-    return { key: "older", label: "Старые", sortOrder: 4, color: "text-zinc-500 bg-zinc-50" };
+  // Create a sorting order based on timestamp descending.
+  // Negating the timestamp so newer dates appear first (lower sortOrder)
+  const sortOrder = -d.getTime();
+
+  if (isToday(d)) {
+    return { key: d.getTime().toString(), label: "Сегодня", sortOrder, color: "text-blue-600 bg-blue-50" };
   }
+
+  if (isYesterday(d)) {
+    return { key: d.getTime().toString(), label: "Вчера", sortOrder, color: "text-amber-600 bg-amber-50" };
+  }
+
+  if (isTomorrow(d)) {
+    return { key: d.getTime().toString(), label: "Завтра", sortOrder, color: "text-purple-600 bg-purple-50" };
+  }
+
+  return { key: d.getTime().toString(), label: format(d, "d MMM yyyy", { locale: ru }), sortOrder, color: "text-zinc-600 bg-zinc-50" };
 };
 
 export function LeadDataGrid({
@@ -62,7 +65,8 @@ export function LeadDataGrid({
   isHistoryTab,
   hasMoreHistory,
   isHistoryLoading,
-  onLoadMore
+  onLoadMore,
+  targetDate
 }: LeadDataGridProps) {
 
   const groupedLeads = useMemo(() => {
@@ -78,13 +82,11 @@ export function LeadDataGrid({
       groups[info.key].items.push(lead);
     });
 
-    // Sort items within each group
+    // Sort items within each group (newest created first)
     Object.values(groups).forEach(g => {
        g.items.sort((a, b) => {
           const aDate = dateFilterKey === "nextActionDate" ? (a.nextActionDate || 0) : a.createdAt;
           const bDate = dateFilterKey === "nextActionDate" ? (b.nextActionDate || 0) : b.createdAt;
-          // for future dates we want ascending, for past dates descending.
-          if (g.sortOrder === 4 && dateFilterKey === "nextActionDate") return aDate - bDate;
           return bDate - aDate;
        });
     });
@@ -107,11 +109,13 @@ export function LeadDataGrid({
         <thead className="text-xs text-zinc-500 uppercase bg-zinc-50/80 sticky top-0 z-10 font-semibold border-b border-zinc-200">
           <tr>
             <th className="px-4 py-3 font-medium tracking-wider w-10">Ист.</th>
-            <th className="px-4 py-3 font-medium tracking-wider w-48">Имя</th>
-            <th className="px-4 py-3 font-medium tracking-wider w-40">Телефон</th>
+            <th className="px-4 py-3 font-medium tracking-wider w-40">Имя</th>
+            <th className="px-4 py-3 font-medium tracking-wider w-36">Телефон</th>
             <th className="px-4 py-3 font-medium tracking-wider w-32">Статус</th>
-            <th className="px-4 py-3 font-medium tracking-wider">След. шаг / Машина</th>
-            <th className="px-4 py-3 font-medium tracking-wider text-right w-40">Создан</th>
+            <th className="px-4 py-3 font-medium tracking-wider w-36">След. шаг</th>
+            <th className="px-4 py-3 font-medium tracking-wider w-40">Машина</th>
+            <th className="px-4 py-3 font-medium tracking-wider text-center">Комментарий</th>
+            <th className="px-4 py-3 font-medium tracking-wider text-right w-32">Создан</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-100/80">
@@ -119,7 +123,7 @@ export function LeadDataGrid({
             <React.Fragment key={group.label}>
               {/* Group Header */}
               <tr className="bg-zinc-50/30">
-                <td colSpan={6} className="px-4 py-2 border-y border-zinc-100">
+                <td colSpan={8} className="px-4 py-2 border-y border-zinc-100">
                   <span className={`text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-sm ${group.color}`}>
                     {group.label} ({group.items.length})
                   </span>
@@ -133,7 +137,7 @@ export function LeadDataGrid({
                     key={lead.id}
                     onClick={() => onSelectLead(lead)}
                     className={`
-                      group cursor-pointer transition-colors h-12
+                      group cursor-pointer transition-colors h-16
                       ${isSelected ? 'bg-blue-50/40 hover:bg-blue-50/60' : 'hover:bg-zinc-50/50'}
                     `}
                   >
@@ -143,7 +147,7 @@ export function LeadDataGrid({
                       </div>
                     </td>
                     <td className="px-4 py-2">
-                      <span className={`font-semibold ${isSelected ? 'text-blue-900' : 'text-zinc-900'} truncate block max-w-[200px]`}>
+                      <span className={`font-semibold ${isSelected ? 'text-blue-900' : 'text-zinc-900'} truncate block max-w-[160px]`}>
                         {lead.name || <span className="text-zinc-400 italic font-normal">Без имени</span>}
                       </span>
                     </td>
@@ -155,15 +159,23 @@ export function LeadDataGrid({
                     <td className="px-4 py-2">
                       <StatusBadge status={lead.status} />
                     </td>
-                    <td className="px-4 py-2 text-zinc-500 text-xs truncate max-w-[300px]">
+                    <td className="px-4 py-2 text-zinc-500 text-xs">
                       {lead.nextActionDate && lead.status !== 'new' ? (
                         <div className="flex items-center gap-1.5 text-orange-600 font-medium bg-orange-50/50 px-2 py-0.5 rounded border border-orange-100 w-fit">
                           <Clock className="w-3 h-3" />
-                          {formatSmartDate(lead.nextActionDate)}
+                          <span className="whitespace-nowrap">{formatSmartDate(lead.nextActionDate)}</span>
                         </div>
                       ) : (
-                        <span className="truncate block">{lead.car || <span className="text-zinc-300">—</span>}</span>
+                        <span className="text-zinc-300">—</span>
                       )}
+                    </td>
+                    <td className="px-4 py-2 text-zinc-700 text-xs truncate max-w-[160px]">
+                      <span className="truncate block">{lead.car || <span className="text-zinc-300">—</span>}</span>
+                    </td>
+                    <td className="px-4 py-2 text-zinc-600 text-xs w-full max-w-sm">
+                      <div className="line-clamp-2 leading-relaxed" title={lead.notes}>
+                        {lead.notes || <span className="text-zinc-300">—</span>}
+                      </div>
                     </td>
                     <td className="px-4 py-2 text-right text-xs text-zinc-400 font-medium">
                       {formatSmartDate(lead.createdAt)}
