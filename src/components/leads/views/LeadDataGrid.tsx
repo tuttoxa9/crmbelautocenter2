@@ -12,6 +12,10 @@ interface LeadDataGridProps {
   selectedLeadId: string | null;
   onSelectLead: (lead: Lead) => void;
   dateFilterKey: "createdAt" | "nextActionDate";
+  isHistoryTab?: boolean;
+  hasMoreHistory?: boolean;
+  isHistoryLoading?: boolean;
+  onLoadMore?: () => void;
 }
 
 const formatSmartDate = (ts?: number | null) => {
@@ -50,7 +54,16 @@ const getGroupInfo = (dateValue: number | null | undefined, filterKey: "createdA
   }
 };
 
-export function LeadDataGrid({ leads, selectedLeadId, onSelectLead, dateFilterKey }: LeadDataGridProps) {
+export function LeadDataGrid({
+  leads,
+  selectedLeadId,
+  onSelectLead,
+  dateFilterKey,
+  isHistoryTab,
+  hasMoreHistory,
+  isHistoryLoading,
+  onLoadMore
+}: LeadDataGridProps) {
 
   const groupedLeads = useMemo(() => {
     const groups: Record<string, { label: string, color: string, sortOrder: number, items: Lead[] }> = {};
@@ -162,6 +175,18 @@ export function LeadDataGrid({ leads, selectedLeadId, onSelectLead, dateFilterKe
           ))}
         </tbody>
       </table>
+
+      {isHistoryTab && hasMoreHistory && (
+        <div className="p-4 flex justify-center border-t border-zinc-200 bg-zinc-50/30">
+          <button
+            onClick={onLoadMore}
+            disabled={isHistoryLoading}
+            className="px-4 py-2 text-sm font-medium text-zinc-600 bg-white border border-zinc-200 rounded-md hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-colors"
+          >
+            {isHistoryLoading ? "Загрузка..." : "Загрузить еще"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
