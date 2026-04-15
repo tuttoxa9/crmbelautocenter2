@@ -19,6 +19,7 @@ export default function LeadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [activeTab, setActiveTab] = useState<FilterTab>("in_progress");
+  const [filterDate, setFilterDate] = useState<string>("");
 
   // History Pagination State
   const [historyLeads, setHistoryLeads] = useState<Lead[]>([]);
@@ -87,9 +88,17 @@ export default function LeadsPage() {
         const match = lead.name?.toLowerCase().includes(query) || lead.phone?.toLowerCase().includes(query) || lead.car?.toLowerCase().includes(query);
         if (!match) return false;
       }
+
+      // 3. Date Filter
+      if (filterDate) {
+        const targetDate = new Date(filterDate).setHours(0,0,0,0);
+        const leadDate = lead.nextActionDate ? new Date(lead.nextActionDate).setHours(0,0,0,0) : new Date(lead.createdAt).setHours(0,0,0,0);
+        if (targetDate !== leadDate) return false;
+      }
+
       return true;
     });
-  }, [leads, historyLeads, debouncedSearchQuery, activeTab]);
+  }, [leads, historyLeads, debouncedSearchQuery, activeTab, filterDate]);
 
   const counts = {
     new: leads.filter(l => l.status === "new").length,
@@ -171,8 +180,8 @@ export default function LeadsPage() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col relative min-w-0 bg-[#FBFBFC]">
-        {/* Top Search Bar */}
-        <div className="h-14 border-b border-zinc-200 flex items-center px-6 bg-white shrink-0">
+        {/* Top Search Bar & Filters */}
+        <div className="h-14 border-b border-zinc-200 flex items-center px-6 bg-white shrink-0 justify-between">
           <div className="flex-1 flex items-center gap-3">
             <Search className="w-4 h-4 text-zinc-400" />
             <input
@@ -181,6 +190,26 @@ export default function LeadsPage() {
               placeholder="Поиск по имени, номеру, авто..."
               className="w-full h-full bg-transparent border-none outline-none text-sm placeholder:text-zinc-400 font-medium"
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="dateFilter" className="text-xs font-medium text-zinc-500">
+              По дате:
+            </label>
+            <input
+              id="dateFilter"
+              type="date"
+              value={filterDate}
+              onChange={(e) => setFilterDate(e.target.value)}
+              className="border border-zinc-200 rounded-md px-2 py-1 text-sm text-zinc-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            {filterDate && (
+              <button
+                onClick={() => setFilterDate("")}
+                className="text-xs text-zinc-400 hover:text-zinc-600 font-medium"
+              >
+                Сбросить
+              </button>
+            )}
           </div>
         </div>
 
