@@ -46,7 +46,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-black overflow-hidden text-zinc-900">
+    <div className="flex h-[100dvh] bg-black overflow-hidden text-zinc-900 overflow-y-hidden">
       <Sidebar />
 
       {/* Mobile Sidebar overlay */}

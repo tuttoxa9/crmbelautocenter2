@@ -89,21 +89,21 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
   const isDateValid = actionDateObj && isValid(actionDateObj);
 
   return (
-    <div className="absolute inset-0 z-40 flex md:justify-end overflow-hidden">
+    <div className="absolute inset-0 z-[100] flex justify-end overflow-hidden">
       {/* Desktop Backdrop */}
       <div 
-        className="absolute inset-0 bg-zinc-900/20 backdrop-blur-sm animate-in fade-in duration-300 hidden md:block" 
+        className="absolute inset-0 bg-zinc-900/30 backdrop-blur-md animate-in fade-in duration-500 hidden md:block" 
         onClick={onClose} 
       />
 
       {/* Main Sheet Container */}
-      <div className="relative w-full md:w-[900px] h-full bg-white md:shadow-2xl md:border-l border-white/20 z-50 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden animate-in fade-in-0 slide-in-from-right-8 duration-300 pb-20 md:pb-0 md:rounded-l-3xl">
+      <div className="relative w-full md:w-[900px] h-full bg-white/95 backdrop-blur-xl md:shadow-[0_0_80px_-20px_rgba(0,0,0,0.5)] md:border-l border-zinc-200/50 z-50 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden animate-in fade-in-0 slide-in-from-right-16 duration-500 pb-20 md:pb-0 md:rounded-l-[2.5rem] overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
 
       {/* Left Pane - Main Edit */}
-      <div className="flex-1 flex flex-col md:h-full bg-white md:border-r border-zinc-100 md:overflow-y-auto custom-scrollbar shrink-0">
+      <div className="flex-1 flex flex-col md:h-full bg-transparent md:border-r border-zinc-100/50 md:overflow-y-auto custom-scrollbar shrink-0">
 
         {/* Header Bar */}
-        <div className="flex-none h-14 border-b border-zinc-100 flex items-center justify-between px-3 md:px-6 bg-zinc-50/50 sticky top-0 md:relative z-30">
+        <div className="flex-none h-14 border-b border-zinc-200/50 flex items-center justify-between px-3 md:px-6 bg-white/60 backdrop-blur-lg sticky top-0 z-30">
           <div className="flex items-center gap-2 md:gap-3">
             <Button variant="ghost" onClick={onClose} className="text-zinc-500 hover:text-zinc-900 -ml-2 px-2 md:px-3 flex items-center gap-1 h-auto py-2">
               <ChevronLeft className="w-6 h-6 -ml-1" />
@@ -134,7 +134,7 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
 
             <div className="mt-4 flex items-center gap-4">
               <div
-                className="flex items-center gap-2 bg-zinc-50 hover:bg-zinc-100 border border-zinc-200 px-3 py-1.5 rounded-md cursor-pointer transition-colors group"
+                className="flex items-center gap-2 bg-zinc-100/50 hover:bg-zinc-100 border border-zinc-200/50 px-4 py-2 rounded-full cursor-pointer transition-colors group shadow-sm"
                 onClick={() => {
                   if(formData.phone) {
                     navigator.clipboard.writeText(formData.phone);
@@ -169,13 +169,13 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 mb-1.5">
                 <Clock className="w-3.5 h-3.5" /> Запланировано на
                 {requiresNextAction && <span className="text-red-500">*</span>}
               </label>
               <input
                 type="datetime-local"
-                className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 shadow-sm focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 outline-none transition-colors"
+                className="flex h-11 w-full rounded-2xl border border-zinc-200/80 bg-zinc-50/50 px-4 py-2 text-sm font-medium text-zinc-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus:bg-white focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 outline-none transition-all"
                 value={isDateValid ? format(actionDateObj, "yyyy-MM-dd'T'HH:mm") : ""}
                 onChange={e => {
                   const val = e.target.value;
@@ -187,22 +187,22 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
             </div>
 
             <div className="space-y-2 col-span-2">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Интересующий Автомобиль</label>
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 inline-block">Интересующий Автомобиль</label>
               <input
                 value={formData.car}
                 onChange={e => setFormData(prev => ({...prev, car: e.target.value}))}
-                className="flex h-10 w-full rounded-md border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-sm font-medium text-zinc-900 focus:bg-white focus:border-zinc-300 outline-none transition-colors"
+                className="flex h-11 w-full rounded-2xl border border-zinc-200/80 bg-zinc-50/50 px-4 py-2 text-sm font-medium text-zinc-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus:bg-white focus:border-zinc-400 outline-none transition-all"
               />
             </div>
 
             <div className="space-y-2 col-span-2">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 mb-1.5">
                 <FileText className="w-3.5 h-3.5" /> Заметки
               </label>
               <Textarea
                 value={formData.notes}
                 onChange={e => setFormData(prev => ({...prev, notes: e.target.value}))}
-                className="min-h-[120px] rounded-md border-zinc-200 bg-amber-50/20 focus:bg-amber-50/40 focus:border-amber-200 font-medium text-sm shadow-inner"
+                className="min-h-[120px] rounded-3xl border-orange-200/50 bg-orange-50/30 focus:bg-orange-50/60 focus:border-orange-300 font-medium text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] p-4 leading-relaxed"
                 placeholder="Свободные заметки..."
               />
             </div>
@@ -213,8 +213,8 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
       </div>
 
       {/* Right Pane - History & Meta */}
-      <div className="w-full md:w-[380px] bg-zinc-50 border-t md:border-t-0 md:border-l border-zinc-200 flex flex-col md:h-full md:overflow-y-auto shrink-0 relative">
-        <div className="flex-none p-4 border-b border-zinc-200 bg-zinc-100/50">
+      <div className="w-full md:w-[380px] bg-zinc-50/50 border-t md:border-t-0 md:border-l border-zinc-200/50 flex flex-col md:h-full md:overflow-y-auto shrink-0 relative">
+        <div className="flex-none p-4 border-b border-zinc-200/50 bg-transparent blur-backdrop-sm sticky top-0 z-10">
           <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Активность</h3>
         </div>
 
@@ -262,14 +262,14 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
 
         {/* Save Footer Action */}
         {hasChanges && (
-          <div className="fixed bottom-0 left-0 right-0 p-3 md:p-5 bg-white/90 backdrop-blur-lg border-t border-zinc-200/50 shadow-[0_-15px_40px_-15px_rgba(0,0,0,0.1)] flex flex-col gap-2 z-[60] md:sticky md:bottom-0 md:mt-auto md:w-full md:rounded-br-none">
+          <div className="fixed bottom-0 left-0 right-0 p-4 md:p-6 bg-white/70 backdrop-blur-2xl border-t border-zinc-200/50 shadow-[0_-20px_40px_-20px_rgba(0,0,0,0.1)] flex flex-col gap-3 z-[60] md:sticky md:bottom-0 md:mt-auto md:w-full md:rounded-br-none">
             {isNextActionMissing && (
               <p className="text-[10px] md:text-xs text-red-600 font-medium text-center text-balance px-2 animate-in slide-in-from-bottom-2">Выберите дату (запланировано)</p>
             )}
             <Button
               onClick={handleSave}
               disabled={isSaveDisabled}
-              className="w-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-lg shadow-zinc-900/20 font-bold h-11 md:h-12 rounded-xl disabled:opacity-50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] font-semibold h-12 md:h-14 rounded-full disabled:opacity-50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] tracking-wide"
             >
               {isSaving ? "Сохранение..." : "Сохранить изменения"}
             </Button>

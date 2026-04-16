@@ -227,7 +227,7 @@ export default function LeadsPage() {
         </div>
 
         {/* Data Grid */}
-        <div className="flex-1 p-6 overflow-hidden flex flex-col">
+        <div className="flex-1 p-2 md:p-6 relative">
           <LeadDataGrid
             leads={filteredLeads}
             selectedLeadId={selectedLead?.id || null}

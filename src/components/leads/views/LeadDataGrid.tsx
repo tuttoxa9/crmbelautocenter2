@@ -104,7 +104,7 @@ export function LeadDataGrid({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#F4F5F7] md:bg-white rounded-none md:rounded-md border-0 md:border border-zinc-200 space-y-4 md:space-y-0 p-2 md:p-0">
+    <div className="absolute inset-0 overflow-y-auto overscroll-contain custom-scrollbar bg-[#F4F5F7] md:bg-white rounded-none md:rounded-md border-0 md:border border-zinc-200 p-0 md:p-0 pb-12" style={{ WebkitOverflowScrolling: 'touch' }}>
       
       {/* ====== DESKTOP DATA GRID (META STYLE) ====== */}
       <div className="hidden md:flex flex-col w-full text-[13px] bg-white">
@@ -189,8 +189,8 @@ export function LeadDataGrid({
       <div className="md:hidden space-y-4 pb-4">
         {groupedLeads.map(group => (
           <div key={group.label} className="space-y-2">
-            <div className="sticky top-0 z-10 bg-[#F4F5F7]/95 backdrop-blur py-1.5 -mx-2 px-2">
-               <span className={`text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-sm ${group.color}`}>
+            <div className="sticky top-0 z-10 bg-[#F4F5F7]/80 backdrop-blur-xl py-2 -mx-2 px-4 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.05)] border-b border-black/[0.03] border-t">
+               <span className={`text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full ${group.color}`}>
                  {group.label} ({group.items.length})
                </span>
             </div>
@@ -200,12 +200,12 @@ export function LeadDataGrid({
                   <div
                     key={lead.id}
                     onClick={() => onSelectLead(lead)}
-                    className={`p-4 rounded-2xl border transition-all duration-300 flex flex-col gap-3 relative overflow-hidden cursor-pointer ${isSelected ? 'bg-blue-50/40 border-blue-300 ring-2 ring-blue-400/20 shadow-md' : 'bg-white border-zinc-200/80 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] active:scale-[0.98]'}`}
+                    className={`p-5 rounded-[2rem] border transition-all duration-500 flex flex-col gap-3 relative overflow-hidden cursor-pointer ${isSelected ? 'bg-white border-blue-400/50 shadow-[0_0_0_2px_rgba(59,130,246,0.2)]' : 'bg-white/80 backdrop-blur-sm border-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] active:scale-[0.97]'}`}
                   >
                     <div className="flex justify-between items-start gap-3">
                       <div className="flex flex-col min-w-0">
-                        <span className={`font-extrabold text-[16px] truncate tracking-tight transition-colors ${isSelected ? 'text-blue-900' : 'text-zinc-900'}`}>
-                          {lead.name || <span className="text-zinc-400 italic font-normal">Без имени</span>}
+                        <span className={`font-medium text-[17px] truncate tracking-tight transition-colors ${isSelected ? 'text-blue-600' : 'text-zinc-900'}`}>
+                          {lead.name || <span className="text-zinc-400 italic">Без имени</span>}
                         </span>
                         <span className="font-mono text-zinc-500/80 mt-0.5 text-[13px]">{lead.phone || "Нет номера"}</span>
                       </div>
@@ -215,8 +215,8 @@ export function LeadDataGrid({
                     </div>
 
                     {(lead.car || lead.notes) && (
-                      <div className="relative bg-zinc-50/50 backdrop-blur-sm border border-zinc-100 rounded-xl p-3 text-sm flex flex-col gap-2 shadow-inner">
-                        {lead.car && <div className="font-semibold text-zinc-800 truncate"><span className="text-zinc-400 font-medium mr-1.5">Авто:</span>{lead.car}</div>}
+                      <div className="relative bg-[#F4F5F7]/50 border border-black/[0.03] rounded-2xl p-3.5 text-sm flex flex-col gap-2">
+                        {lead.car && <div className="font-medium text-zinc-800 truncate"><span className="text-zinc-400 font-light mr-1.5">Авто:</span>{lead.car}</div>}
                         {lead.notes && <div className="text-zinc-600 line-clamp-3 leading-relaxed mt-0.5 text-[13px]">{lead.notes}</div>}
                       </div>
                     )}
@@ -227,7 +227,7 @@ export function LeadDataGrid({
                         <span className="text-[11px] text-zinc-400 font-medium tracking-wide">{formatSmartDate(lead.createdAt)}</span>
                       </div>
                       {lead.nextActionDate && lead.status !== 'new' && (
-                        <div className="flex items-center gap-1.5 text-orange-700 font-bold bg-gradient-to-r from-orange-100/80 to-orange-50/80 px-3 py-1.5 rounded-lg border border-orange-200 shadow-sm">
+                        <div className="flex items-center gap-1.5 text-orange-600 font-medium bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100/50 shadow-sm">
                           <Clock className="w-3.5 h-3.5" />
                           <span className="text-xs whitespace-nowrap">{formatSmartDate(lead.nextActionDate)}</span>
                         </div>

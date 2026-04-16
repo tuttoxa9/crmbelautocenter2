@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body
-        className={`${inter.variable} font-sans antialiased bg-gray-50 text-gray-900`}
+        className={`${inter.variable} font-sans bg-[#F4F5F7] text-zinc-900 transition-colors duration-500`}
       >
         <AuthProvider>
           {children}
