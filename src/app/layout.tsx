@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-const inter = Inter({
-  variable: "--font-inter",
+const geist = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin", "cyrillic"],
   display: 'swap',
+  weight: ['300', '400', '500', '600'],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body
-        className={`${inter.variable} font-sans antialiased bg-gray-50 text-gray-900`}
+        className={`${geist.variable} font-sans antialiased bg-[#F4F5F7] text-zinc-800`}
       >
         <AuthProvider>
           {children}

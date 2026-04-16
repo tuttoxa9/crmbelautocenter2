@@ -38,17 +38,17 @@ export function SourceDropdown({ value, onChange, className }: SourceDropdownPro
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full h-10 px-3 py-2 bg-white border border-zinc-200 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-zinc-900 transition-all text-sm font-medium text-zinc-900 hover:bg-zinc-50"
+        className="flex items-center justify-between w-full h-9 px-3 py-1 bg-transparent border border-border/60 rounded-[8px] shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/20 transition-all duration-300 ease-out text-[14px] font-medium text-zinc-900 hover:border-border"
       >
         <span className="flex items-center gap-2">
-          <SourceIcon source={value} className="w-4 h-4 text-zinc-500" />
+          <SourceIcon source={value} className="w-4 h-4 text-zinc-500 stroke-[1.5]" />
           {getSourceLabel(value)}
         </span>
-        <ChevronDown className={cn("w-4 h-4 text-zinc-400 transition-transform duration-200", isOpen && "rotate-180")} />
+        <ChevronDown className={cn("w-4 h-4 text-zinc-400 transition-transform duration-300 ease-out stroke-[1.5]", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white/95 backdrop-blur-xl border border-zinc-200 rounded-md shadow-xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 py-1">
+        <div className="absolute z-50 w-full mt-1.5 bg-white/95 backdrop-blur-xl border border-border/40 rounded-[12px] shadow-lg max-h-60 overflow-y-auto animate-in fade-in zoom-in-[0.98] duration-300 ease-out py-1.5 custom-scrollbar">
           {SOURCES.map((source) => (
             <button
               key={source}
@@ -57,13 +57,13 @@ export function SourceDropdown({ value, onChange, className }: SourceDropdownPro
                 onChange(source);
                 setIsOpen(false);
               }}
-              className="flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-zinc-100 text-zinc-800"
+              className="flex items-center justify-between w-full px-3 py-2.5 text-[14px] text-left transition-all duration-300 ease-out hover:bg-zinc-50/80 text-zinc-700 hover:text-zinc-900"
             >
               <span className="flex items-center gap-2">
-                <SourceIcon source={source} className="w-4 h-4 text-zinc-500" />
+                <SourceIcon source={source} className="w-4 h-4 text-zinc-500 stroke-[1.5]" />
                 {getSourceLabel(source)}
               </span>
-              {value === source && <Check className="w-4 h-4 text-zinc-900" />}
+              {value === source && <Check className="w-4 h-4 text-zinc-900 stroke-[1.5] animate-in zoom-in-50 duration-300 ease-out" />}
             </button>
           ))}
         </div>

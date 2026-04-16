@@ -104,12 +104,12 @@ export function LeadDataGrid({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#F4F5F7] md:bg-white rounded-none md:rounded-md border-0 md:border border-zinc-200 space-y-4 md:space-y-0 p-2 md:p-0">
+    <div className="flex-1 overflow-y-auto overflow-x-auto md:overflow-x-hidden custom-scrollbar bg-[#F4F5F7] md:bg-white rounded-[12px] border border-border/40 space-y-4 md:space-y-0 p-2 md:p-0 shadow-sm md:m-4 m-2">
       
-      {/* ====== DESKTOP DATA GRID (META STYLE) ====== */}
-      <div className="hidden md:flex flex-col w-full text-[13px] bg-white">
+      {/* ====== DATA GRID (Responsive horizontal scroll for mobile) ====== */}
+      <div className="flex flex-col w-[800px] md:w-full text-[13px] bg-white rounded-[10px] md:rounded-none">
         {/* Header */}
-        <div className="flex text-[10px] text-zinc-400 uppercase bg-white/95 backdrop-blur-sm sticky top-0 z-10 font-bold tracking-widest border-b border-zinc-200/50 py-3 px-2">
+        <div className="flex text-[11px] text-zinc-500 uppercase bg-white/95 backdrop-blur-sm sticky top-0 z-10 font-semibold tracking-wider border-b border-border/60 py-3 px-2">
           <div className="w-12 text-center">Ист.</div>
           <div className="w-48 px-2">Имя</div>
           <div className="w-36 px-2">Телефон</div>

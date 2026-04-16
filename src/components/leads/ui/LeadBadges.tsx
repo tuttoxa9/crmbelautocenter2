@@ -26,10 +26,10 @@ export const StatusBadge = ({ status, className }: { status: LeadStatus, classNa
   const dotColorClass = getStatusDotColor(status);
   return (
     <span className={cn(
-      "inline-flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 bg-zinc-100 border border-zinc-200/60 rounded-md md:rounded-full text-zinc-700 font-medium text-[10px] md:text-[11px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-colors hover:bg-zinc-200/60",
+      "inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-50 border border-border/60 rounded-[6px] text-zinc-700 font-medium text-[11px] transition-colors",
       className
     )}>
-      <span className={cn("w-1.5 h-1.5 rounded-full shadow-sm", dotColorClass)} />
+      <span className={cn("w-1.5 h-1.5 rounded-full", dotColorClass)} />
       {getStatusLabel(status)}
     </span>
   );
