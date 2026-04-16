@@ -29,12 +29,12 @@ export function Sidebar() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-100 w-64 flex-shrink-0 hidden md:flex">
-      <div className="p-6 border-b border-zinc-800">
-        <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
+    <div className="flex h-screen flex-col bg-[#F9FAFB] border-r border-zinc-200/60 text-zinc-900 w-[260px] flex-shrink-0 hidden md:flex">
+      <div className="px-6 py-8">
+        <h1 className="text-[15px] font-medium tracking-tight text-zinc-800">Белавтоцентр CRM</h1>
       </div>
       
-      <nav className="flex-1 px-3 py-6 space-y-1">
+      <nav className="flex-1 px-4 py-2 space-y-1">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
@@ -42,24 +42,24 @@ export function Sidebar() {
               key={item.name}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100"
+                "flex items-center gap-3 rounded-[8px] px-3 py-2 text-[14px] font-medium transition-all duration-300 ease-out",
+                isActive ? "bg-white text-zinc-900 shadow-sm border border-zinc-200/50" : "text-zinc-500 hover:bg-zinc-100/60 hover:text-zinc-900 border border-transparent"
               )}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className="h-4 w-4 stroke-[1.5]" />
               {item.name}
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-4 border-t border-zinc-800">
+      <div className="p-4 mt-auto mb-2 mx-4 bg-zinc-100/50 rounded-[10px] border border-zinc-200/50">
         <div className="flex items-center justify-between">
-          <div className="text-xs font-medium text-zinc-400 truncate pr-2">
+          <div className="text-[13px] font-medium text-zinc-600 truncate pr-2">
             {user?.email || "Пользователь"}
           </div>
-          <Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800" title="Выйти">
-            <LogOut className="h-4 w-4" />
+          <Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 text-zinc-400 hover:text-zinc-900 hover:bg-white rounded-[6px]" title="Выйти">
+            <LogOut className="h-4 w-4 stroke-[1.5]" />
           </Button>
         </div>
       </div>
