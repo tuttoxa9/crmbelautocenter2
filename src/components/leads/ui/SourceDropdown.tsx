@@ -34,11 +34,11 @@ export function SourceDropdown({ value, onChange, className }: SourceDropdownPro
   }, [isOpen]);
 
   return (
-    <div className={cn("relative w-full", className)} ref={dropdownRef}>
+    <div className={cn("relative", className)} ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full h-10 px-3 py-2 bg-white border border-zinc-200 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-zinc-900 transition-all text-sm font-medium text-zinc-900 hover:bg-zinc-50"
+        className="flex items-center justify-between gap-1.5 w-full h-8 md:h-10 px-2.5 md:px-3 py-1.5 md:py-2 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-zinc-900 transition-all text-xs md:text-sm font-medium text-zinc-700 hover:text-zinc-900"
       >
         <span className="flex items-center gap-2">
           <SourceIcon source={value} className="w-4 h-4 text-zinc-500" />

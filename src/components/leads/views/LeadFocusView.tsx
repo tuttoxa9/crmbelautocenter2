@@ -1,14 +1,15 @@
 "use client";
 
-import { Lead } from "@/lib/types";
+import { Lead, LeadSource } from "@/lib/types";
 import { format, isValid } from "date-fns";
 import { ru } from "date-fns/locale";
-import { Copy, CheckCircle2, Phone, Trash2, Clock, MapPin, Smartphone, FileText, LayoutList, ChevronLeft } from "lucide-react";
+import { Copy, CheckCircle2, Phone, Trash2, Clock, MapPin, Smartphone, FileText, ChevronLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { formatPhone } from "@/lib/formatPhone";
 import { getSourceLabel, getStatusLabel } from "@/lib/displayUtils";
-import { SourceIcon, StatusBadge } from "../ui/LeadBadges";
+import { StatusBadge } from "../ui/LeadBadges";
 import { StatusDropdown } from "../ui/StatusDropdown";
+import { SourceDropdown } from "../ui/SourceDropdown";
 import { updateLeadStatus, updateLeadDetails, deleteLead } from "@/lib/leadService";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,8 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
   const { user } = useAuth();
 
   const [formData, setFormData] = useState({
-    name: "", phone: "", car: "", notes: "", status: "new" as import("@/lib/types").LeadStatus, nextActionDate: null as number | null
+    name: "", phone: "", car: "", notes: "", status: "new" as import("@/lib/types").LeadStatus, nextActionDate: null as number | null,
+    source: "call" as LeadSource
   });
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -33,7 +35,8 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
     if (lead) {
       setFormData({
         name: lead.name || "", phone: lead.phone || "", car: lead.car || "",
-        notes: lead.notes || "", status: lead.status, nextActionDate: lead.nextActionDate || null
+        notes: lead.notes || "", status: lead.status, nextActionDate: lead.nextActionDate || null,
+        source: lead.source
       });
     }
   }, [lead]);
@@ -43,7 +46,8 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
   const hasChanges =
     formData.name !== lead.name || formData.phone !== lead.phone ||
     formData.car !== lead.car || formData.notes !== lead.notes ||
-    formData.status !== lead.status || formData.nextActionDate !== lead.nextActionDate;
+    formData.status !== lead.status || formData.nextActionDate !== lead.nextActionDate ||
+    formData.source !== lead.source;
 
   // Per user request, setting the next action date is mandatory
   const terminalStatuses = ["success", "refusal", "bank_refusal", "spam", "new"];
@@ -64,6 +68,7 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
       }
       await updateLeadDetails(lead.id, {
         name: formData.name, phone: formData.phone, car: formData.car, notes: formData.notes,
+        source: formData.source,
         ...(formData.status === lead.status ? { nextActionDate: formData.nextActionDate } : {})
       });
     } catch (error) {
@@ -110,10 +115,12 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
               <span className="text-[15px] font-medium md:text-sm">Назад</span>
             </Button>
             <div className="w-px h-4 bg-zinc-200 hidden md:block" />
-            <div className="flex items-center gap-1.5 text-[10px] md:text-xs font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded">
-              <SourceIcon source={lead.source} className="w-3 md:w-3.5 h-3 md:h-3.5" /> <span className="hidden sm:inline">{getSourceLabel(lead.source)}</span>
-            </div>
-            <span className="text-[10px] md:text-xs text-zinc-400 font-mono">ID: {lead.id?.slice(-6)}</span>
+            <SourceDropdown
+              value={formData.source}
+              onChange={(source) => setFormData(prev => ({...prev, source}))}
+              className="w-auto min-w-[120px] md:min-w-[140px]"
+            />
+            <span className="text-[10px] md:text-xs text-zinc-400 font-mono hidden sm:inline">ID: {lead.id?.slice(-6)}</span>
           </div>
 
           <Button onClick={handleDelete} variant="ghost" size="icon-sm" className="text-zinc-400 hover:text-red-600" title="Удалить лида">
@@ -146,7 +153,8 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
                 <input
                   value={formData.phone}
                   onChange={e => setFormData(prev => ({...prev, phone: formatPhone(e.target.value)}))}
-                  className="font-mono text-base md:text-lg font-bold bg-transparent outline-none w-32 md:w-40 text-zinc-800"
+                  className="font-mono text-base md:text-lg font-bold bg-transparent outline-none text-zinc-800 min-w-0"
+                  style={{ width: `${Math.max((formData.phone?.length || 1) + 1, 10)}ch` }}
                 />
                 {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-zinc-300 opacity-0 group-hover:opacity-100" />}
               </div>
