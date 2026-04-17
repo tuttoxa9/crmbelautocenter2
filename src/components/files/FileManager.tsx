@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload } from "lucide-react";
+import { Upload, HardDrive } from "lucide-react";
 
 import { useFileManager, S3Object } from "./useFileManager";
 import { FileToolbar } from "./FileToolbar";
@@ -47,9 +47,7 @@ export function FileManager() {
   const closeLightbox = () => setLightboxIndex(null);
   const prevImage = () => setLightboxIndex((i) => (i !== null && i > 0 ? i - 1 : i));
   const nextImage = () =>
-    setLightboxIndex((i) =>
-      i !== null && i < fm.images.length - 1 ? i + 1 : i
-    );
+    setLightboxIndex((i) => (i !== null && i < fm.images.length - 1 ? i + 1 : i));
 
   // ── Delete ──────────────────────────────────────────────────────────────────
   const handleDeleteSingle = (item: S3Object) => {
@@ -58,67 +56,64 @@ export function FileManager() {
     setSingleDeleteTarget(item);
     setShowDeleteConfirm(true);
   };
-
   const handleDeleteSelected = () => setShowDeleteConfirm(true);
-
   const handleConfirmDelete = async () => {
     setShowDeleteConfirm(false);
     setSingleDeleteTarget(null);
     await fm.handleDeleteSelected();
   };
-
   const handleCancelDelete = () => {
     setShowDeleteConfirm(false);
-    if (singleDeleteTarget) {
-      fm.clearSelection();
-      setSingleDeleteTarget(null);
-    }
+    if (singleDeleteTarget) { fm.clearSelection(); setSingleDeleteTarget(null); }
   };
 
-  // ── Copy URL ────────────────────────────────────────────────────────────────
-  const copyUrl = (url: string) => navigator.clipboard.writeText(url);
-
   // ── Upload helpers ──────────────────────────────────────────────────────────
+  const copyUrl = (url: string) => navigator.clipboard.writeText(url);
   const handleManualUpload = async (files: File[]) => {
     setUploadSheetOpen(true);
     await fm.stageFiles(files);
   };
-
   const handleUploadAll = async () => {
     await fm.handleUploadAll();
     if (fm.allSuccess) {
-      setTimeout(() => {
-        setUploadSheetOpen(false);
-        fm.clearStagedFiles();
-      }, 1500);
+      setTimeout(() => { setUploadSheetOpen(false); fm.clearStagedFiles(); }, 1500);
     }
   };
 
   const deleteCount = singleDeleteTarget ? 1 : fm.selectedPaths.size;
 
   return (
+    // Root: fills the black bg-black parent, sets its own dark surface
     <div
-      className="flex flex-col h-full p-3 md:p-5 gap-3 relative"
+      className="flex flex-col h-full bg-[#111113] relative overflow-hidden"
       {...getRootProps()}
     >
       <input {...getInputProps()} />
 
-      {/* ── Drag overlay ──────────────────────────────────────────────────── */}
+      {/* ── Drag overlay ─────────────────────────────────────────────────── */}
       {isDragActive && (
-        <div className="absolute inset-0 z-[60] bg-indigo-50/90 border-4 border-dashed border-indigo-400 rounded-2xl flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center mb-4 animate-bounce">
-            <Upload className="w-8 h-8 text-indigo-600" />
+        <div className="absolute inset-0 z-[60] bg-indigo-950/80 border-2 border-dashed border-indigo-400 rounded-none flex flex-col items-center justify-center backdrop-blur-sm pointer-events-none">
+          <div className="w-20 h-20 rounded-3xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center mb-5">
+            <Upload className="w-10 h-10 text-indigo-300 animate-bounce" />
           </div>
-          <p className="text-xl font-bold text-indigo-700">Отпустите файлы</p>
-          <p className="text-sm text-indigo-500 mt-1">Они попадут в менеджер загрузок</p>
+          <p className="text-2xl font-bold text-white">Отпустите файлы</p>
+          <p className="text-sm text-indigo-300 mt-2">Они попадут в менеджер загрузок</p>
         </div>
       )}
 
-      {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="flex-none">
-        <h1 className="text-xl md:text-2xl font-extrabold text-zinc-900 tracking-tight mb-3">
-          Файлы
-        </h1>
+      {/* ── Page header ──────────────────────────────────────────────────── */}
+      <div className="flex-none px-5 pt-5 pb-4 border-b border-white/[0.06]">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/15 flex items-center justify-center">
+            <HardDrive className="w-4 h-4 text-amber-400" />
+          </div>
+          <h1 className="text-xl font-bold text-white tracking-tight">Файлы</h1>
+        </div>
+        <p className="text-xs text-zinc-500 ml-11">Облачное хранилище · S3</p>
+      </div>
+
+      {/* ── Toolbar ──────────────────────────────────────────────────────── */}
+      <div className="flex-none px-4 pt-3 pb-2">
         <FileToolbar
           breadcrumbs={fm.breadcrumbs}
           currentPrefix={fm.currentPrefix}
@@ -133,44 +128,39 @@ export function FileManager() {
         />
       </div>
 
-      {/* ── Content ───────────────────────────────────────────────────────── */}
-      <div className="flex-1 bg-white/80 backdrop-blur-sm rounded-2xl border border-zinc-200/70 shadow-sm overflow-hidden flex flex-col min-h-0">
-        <div className="flex-1 overflow-y-auto p-3 md:p-4" style={{ WebkitOverflowScrolling: "touch" }}>
-          {fm.loading ? (
-            <FileSkeletons count={12} />
-          ) : fm.error ? (
-            <ErrorState
-              message={fm.error}
-              onRetry={() => fm.fetchItems(fm.currentPrefix)}
-            />
-          ) : fm.displayedItems.length === 0 ? (
-            <EmptyState
-              onDrop={handleManualUpload}
-              isSubfolder={fm.currentPrefix !== ""}
-            />
-          ) : (
-            <FileGrid
-              items={fm.displayedItems}
-              currentPrefix={fm.currentPrefix}
-              selectedPaths={fm.selectedPaths}
-              hiddenFolders={fm.hiddenFolders}
-              onNavigateUp={fm.navigateUp}
-              onFolderClick={fm.navigateToFolder}
-              onToggleSelect={fm.toggleSelection}
-              onOpenLightbox={openLightbox}
-              onDownload={fm.handleDownloadFile}
-              onCopyUrl={copyUrl}
-              onToggleVisibility={fm.toggleFolderVisibility}
-              onRename={setRenameTarget}
-              onDelete={handleDeleteSingle}
-              getPublicUrl={fm.getPublicUrl}
-              formatSize={fm.formatSize}
-            />
-          )}
-        </div>
+      {/* ── File grid area ───────────────────────────────────────────────── */}
+      <div
+        className="flex-1 overflow-y-auto px-4 pb-6 min-h-0"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
+        {fm.loading ? (
+          <FileSkeletons count={12} />
+        ) : fm.error ? (
+          <ErrorState message={fm.error} onRetry={() => fm.fetchItems(fm.currentPrefix)} />
+        ) : fm.displayedItems.length === 0 ? (
+          <EmptyState onDrop={handleManualUpload} isSubfolder={fm.currentPrefix !== ""} />
+        ) : (
+          <FileGrid
+            items={fm.displayedItems}
+            currentPrefix={fm.currentPrefix}
+            selectedPaths={fm.selectedPaths}
+            hiddenFolders={fm.hiddenFolders}
+            onNavigateUp={fm.navigateUp}
+            onFolderClick={fm.navigateToFolder}
+            onToggleSelect={fm.toggleSelection}
+            onOpenLightbox={openLightbox}
+            onDownload={fm.handleDownloadFile}
+            onCopyUrl={copyUrl}
+            onToggleVisibility={fm.toggleFolderVisibility}
+            onRename={setRenameTarget}
+            onDelete={handleDeleteSingle}
+            getPublicUrl={fm.getPublicUrl}
+            formatSize={fm.formatSize}
+          />
+        )}
       </div>
 
-      {/* ── Floating Selection Bar ─────────────────────────────────────────── */}
+      {/* ── Floating Selection Bar ───────────────────────────────────────── */}
       {fm.selectedPaths.size > 0 && (
         <SelectionBar
           count={fm.selectedPaths.size}
@@ -181,7 +171,7 @@ export function FileManager() {
         />
       )}
 
-      {/* ── Upload Sheet ───────────────────────────────────────────────────── */}
+      {/* ── Overlays & Dialogs ───────────────────────────────────────────── */}
       <UploadSheet
         isOpen={uploadSheetOpen}
         onClose={() => setUploadSheetOpen(false)}
@@ -196,7 +186,6 @@ export function FileManager() {
         formatSize={fm.formatSize}
       />
 
-      {/* ── Lightbox ───────────────────────────────────────────────────────── */}
       {lightboxIndex !== null && (
         <ImageLightbox
           images={fm.images}
@@ -210,35 +199,21 @@ export function FileManager() {
         />
       )}
 
-      {/* ── Delete Confirm ─────────────────────────────────────────────────── */}
       {showDeleteConfirm && (
-        <DeleteConfirmDialog
-          count={deleteCount}
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
-        />
+        <DeleteConfirmDialog count={deleteCount} onConfirm={handleConfirmDelete} onCancel={handleCancelDelete} />
       )}
 
-      {/* ── Create Folder ──────────────────────────────────────────────────── */}
       {showCreateFolder && (
         <CreateFolderDialog
-          onConfirm={async (name) => {
-            setShowCreateFolder(false);
-            await fm.handleCreateFolder(name);
-          }}
+          onConfirm={async (name) => { setShowCreateFolder(false); await fm.handleCreateFolder(name); }}
           onCancel={() => setShowCreateFolder(false)}
         />
       )}
 
-      {/* ── Rename ─────────────────────────────────────────────────────────── */}
       {renameTarget && (
         <RenameDialog
           item={renameTarget}
-          onConfirm={async (newName) => {
-            const target = renameTarget;
-            setRenameTarget(null);
-            await fm.handleRename(target, newName);
-          }}
+          onConfirm={async (newName) => { const t = renameTarget; setRenameTarget(null); await fm.handleRename(t, newName); }}
           onCancel={() => setRenameTarget(null)}
         />
       )}

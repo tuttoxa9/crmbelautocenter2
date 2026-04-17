@@ -34,12 +34,12 @@ export function FileGrid({
       {currentPrefix !== "" && (
         <div
           onClick={onNavigateUp}
-          className="group flex flex-col items-center p-3 rounded-2xl border border-zinc-200/70 bg-white hover:border-zinc-300 hover:bg-zinc-50 hover:shadow-md transition-all cursor-pointer active:scale-[0.96] select-none"
+          className="group flex flex-col items-center p-3 rounded-2xl border border-white/[0.07] bg-white/[0.04] hover:border-white/[0.14] hover:bg-white/[0.08] transition-all cursor-pointer active:scale-[0.95] select-none"
         >
-          <div className="w-full aspect-square flex items-center justify-center mb-2 rounded-xl bg-zinc-50">
-            <CornerLeftUp className="w-8 h-8 text-zinc-400 group-hover:text-zinc-600 transition-colors" />
+          <div className="w-full aspect-square flex items-center justify-center mb-2 rounded-xl bg-white/[0.04]">
+            <CornerLeftUp className="w-8 h-8 text-zinc-600 group-hover:text-zinc-300 transition-colors" />
           </div>
-          <span className="text-xs font-medium text-zinc-500 group-hover:text-zinc-700">..</span>
+          <span className="text-xs font-medium text-zinc-600 group-hover:text-zinc-400">..</span>
         </div>
       )}
 
