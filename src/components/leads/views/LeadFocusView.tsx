@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { LEAD_STATUSES } from "@/lib/types";
+import { CarPreview } from "./CarPreview";
 
 interface LeadFocusViewProps {
   lead: Lead | null;
@@ -253,18 +254,25 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
             <p className="text-xs text-zinc-400 text-center mt-10">Нет истории</p>
           )}
 
-          {/* Meta Payload */}
-          {lead.payload && Object.keys(lead.payload).filter(k => !["name", "phone", "car", "source", "notes"].includes(k)).length > 0 && (
-            <div className="mt-8 pt-6 border-t border-zinc-200/60">
-              <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2 mb-3">
-                <Smartphone className="w-3.5 h-3.5" /> Raw Data
-              </h3>
-              <pre className="text-[10px] font-mono text-zinc-500 bg-white p-3 rounded-md border border-zinc-200 overflow-x-auto">
-                {JSON.stringify(Object.fromEntries(
-                  Object.entries(lead.payload).filter(([k]) => !["name", "phone", "car", "source", "notes"].includes(k))
-                ), null, 2)}
-              </pre>
-            </div>
+          {/* Meta Payload & Car Preview */}
+          {(lead.payload?.carId || (lead.notes && lead.notes.includes("belautocenter.by/catalog/"))) ? (
+            <CarPreview 
+              carId={lead.payload?.carId} 
+              url={lead.notes?.match(/https:\/\/belautocenter\.by\/catalog\/[a-zA-Z0-9_-]+/)?.[0]} 
+            />
+          ) : (
+            lead.payload && Object.keys(lead.payload).filter(k => !["name", "phone", "car", "source", "notes"].includes(k)).length > 0 && (
+              <div className="mt-8 pt-6 border-t border-zinc-200/60">
+                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2 mb-3">
+                  <Smartphone className="w-3.5 h-3.5" /> Raw Data
+                </h3>
+                <pre className="text-[10px] font-mono text-zinc-500 bg-white p-3 rounded-md border border-zinc-200 overflow-x-auto">
+                  {JSON.stringify(Object.fromEntries(
+                    Object.entries(lead.payload).filter(([k]) => !["name", "phone", "car", "source", "notes"].includes(k))
+                  ), null, 2)}
+                </pre>
+              </div>
+            )
           )}
         </div>
 
