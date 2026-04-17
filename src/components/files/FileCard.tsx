@@ -138,7 +138,7 @@ export function FolderCard({
 }: FolderCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showMobileSheet, setShowMobileSheet] = useState(false);
-  const longPressTimer = useRef<NodeJS.Timeout>();
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const actions: ContextAction[] = [
     { label: isHidden ? "Показывать" : "Скрыть", icon: isHidden ? Eye : EyeOff, onClick: onToggleVisibility },
@@ -251,7 +251,7 @@ export function FileCard({
   const [showMenu, setShowMenu] = useState(false);
   const [showMobileSheet, setShowMobileSheet] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const longPressTimer = useRef<NodeJS.Timeout>();
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const img = isImage(item.name);
   const { Icon, color, bg } = getFileIcon(item.name);
 
