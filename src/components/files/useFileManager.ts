@@ -90,6 +90,13 @@ export function useFileManager() {
 
   const breadcrumbs = currentPrefix.split("/").filter(Boolean);
 
+  // ─── Displayed items (computed early so selection can use it) ─────────────────
+  const displayedItems = items.filter((item) => {
+    if (item.type === "folder" && !showHidden && hiddenFolders.includes(item.path)) return false;
+    if (searchQuery) return item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return true;
+  });
+
   // ─── Selection ────────────────────────────────────────────────────────────────
   const toggleSelection = useCallback((path: string) => {
     setSelectedPaths((prev) => {
@@ -101,9 +108,11 @@ export function useFileManager() {
 
   const toggleSelectAll = useCallback(() => {
     setSelectedPaths((prev) =>
-      prev.size === items.length ? new Set() : new Set(items.map((i) => i.path))
+      prev.size === displayedItems.length
+        ? new Set()
+        : new Set(displayedItems.map((i) => i.path))
     );
-  }, [items]);
+  }, [displayedItems]);
 
   const clearSelection = () => setSelectedPaths(new Set());
 
@@ -338,11 +347,6 @@ export function useFileManager() {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
-  const displayedItems = items.filter((item) => {
-    if (item.type === "folder" && !showHidden && hiddenFolders.includes(item.path)) return false;
-    if (searchQuery) return item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return true;
-  });
 
   const images = displayedItems.filter(
     (i) => i.type === "file" && /\.(jpe?g|png|gif|webp|svg)$/i.test(i.name)
