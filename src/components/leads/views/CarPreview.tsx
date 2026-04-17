@@ -25,6 +25,11 @@ export function CarPreview({ carId, url }: CarPreviewProps) {
         return;
       }
       try {
+        if (!db) {
+          console.error("Firestore database is null");
+          setError(true);
+          return;
+        }
         const docRef = doc(db, "cars", extractedId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
