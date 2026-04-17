@@ -257,7 +257,7 @@ export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
           {/* Meta Payload & Car Preview */}
           {(lead.payload?.carId || (lead.notes && lead.notes.includes("belautocenter.by/catalog/"))) ? (
             <CarPreview 
-              carId={lead.payload?.carId} 
+              carId={lead.payload?.carId as string | undefined} 
               url={lead.notes?.match(/https:\/\/belautocenter\.by\/catalog\/[a-zA-Z0-9_-]+/)?.[0]} 
             />
           ) : (
