@@ -37,7 +37,7 @@ export function useFileManager() {
   const [stagedFiles, setStagedFiles] = useState<StagedFile[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // ─── Settings ────────────────────────────────────────────────────────────────
   const fetchSettings = useCallback(async () => {
