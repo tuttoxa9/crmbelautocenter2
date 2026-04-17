@@ -26,6 +26,8 @@ export async function POST(request: Request) {
         detectedSource = "tiktok";
       } else if (payloadString.includes("site") || payloadString.includes("сайт") || payloadString.includes("web")) {
         detectedSource = "site";
+      } else if (payloadString.includes("kufar") || payloadString.includes("куфар")) {
+        detectedSource = "kufar";
       }
     }
 
@@ -57,7 +59,7 @@ export async function POST(request: Request) {
           status,
           changedAt: now,
           changedBy: "API Webhook",
-          comment: `${detectedSource === 'instagram' ? 'Instagram' : detectedSource === 'tiktok' ? 'TikTok' : detectedSource === 'site' ? 'Сайт' : detectedSource === 'telegram' ? 'Telegram' : 'Zapier'} Лид`
+          comment: `${detectedSource === 'instagram' ? 'Instagram' : detectedSource === 'tiktok' ? 'TikTok' : detectedSource === 'site' ? 'Сайт' : detectedSource === 'telegram' ? 'Telegram' : detectedSource === 'kufar' ? 'Куфар' : 'Zapier'} Лид`
         }
       ],
       payload: data

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { LeadStatus } from "@/lib/types";
 import { InstagramIcon, TikTokIcon, TelegramIcon } from "./Icons";
 import { getStatusLabel } from "@/lib/displayUtils";
-import { Globe, Search, PhoneCall, User } from "lucide-react";
+import { Globe, Search, PhoneCall, User, ShoppingBag } from "lucide-react";
 
 export const getStatusDotColor = (status: LeadStatus) => {
   const config: Record<LeadStatus, string> = {
@@ -44,6 +44,7 @@ export const SourceIcon = ({ source, className }: { source: string, className?: 
     case 'site': return <Globe className={cn(iconClass, "text-blue-500")} />;
     case 'call': return <PhoneCall className={cn(iconClass, "text-emerald-600")} />;
     case 'walk_in': return <User className={cn(iconClass, "text-amber-600")} />;
+    case 'kufar': return <ShoppingBag className={cn(iconClass, "text-emerald-500")} />;
     default: return <Search className={cn(iconClass, "text-zinc-400")} />;
   }
 };

@@ -14,7 +14,7 @@ interface SourceDropdownProps {
 }
 
 const SOURCES: LeadSource[] = [
-  "call", "walk_in", "site", "instagram", "tiktok", "telegram"
+  "call", "walk_in", "site", "instagram", "tiktok", "telegram", "kufar"
 ];
 
 export function SourceDropdown({ value, onChange, className }: SourceDropdownProps) {
