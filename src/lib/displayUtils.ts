@@ -41,6 +41,7 @@ export const getSourceLabel = (source: string) => {
     zapier: "Интеграция",
     telegram: "Телеграм",
     walk_in: "С улицы",
+    kufar: "Куфар",
   };
   return map[source] || "Неизвестно";
 };

@@ -30,7 +30,8 @@ export type LeadSource =
   | "call"
   | "zapier"
   | "telegram"
-  | "walk_in"; // С улицы
+  | "walk_in" // С улицы
+  | "kufar";
 
 export interface StatusHistoryEntry {
   status: LeadStatus;
