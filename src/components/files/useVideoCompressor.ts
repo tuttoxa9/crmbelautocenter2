@@ -107,20 +107,13 @@ export function useVideoCompressor(): UseVideoCompressorResult {
       conversionRef.current = conversion;
       
       let compressionPercent = 0;
-      conversion.onprogress = (e: any) => {
-        // e might have ratio/percentage
-        if (e && typeof e.progress === 'number') {
-          compressionPercent = Math.min(100, Math.round(e.progress * 100));
-          setCompressionProgress(compressionPercent);
-        } else if (e === undefined) {
-          // hacky simulate progress if no progress event natively
-          compressionPercent = Math.min(99, compressionPercent + 5);
-          setCompressionProgress(compressionPercent);
-        }
+      conversion.onProgress = (progress: number) => {
+        compressionPercent = Math.min(100, Math.round(progress * 100));
+        setCompressionProgress(compressionPercent);
       };
 
       // Ensure we hit 100
-      await conversion.start();
+      await conversion.execute();
       setCompressionProgress(100);
 
       // We get it from target.buffer
