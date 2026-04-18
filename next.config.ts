@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
+  transpilePackages: ["mediabunny"],
 };
 
 export default nextConfig;

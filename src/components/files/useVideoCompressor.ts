@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Conversion, Input, Output, MP4, BlobSource } from 'mediabunny'; // Assuming standard MB API
+import { Conversion, Input, Output, BufferTarget, BlobSource, Mp4OutputFormat, ALL_FORMATS } from 'mediabunny';
 import { auth } from '@/lib/firebase';
 
 export type VideoCompressorStatus = 'idle' | 'compressing' | 'uploading' | 'success' | 'error' | 'no_support';
@@ -74,7 +74,7 @@ export function useVideoCompressor(): UseVideoCompressorResult {
 
       // According to user: "new MB.Output({ ... })"
       // Also, progress can be tracked. Example snippet for typical mediabunny:
-      const input = new Input({ source: new BlobSource(file) } as any) || new Input(file as any);
+      const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS } as any);
       
       const outputFormat = {
          codec: 'avc1.4d0034',
@@ -82,7 +82,8 @@ export function useVideoCompressor(): UseVideoCompressorResult {
       };
 
       const outputOptions: any = {
-        format: MP4 as any,
+        target: new BufferTarget(),
+        format: new Mp4OutputFormat(),
         video: outputFormat,
         audio: {
           codec: 'mp4a.40.2',
@@ -92,7 +93,17 @@ export function useVideoCompressor(): UseVideoCompressorResult {
       
       const output = new Output(outputOptions);
       
-      const conversion = 'init' in Conversion ? await (Conversion as any).init(input, output) : new (Conversion as any)(input, output);
+      const conversionOptions = {
+        input,
+        output,
+        video: outputFormat,
+        audio: {
+          codec: 'mp4a.40.2',
+          bitrate: 128_000, 
+        }
+      };
+
+      const conversion = 'init' in Conversion ? await (Conversion as any).init(conversionOptions) : new (Conversion as any)(conversionOptions);
       conversionRef.current = conversion;
       
       let compressionPercent = 0;
@@ -109,11 +120,11 @@ export function useVideoCompressor(): UseVideoCompressorResult {
       };
 
       // Ensure we hit 100
-      const outputBuffer = await conversion.start();
+      await conversion.start();
       setCompressionProgress(100);
 
-      // Depending on MB API it might return a Buffer, ArrayBuffer, Blob etc.
-      // We assume it's a Buffer/Uint8Array/ArrayBuffer or Blob.
+      // We get it from target.buffer
+      const outputBuffer = outputOptions.target.buffer;
       const compressedBlob = new Blob([outputBuffer], { type: 'video/mp4' });
       setCompressedSize(compressedBlob.size);
       
