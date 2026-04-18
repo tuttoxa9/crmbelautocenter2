@@ -77,7 +77,7 @@ export function useVideoCompressor(): UseVideoCompressorResult {
       const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS } as any);
       
       const outputFormat = {
-         codec: 'avc1.4d0034',
+         codec: 'avc',
          bitrate: targetBitrate 
       };
 
@@ -86,7 +86,7 @@ export function useVideoCompressor(): UseVideoCompressorResult {
         format: new Mp4OutputFormat(),
         video: outputFormat,
         audio: {
-          codec: 'mp4a.40.2',
+          codec: 'aac',
           bitrate: 128_000, 
         }
       };
@@ -98,7 +98,7 @@ export function useVideoCompressor(): UseVideoCompressorResult {
         output,
         video: outputFormat,
         audio: {
-          codec: 'mp4a.40.2',
+          codec: 'aac',
           bitrate: 128_000, 
         }
       };
