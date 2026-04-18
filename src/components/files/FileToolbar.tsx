@@ -2,7 +2,7 @@
 
 import {
   Folder, FolderPlus, Upload, Eye, EyeOff,
-  ChevronRight, Search, X,
+  ChevronRight, Search, X, Video
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -17,6 +17,7 @@ interface FileToolbarProps {
   onNavigateRoot: () => void;
   onOpenCreateFolder: () => void;
   onUpload: (files: File[]) => void;
+  onOpenVideoCompressor: () => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
 }
@@ -24,7 +25,7 @@ interface FileToolbarProps {
 export function FileToolbar({
   breadcrumbs, currentPrefix, showHidden,
   onToggleHidden, onNavigate, onNavigateRoot,
-  onOpenCreateFolder, onUpload,
+  onOpenCreateFolder, onUpload, onOpenVideoCompressor,
   searchQuery, onSearchChange,
 }: FileToolbarProps) {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -131,9 +132,18 @@ export function FileToolbar({
             <span className="hidden sm:inline">Папка</span>
           </Button>
 
-          <label className="cursor-pointer">
+          <button
+            onClick={onOpenVideoCompressor}
+            title="Сжать и загрузить видео"
+            className="inline-flex items-center gap-1.5 h-7 px-3 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-semibold rounded-xl transition-colors ml-1"
+          >
+            <Video className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Сжать</span>
+          </button>
+
+          <label className="cursor-pointer ml-1">
             <div className="inline-flex items-center gap-1.5 h-7 px-3 bg-white text-zinc-900 hover:bg-zinc-100 text-xs font-semibold rounded-xl transition-colors">
-              <Upload className="w-3 h-3" />
+              <Upload className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Загрузить</span>
             </div>
             <input

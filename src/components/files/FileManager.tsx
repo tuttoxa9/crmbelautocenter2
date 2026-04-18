@@ -16,12 +16,14 @@ import { ImageLightbox } from "./ImageLightbox";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import { CreateFolderDialog } from "./CreateFolderDialog";
 import { RenameDialog } from "./RenameDialog";
+import { VideoCompressorSheet } from "./VideoCompressorSheet";
 
 export function FileManager() {
   const fm = useFileManager();
 
   // ── UI state ────────────────────────────────────────────────────────────────
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false);
+  const [videoCompressorOpen, setVideoCompressorOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCreateFolder, setShowCreateFolder] = useState(false);
@@ -123,6 +125,7 @@ export function FileManager() {
           onNavigateRoot={() => fm.navigateTo("")}
           onOpenCreateFolder={() => setShowCreateFolder(true)}
           onUpload={handleManualUpload}
+          onOpenVideoCompressor={() => setVideoCompressorOpen(true)}
           searchQuery={fm.searchQuery}
           onSearchChange={fm.handleSearchChange}
         />
@@ -184,6 +187,16 @@ export function FileManager() {
         isAnyReady={fm.isAnyReady}
         allSuccess={fm.allSuccess}
         formatSize={fm.formatSize}
+      />
+
+      <VideoCompressorSheet
+        isOpen={videoCompressorOpen}
+        onClose={() => setVideoCompressorOpen(false)}
+        currentPrefix={fm.currentPrefix}
+        onUploadSuccess={() => {
+          fm.fetchItems(fm.currentPrefix);
+          setTimeout(() => setVideoCompressorOpen(false), 2000); // 2 sec delay to show success
+        }}
       />
 
       {lightboxIndex !== null && (
