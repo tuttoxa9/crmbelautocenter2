@@ -21,13 +21,12 @@ export function ImageLightbox({
   images, currentIndex, onClose, onPrev, onNext,
   onDownload, getPublicUrl, formatSize,
 }: ImageLightboxProps) {
-  const [imgLoaded, setImgLoaded] = useState(false);
+  const [loadedPath, setLoadedPath] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const current = images[currentIndex];
 
-  // Reset loaded state on image change
-  useEffect(() => setImgLoaded(false), [currentIndex]);
+  const imgLoaded = loadedPath === current?.path;
 
   // Keyboard navigation
   useEffect(() => {
@@ -143,7 +142,7 @@ export function ImageLightbox({
             key={current.path}
             src={getPublicUrl(current.path)}
             alt={current.name}
-            onLoad={() => setImgLoaded(true)}
+            onLoad={() => setLoadedPath(current.path)}
             className={cn(
               "max-h-[calc(100vh-180px)] max-w-full object-contain rounded-2xl transition-opacity duration-300 shadow-2xl",
               imgLoaded ? "opacity-100" : "opacity-0"

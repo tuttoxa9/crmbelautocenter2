@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
     try {
         await verifyFirebaseIdToken(idToken);
-    } catch (e) {
+    } catch {
         return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 

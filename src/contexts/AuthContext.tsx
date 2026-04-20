@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined" && window.localStorage.getItem("PLAYWRIGHT_TEST_BYPASS") === "true") {
          return;
       }
-    } catch (e) {
+    } catch {
       // Ignore
     }
 
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined" && window.localStorage.getItem("PLAYWRIGHT_TEST_BYPASS") === "true") {
         setTimeout(() => setIsBypass(true), 0);
       }
-    } catch (e) {
+    } catch {
       // Ignore
     }
   }, []);

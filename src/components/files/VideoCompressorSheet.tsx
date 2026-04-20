@@ -32,14 +32,15 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Reset internal UI state on close
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(isOpen);
+  if (isOpen !== prevOpen) {
+    setPrevOpen(isOpen);
     if (!isOpen) {
       setSelectedFile(null);
       setQuality(50);
       reset();
     }
-  }, [isOpen, reset]);
+  }
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {

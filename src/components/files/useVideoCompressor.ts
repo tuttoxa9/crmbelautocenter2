@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { Conversion, Input, Output, BufferTarget, BlobSource, Mp4OutputFormat, ALL_FORMATS } from 'mediabunny';
+import { Conversion, Input, Output, BufferTarget, BlobSource, Mp4OutputFormat, ALL_FORMATS, ConversionOptions, OutputOptions, ConversionVideoOptions, ConversionAudioOptions } from 'mediabunny';
 import { auth } from '@/lib/firebase';
 
 export type VideoCompressorStatus = 'idle' | 'compressing' | 'uploading' | 'success' | 'error' | 'no_support';
@@ -26,7 +26,7 @@ export function useVideoCompressor(): UseVideoCompressorResult {
 
   const xhrRef = useRef<XMLHttpRequest | null>(null);
   // Optional: keep track of conversion process to abort
-  const conversionRef = useRef<any>(null);
+  const conversionRef = useRef<Conversion | null>(null);
 
   // Fallback check: WebCodecs VideoEncoder is needed
   const isSupported = typeof window !== 'undefined' && 'VideoEncoder' in window;
@@ -66,44 +66,38 @@ export function useVideoCompressor(): UseVideoCompressorResult {
       // Usually quality 0-100 translates to a bitrate easily. We assume an average video takes 1MB per second at 8Mbps.
       // We will define a basic heuristic for bitrate, or dynamic calculation.
       // 100 quality -> very high bitrate, 1 quality -> 100kbps
-      const baseBitrate = file.size * 8 / 10; // rough guess of total original bits if duration ~10s (this is flawed without duration)
       // Standard safe bitrates for web: 1000kbps (low) up to 8000kbps(high).
       const MAX_BITRATE = 8_000_000;
       const MIN_BITRATE = 300_000;
       const targetBitrate = Math.max(MIN_BITRATE, Math.min(MAX_BITRATE, (quality / 100) * MAX_BITRATE));
 
-      // According to user: "new MB.Output({ ... })"
-      // Also, progress can be tracked. Example snippet for typical mediabunny:
-      const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS } as any);
+      const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
       
-      const outputFormat = {
+      const outputFormat: ConversionVideoOptions = {
          codec: 'avc',
          bitrate: targetBitrate 
       };
 
-      const outputOptions: any = {
+      const outputAudio: ConversionAudioOptions = {
+        codec: 'aac',
+        bitrate: 128_000, 
+      };
+
+      const outputOptions: OutputOptions<Mp4OutputFormat, BufferTarget> = {
         target: new BufferTarget(),
         format: new Mp4OutputFormat(),
-        video: outputFormat,
-        audio: {
-          codec: 'aac',
-          bitrate: 128_000, 
-        }
       };
       
       const output = new Output(outputOptions);
       
-      const conversionOptions = {
+      const conversionOptions: ConversionOptions = {
         input,
         output,
         video: outputFormat,
-        audio: {
-          codec: 'aac',
-          bitrate: 128_000, 
-        }
+        audio: outputAudio,
       };
 
-      const conversion = 'init' in Conversion ? await (Conversion as any).init(conversionOptions) : new (Conversion as any)(conversionOptions);
+      const conversion = await Conversion.init(conversionOptions);
       conversionRef.current = conversion;
       
       let compressionPercent = 0;
@@ -118,6 +112,8 @@ export function useVideoCompressor(): UseVideoCompressorResult {
 
       // We get it from target.buffer
       const outputBuffer = outputOptions.target.buffer;
+      if (!outputBuffer) throw new Error('Failed to produce compressed video buffer');
+
       const compressedBlob = new Blob([outputBuffer], { type: 'video/mp4' });
       setCompressedSize(compressedBlob.size);
       
@@ -174,10 +170,11 @@ export function useVideoCompressor(): UseVideoCompressorResult {
         xhr.send(compressedBlob);
       });
 
-    } catch (err: any) {
-      if (err.message !== 'Upload aborted') {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Произошла ошибка при сжатии или загрузке видео';
+      if (errorMessage !== 'Upload aborted') {
         setStatus('error');
-        setError(err.message || 'Произошла ошибка при сжатии или загрузке видео');
+        setError(errorMessage);
       }
     }
   }, [reset, isSupported]);

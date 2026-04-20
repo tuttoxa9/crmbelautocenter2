@@ -10,8 +10,18 @@ interface CarPreviewProps {
   url?: string;
 }
 
+interface Car {
+  make: string;
+  model: string;
+  year?: string | number;
+  mileage?: number;
+  engineVolume?: string | number;
+  price?: number;
+  imageUrls?: string[];
+}
+
 export function CarPreview({ carId, url }: CarPreviewProps) {
-  const [car, setCar] = useState<any>(null);
+  const [car, setCar] = useState<Car | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -33,12 +43,12 @@ export function CarPreview({ carId, url }: CarPreviewProps) {
         const docRef = doc(db, "cars", extractedId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setCar(docSnap.data());
+          setCar(docSnap.data() as Car);
         } else {
           setError(true);
         }
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.error(err);
         setError(true);
       } finally {
         setLoading(false);

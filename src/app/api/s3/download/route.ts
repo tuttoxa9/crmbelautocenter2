@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
     try {
         await verifyFirebaseIdToken(token);
-    } catch (e) {
+    } catch {
         return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
