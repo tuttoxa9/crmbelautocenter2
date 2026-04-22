@@ -81,9 +81,7 @@ export default function IntegrationsPage() {
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4 mr-2" /> Добавить</Button>
-          </DialogTrigger>
+          <DialogTrigger render={<Button><Plus className="h-4 w-4 mr-2" /> Добавить</Button>} />
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Новая интеграция</DialogTitle>
