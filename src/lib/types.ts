@@ -54,3 +54,15 @@ export interface Lead {
   history: StatusHistoryEntry[];
   payload?: Record<string, unknown>; // Гибкая структура для сырых данных (например из Zapier, Telegram и т.д.)
 }
+
+export interface Integration {
+  id?: string;
+  source: "meta" | "tiktok";
+  name: string;
+  campaignId?: string;
+  formId?: string;
+  isActive: boolean;
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+}

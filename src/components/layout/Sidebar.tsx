@@ -13,6 +13,7 @@ const navItems = [
   { name: "Лиды", href: "/leads", icon: ClipboardList },
   { name: "Файлы", href: "/files", icon: Folder },
   { name: "Настройки", href: "/settings", icon: Settings },
+  { name: "Интеграции", href: "/settings/integrations", icon: Settings },
 ];
 
 export function Sidebar() {
