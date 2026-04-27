@@ -130,12 +130,12 @@ export default function CommissionPage() {
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
+            <DialogTrigger render={
               <Button onClick={() => handleOpenDialog()} className="gap-2">
                 <Plus className="w-4 h-4" />
                 Добавить запись
               </Button>
-            </DialogTrigger>
+            } />
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>{editingCommission ? "Редактировать запись" : "Новая запись"}</DialogTitle>
