@@ -156,7 +156,7 @@ export default function CommissionPage() {
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label className="text-right">Статус</Label>
                   <div className="col-span-3">
-                    <Select value={status} onValueChange={(val: CommissionStatus) => setStatus(val)}>
+                    <Select value={status} onValueChange={(val) => { if (val) setStatus(val as CommissionStatus) }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Выберите статус" />
                       </SelectTrigger>
