@@ -2,18 +2,21 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
 
 interface AuthContextType {
   user: User | null;
+  userRole: string | null;
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ user: null, userRole: null, loading: true });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -23,8 +26,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      
+      if (currentUser && db) {
+        try {
+          const docRef = doc(db, "users", currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+             setUserRole(docSnap.data().role || 'admin');
+          } else {
+             setUserRole('admin');
+          }
+        } catch (error) {
+          console.error("Error fetching user role: ", error);
+          setUserRole('admin');
+        }
+      } else {
+        setUserRole(null);
+      }
+      
       setLoading(false);
     });
 
@@ -46,9 +67,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user && pathname !== "/login") {
       router.push("/login");
     } else if (user && (pathname === "/login" || pathname === "/")) {
-      router.push("/leads");
+      if (userRole === "commission") {
+        router.push("/commission");
+      } else {
+        router.push("/leads");
+      }
     }
-  }, [user, loading, pathname, router]);
+  }, [user, userRole, loading, pathname, router]);
 
   // Temporary mock user for Playwright
   const [isBypass, setIsBypass] = useState(false);
@@ -66,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const mockUser = isBypass ? { email: "test@test.com", uid: "test_uid" } as User : null;
 
   return (
-    <AuthContext.Provider value={{ user: user || mockUser, loading: isBypass ? false : loading }}>
+    <AuthContext.Provider value={{ user: user || mockUser, userRole: mockUser ? 'admin' : userRole, loading: isBypass ? false : loading }}>
       {children}
     </AuthContext.Provider>
   );

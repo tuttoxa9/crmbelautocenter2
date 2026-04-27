@@ -3,22 +3,23 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { ClipboardList, Folder, Settings, LogOut } from "lucide-react";
+import { ClipboardList, Folder, Settings, LogOut, Briefcase } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { name: "Лиды", href: "/leads", icon: ClipboardList },
-  { name: "Файлы", href: "/files", icon: Folder },
-  { name: "Настройки", href: "/settings", icon: Settings },
-  { name: "Интеграции", href: "/settings/integrations", icon: Settings },
+  { name: "Лиды", href: "/leads", icon: ClipboardList, roles: ["admin"] },
+  { name: "Комиссия", href: "/commission", icon: Briefcase, roles: ["admin", "commission"] },
+  { name: "Файлы", href: "/files", icon: Folder, roles: ["admin"] },
+  { name: "Настройки", href: "/settings", icon: Settings, roles: ["admin"] },
+  { name: "Интеграции", href: "/settings/integrations", icon: Settings, roles: ["admin"] },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, userRole } = useAuth();
 
   const handleLogout = async () => {
     if (!auth) return;
@@ -36,7 +37,7 @@ export function Sidebar() {
       </div>
       
       <nav className="flex-1 px-3 py-6 space-y-1">
-        {navItems.map((item) => {
+        {navItems.filter(item => item.roles.includes(userRole || 'admin')).map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
             <Link

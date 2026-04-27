@@ -9,19 +9,20 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, Folder, Settings } from "lucide-react";
+import { ClipboardList, Folder, Settings, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 
 const navItems = [
-  { name: "Лиды", href: "/leads", icon: ClipboardList },
-  { name: "Файлы", href: "/files", icon: Folder },
-  { name: "Настройки", href: "/settings", icon: Settings },
+  { name: "Лиды", href: "/leads", icon: ClipboardList, roles: ["admin"] },
+  { name: "Комиссия", href: "/commission", icon: Briefcase, roles: ["admin", "commission"] },
+  { name: "Файлы", href: "/files", icon: Folder, roles: ["admin"] },
+  { name: "Настройки", href: "/settings", icon: Settings, roles: ["admin"] },
 ];
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, loading } = useAuth();
+  const { user, userRole, loading } = useAuth();
   const pathname = usePathname();
 
   if (loading) {
@@ -69,7 +70,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                 <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
               </div>
               <nav className="mt-8 px-4 space-y-1">
-                {navItems.map((item) => {
+                {navItems.filter(item => item.roles.includes(userRole || 'admin')).map((item) => {
                   const isActive = pathname.startsWith(item.href);
                   return (
                     <Link

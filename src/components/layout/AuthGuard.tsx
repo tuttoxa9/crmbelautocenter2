@@ -3,9 +3,22 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { auth } from "@/lib/firebase";
 import { Spinner } from "@/components/ui/spinner";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, userRole, loading } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      // If user is a commission agent and trying to access non-commission routes
+      if (userRole === "commission" && !pathname.startsWith("/commission") && !pathname.startsWith("/login")) {
+         router.push("/commission");
+      }
+    }
+  }, [loading, user, userRole, pathname, router]);
 
   if (loading) {
     return (
