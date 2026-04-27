@@ -173,7 +173,7 @@ export default function CommissionPage() {
               />
             </div>
           </div>
-          {activeTab !== "all" && activeTab !== "new" && (
+          {activeTab !== "all" && activeTab !== "refusal" && (
             <div className="w-full sm:w-auto flex items-center justify-center gap-1 bg-zinc-50 border border-zinc-200 rounded-md p-1 shrink-0">
               <button
                 onClick={handlePrevDay}
