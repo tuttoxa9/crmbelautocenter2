@@ -3,7 +3,7 @@
 import { Lead } from "@/lib/types";
 import { format, isValid, isToday, isTomorrow, isYesterday, startOfDay, isSameDay } from "date-fns";
 import { ru } from "date-fns/locale";
-import { SourceIcon, StatusBadge } from "@/components/leads/ui/LeadBadges";
+import { StatusBadge } from "@/components/leads/ui/LeadBadges";
 import { Clock } from "lucide-react";
 import React, { useMemo } from "react";
 
@@ -105,14 +105,12 @@ export function CommissionDataGrid({
       <div className="hidden md:flex flex-col w-full text-[13px] bg-white">
         {/* Header */}
         <div className="flex text-[10px] text-zinc-400 uppercase bg-white/95 backdrop-blur-sm sticky top-0 z-10 font-bold tracking-widest border-b border-zinc-200/50 py-3 px-2">
-          <div className="w-12 text-center">Ист.</div>
           <div className="w-48 px-2">Имя</div>
           <div className="w-36 px-2">Телефон</div>
           <div className="w-36 px-2">Статус</div>
           <div className="w-36 px-2">След. шаг</div>
-          <div className="w-48 px-2">Машина</div>
+          <div className="w-48 px-2">Ссылка</div>
           <div className="flex-1 px-2">Комментарий</div>
-          <div className="w-24 px-2 text-right">Создан</div>
         </div>
 
         {/* Body */}
@@ -133,9 +131,6 @@ export function CommissionDataGrid({
                     onClick={() => onSelectLead(lead)}
                     className={`flex items-center min-h-[52px] border-b border-zinc-100/50 transition-colors group cursor-pointer px-2 ${isSelected ? 'bg-zinc-100/60 shadow-[inset_2px_0_0_#27272a]' : 'hover:bg-zinc-50'}`}
                   >
-                    <div className="w-12 flex justify-center opacity-40 group-hover:opacity-80 transition-opacity">
-                      <SourceIcon source={lead.source} className="w-3.5 h-3.5" />
-                    </div>
                     <div className="w-48 px-2 flex flex-col justify-center">
                       <span className={`font-semibold truncate max-w-full ${isSelected ? 'text-zinc-900' : 'text-zinc-800'}`}>
                         {lead.name || <span className="text-zinc-400 italic font-normal">Без имени</span>}
@@ -165,9 +160,6 @@ export function CommissionDataGrid({
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 pr-2">
                         <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider bg-white border border-zinc-200 shadow-sm px-2 py-0.5 rounded">Открыть</span>
                       </div>
-                    </div>
-                    <div className="w-24 px-2 text-right text-[11px] text-zinc-400 font-medium">
-                      {formatSmartDate(lead.createdAt)}
                     </div>
                   </div>
                 );
@@ -208,15 +200,13 @@ export function CommissionDataGrid({
 
                     {(lead.car || lead.notes) && (
                       <div className="relative bg-[#F4F5F7]/50 border border-black/[0.03] rounded-2xl p-3.5 text-sm flex flex-col gap-2">
-                        {lead.car && <div className="font-medium text-zinc-800 truncate"><span className="text-zinc-400 font-light mr-1.5">Авто:</span>{lead.car}</div>}
+                        {lead.car && <div className="font-medium text-zinc-800 truncate"><span className="text-zinc-400 font-light mr-1.5">Ссылка:</span>{lead.car}</div>}
                         {lead.notes && <div className="text-zinc-600 line-clamp-3 leading-relaxed mt-0.5 text-[13px]">{lead.notes}</div>}
                       </div>
                     )}
                     
                     <div className="flex items-center justify-between mt-1 pt-2">
                       <div className="flex gap-2 items-center">
-                        <div className="opacity-50 transition-opacity hover:opacity-100"><SourceIcon source={lead.source} /></div>
-                        <span className="text-[11px] text-zinc-400 font-medium tracking-wide">{formatSmartDate(lead.createdAt)}</span>
                       </div>
                       {lead.nextActionDate && lead.status !== 'new' && (
                         <div className="flex items-center gap-1.5 text-orange-600 font-medium bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100/50 shadow-sm">

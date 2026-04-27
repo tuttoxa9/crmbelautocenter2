@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { formatPhone } from "@/lib/formatPhone";
 import { LeadSource, LeadStatus } from "@/lib/types";
-import { StatusDropdown } from "../../leads/ui/StatusDropdown";
-import { SourceDropdown } from "../../leads/ui/SourceDropdown";
+import { CommissionStatusDropdown } from "./CommissionStatusDropdown";
 import { createCommission } from "@/lib/services/commission";
 import { useAuth } from "@/contexts/AuthContext";
 import { Plus, X, Clock } from "lucide-react";
@@ -20,7 +19,7 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "", phone: "", source: "call" as LeadSource, car: "", status: "new" as LeadStatus, notes: "", nextActionDate: null as number | null
+    name: "", phone: "", source: "call" as LeadSource, car: "", status: "visit" as LeadStatus, notes: "", nextActionDate: null as number | null
   });
 
   const terminalStatuses = ["success", "refusal", "bank_refusal", "spam"];
@@ -35,7 +34,7 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
       await createCommission({
         name: formData.name, phone: formData.phone, source: formData.source, status: formData.status, car: formData.car, notes: formData.notes, nextActionDate: formData.nextActionDate
       }, user.email || 'unknown');
-      setFormData({ name: "", phone: "", source: "call", car: "", status: "new", notes: "", nextActionDate: null });
+      setFormData({ name: "", phone: "", source: "call", car: "", status: "visit", notes: "", nextActionDate: null });
       setIsOpen(false);
       if(onSuccess) onSuccess();
     } catch (error) {
@@ -95,7 +94,7 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
             </div>
             
             <div className="space-y-1.5 col-span-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Интересующий Автомобиль</label>
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Ссылка на объявление</label>
               <input
                 value={formData.car} onChange={e => setFormData(prev => ({...prev, car: e.target.value}))}
                 className="w-full h-11 px-4 text-sm border border-zinc-200/80 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-zinc-50/50 focus:bg-white transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
@@ -104,7 +103,7 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
 
             <div className="space-y-1.5 col-span-2 sm:col-span-1">
               <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">Начальный Статус</label>
-              <StatusDropdown
+              <CommissionStatusDropdown
                 value={formData.status}
                 onChange={status => setFormData(prev => ({...prev, status}))}
               />
@@ -128,13 +127,7 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
               />
             </div>
 
-            <div className="space-y-1.5 col-span-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Источник</label>
-              <SourceDropdown
-                value={formData.source} 
-                onChange={source => setFormData(prev => ({...prev, source}))}
-              />
-            </div>
+
 
             <div className="space-y-1.5 col-span-2">
               <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Заметка менеджера</label>

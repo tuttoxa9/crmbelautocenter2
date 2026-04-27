@@ -12,14 +12,13 @@ import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { format, addDays, subDays, startOfDay, isToday, isSameDay, isBefore, isAfter } from "date-fns";
 import { ru } from "date-fns/locale";
 
-type FilterTab = "new" | "in_progress" | "visit" | "no_answer" | "thinking" | "callback" | "all";
-
+type FilterTab = "visit" | "thinking" | "callback" | "refusal" | "all";
 export default function CommissionPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
-  const [activeTab, setActiveTab] = useState<FilterTab>("in_progress");
+  const [activeTab, setActiveTab] = useState<FilterTab>("visit");
   const [filterDate, setFilterDate] = useState<Date>(startOfDay(new Date()));
   const [mobileView, setMobileView] = useState<"menu" | "list">("menu");
 
@@ -30,7 +29,7 @@ export default function CommissionPage() {
 
   useEffect(() => {
     const activeStatuses: import("@/lib/types").LeadStatus[] = [
-      "new", "in_progress", "visit", "no_answer", "thinking", "callback"
+      "visit", "thinking", "callback", "refusal"
     ];
 
     const unsubscribe = subscribeToCommissions((fetchedLeads) => {
@@ -75,7 +74,7 @@ export default function CommissionPage() {
 
   const filteredLeads = useMemo(() => {
     const sourceLeads = activeTab === "all" ? historyLeads : leads;
-    const isDateFilteredTab = activeTab !== "all" && activeTab !== "new";
+    const isDateFilteredTab = activeTab !== "all" && activeTab !== "refusal";
 
     return sourceLeads.filter(lead => {
       if (activeTab !== "all" && lead.status !== activeTab) return false;
@@ -106,15 +105,13 @@ export default function CommissionPage() {
   const handleResetToToday = () => setFilterDate(startOfDay(new Date()));
 
   const counts = {
-    new: leads.filter(l => l.status === "new").length,
-    in_progress: leads.filter(l => l.status === "in_progress").length,
     visit: leads.filter(l => l.status === "visit").length,
-    no_answer: leads.filter(l => l.status === "no_answer").length,
     thinking: leads.filter(l => l.status === "thinking").length,
     callback: leads.filter(l => l.status === "callback").length,
+    refusal: leads.filter(l => l.status === "refusal").length,
   };
 
-  const isDateTab = activeTab !== "new";
+  const isDateTab = activeTab !== "refusal" && activeTab !== "all";
 
   return (
     <div className="h-full bg-zinc-950 text-zinc-900 font-sans overflow-hidden relative">
@@ -129,12 +126,10 @@ export default function CommissionPage() {
           <div className="hidden md:block text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-3 mb-2">Фильтры</div>
           <nav className="flex flex-col gap-2 md:gap-0.5 overflow-y-auto px-4 md:px-0 pb-6 md:pb-0 scrollbar-hide">
             {[
-              { id: "new", label: "Новые", icon: Inbox, count: counts.new },
-              { id: "in_progress", label: "В работе", icon: LayoutGrid, count: counts.in_progress },
               { id: "visit", label: "Приезд", icon: CalendarDays, count: counts.visit },
               { id: "callback", label: "Перезвон", icon: PhoneForwarded, count: counts.callback },
-              { id: "no_answer", label: "Недозвон", icon: PhoneOff, count: counts.no_answer },
               { id: "thinking", label: "Думает", icon: BrainCircuit, count: counts.thinking },
+              { id: "refusal", label: "Отказ", icon: PhoneOff, count: counts.refusal },
             ].map(tab => (
               <button
                 key={tab.id}

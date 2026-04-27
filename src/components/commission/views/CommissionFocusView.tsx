@@ -8,8 +8,7 @@ import { useState, useEffect } from "react";
 import { formatPhone } from "@/lib/formatPhone";
 import { getSourceLabel, getStatusLabel } from "@/lib/displayUtils";
 import { StatusBadge } from "../../leads/ui/LeadBadges";
-import { StatusDropdown } from "../../leads/ui/StatusDropdown";
-import { SourceDropdown } from "../../leads/ui/SourceDropdown";
+import { CommissionStatusDropdown } from "../ui/CommissionStatusDropdown";
 import { updateCommissionStatus, updateCommissionDetails, deleteCommission } from "@/lib/services/commission";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -111,11 +110,7 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
               <span className="text-[15px] font-medium md:text-sm">Назад</span>
             </Button>
             <div className="w-px h-4 bg-zinc-200 hidden md:block" />
-            <SourceDropdown
-              value={formData.source}
-              onChange={(source) => setFormData(prev => ({...prev, source}))}
-              className="w-auto min-w-[120px] md:min-w-[140px]"
-            />
+
             <span className="text-[10px] md:text-xs text-zinc-400 font-mono hidden sm:inline">ID: {lead.id?.slice(-6)}</span>
           </div>
 
@@ -163,7 +158,7 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
               <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5" /> Статус
               </label>
-              <StatusDropdown
+              <CommissionStatusDropdown
                 value={formData.status}
                 onChange={(status) => setFormData(prev => ({...prev, status}))}
               />
@@ -188,7 +183,7 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
             </div>
 
             <div className="space-y-2 col-span-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 inline-block">Интересующий Автомобиль</label>
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 inline-block">Ссылка на объявление</label>
               <input
                 value={formData.car}
                 onChange={e => setFormData(prev => ({...prev, car: e.target.value}))}
