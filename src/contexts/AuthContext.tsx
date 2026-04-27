@@ -30,17 +30,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(currentUser);
       
       if (currentUser && db) {
-        try {
-          const docRef = doc(db, "users", currentUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-             setUserRole(docSnap.data().role || 'admin');
-          } else {
-             setUserRole('admin');
+        if (currentUser.email && currentUser.email.toLowerCase() === "comis@belauto.by") {
+          setUserRole('commission');
+        } else {
+          try {
+            const docRef = doc(db, "users", currentUser.uid);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+               setUserRole(docSnap.data().role || 'admin');
+            } else {
+               setUserRole('admin');
+            }
+          } catch (error) {
+            console.error("Error fetching user role: ", error);
+            setUserRole('admin');
           }
-        } catch (error) {
-          console.error("Error fetching user role: ", error);
-          setUserRole('admin');
         }
       } else {
         setUserRole(null);
