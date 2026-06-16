@@ -28,10 +28,18 @@ export async function GET(request: Request) {
 
     const response = await s3Client.send(command);
 
+    const folderDates = new Map<string, Date>();
+    (response.Contents || []).forEach(c => {
+      if (c.Key?.endsWith("/") && c.LastModified) {
+        folderDates.set(c.Key, c.LastModified);
+      }
+    });
+
     const folders = (response.CommonPrefixes || []).map((p) => ({
       name: p.Prefix?.replace(prefix, "").replace("/", ""),
       path: p.Prefix,
       type: "folder",
+      lastModified: folderDates.get(p.Prefix as string) || undefined,
     }));
 
     const files = (response.Contents || [])
