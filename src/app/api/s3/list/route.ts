@@ -32,15 +32,33 @@ export async function GET(request: Request) {
 
     const folderObjects = contents.filter((c) => c.Key?.endsWith("/"));
 
-    const folders = (response.CommonPrefixes || []).map((p) => {
-      const folderObj = folderObjects.find((c) => c.Key === p.Prefix);
-      return {
-        name: p.Prefix?.replace(prefix, "").replace("/", ""),
-        path: p.Prefix,
-        type: "folder",
-        lastModified: folderObj?.LastModified,
-      };
-    });
+    const folders = await Promise.all(
+      (response.CommonPrefixes || []).map(async (p) => {
+        let lastModified = folderObjects.find((c) => c.Key === p.Prefix)?.LastModified;
+
+        if (!lastModified && p.Prefix) {
+            try {
+                const folderResponse = await s3Client.send(new ListObjectsV2Command({
+                    Bucket: BUCKET_NAME,
+                    Prefix: p.Prefix,
+                    MaxKeys: 1,
+                }));
+                if (folderResponse.Contents && folderResponse.Contents.length > 0) {
+                    lastModified = folderResponse.Contents[0].LastModified;
+                }
+            } catch (e) {
+                console.error(`Failed to fetch last modified for prefix ${p.Prefix}:`, e);
+            }
+        }
+
+        return {
+          name: p.Prefix?.replace(prefix, "").replace("/", ""),
+          path: p.Prefix,
+          type: "folder",
+          lastModified,
+        };
+      })
+    );
 
     const files = contents
       .filter((c) => c.Key !== prefix && !c.Key?.endsWith("/"))
