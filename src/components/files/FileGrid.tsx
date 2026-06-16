@@ -3,6 +3,9 @@
 import { CornerLeftUp } from "lucide-react";
 import { S3Object } from "./useFileManager";
 import { FolderCard, FileCard } from "./FileCard";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+import React from "react";
 
 interface FileGridProps {
   items: S3Object[];
@@ -44,42 +47,72 @@ export function FileGrid({
       )}
 
       {/* Items */}
-      {items.map((item) => {
-        const isSelected = selectedPaths.has(item.path);
-        const isHidden = item.type === "folder" && hiddenFolders.includes(item.path);
+            {(() => {
+        const groupedItems = items.reduce((acc, item) => {
+          let dateKey = "Без даты";
+          if (item.lastModified) {
+            dateKey = format(new Date(item.lastModified), "d MMMM yyyy", { locale: ru });
+          }
+          if (!acc[dateKey]) {
+            acc[dateKey] = [];
+          }
+          acc[dateKey].push(item);
+          return acc;
+        }, {} as Record<string, S3Object[]>);
 
-        if (item.type === "folder") {
-          return (
-            <FolderCard
-              key={item.path}
-              item={item}
-              isSelected={isSelected}
-              isHidden={isHidden}
-              onSelect={() => onToggleSelect(item.path)}
-              onClick={() => onFolderClick(item)}
-              onToggleVisibility={() => onToggleVisibility(item.path)}
-              onRename={() => onRename(item)}
-              onDelete={() => onDelete(item)}
-            />
-          );
-        }
+        // Сортировка дат по убыванию (новые сверху)
+        const sortedDates = Object.keys(groupedItems).sort((a, b) => {
+          if (a === "Без даты") return 1;
+          if (b === "Без даты") return -1;
+          const dateA = groupedItems[a][0].lastModified ? new Date(groupedItems[a][0].lastModified).getTime() : 0;
+          const dateB = groupedItems[b][0].lastModified ? new Date(groupedItems[b][0].lastModified).getTime() : 0;
+          return dateB - dateA;
+        });
 
-        return (
-          <FileCard
-            key={item.path}
-            item={item}
-            isSelected={isSelected}
-            onSelect={() => onToggleSelect(item.path)}
-            onOpenLightbox={() => onOpenLightbox(item.path)}
-            onDownload={() => onDownload(item.path)}
-            onCopyUrl={() => onCopyUrl(getPublicUrl(item.path))}
-            onRename={() => onRename(item)}
-            onDelete={() => onDelete(item)}
-            publicUrl={getPublicUrl(item.path)}
-            formatSize={formatSize}
-          />
-        );
-      })}
+        return sortedDates.map(date => (
+          <React.Fragment key={date}>
+            <div className="col-span-full mt-4 mb-2">
+              <h3 className="text-lg font-medium text-white/80">{date}</h3>
+            </div>
+            {groupedItems[date].map((item) => {
+              const isSelected = selectedPaths.has(item.path);
+              const isHidden = item.type === "folder" && hiddenFolders.includes(item.path);
+
+              if (item.type === "folder") {
+                return (
+                  <FolderCard
+                    key={item.path}
+                    item={item}
+                    isSelected={isSelected}
+                    isHidden={isHidden}
+                    onSelect={() => onToggleSelect(item.path)}
+                    onClick={() => onFolderClick(item)}
+                    onToggleVisibility={() => onToggleVisibility(item.path)}
+                    onRename={() => onRename(item)}
+                    onDelete={() => onDelete(item)}
+                  />
+                );
+              }
+
+              return (
+                <FileCard
+                  key={item.path}
+                  item={item}
+                  isSelected={isSelected}
+                  onSelect={() => onToggleSelect(item.path)}
+                  onOpenLightbox={() => onOpenLightbox(item.path)}
+                  onDownload={() => onDownload(item.path)}
+                  onCopyUrl={() => onCopyUrl(getPublicUrl(item.path))}
+                  onRename={() => onRename(item)}
+                  onDelete={() => onDelete(item)}
+                  publicUrl={getPublicUrl(item.path)}
+                  formatSize={formatSize}
+                />
+              );
+            })}
+          </React.Fragment>
+        ));
+      })()}
     </div>
   );
 }

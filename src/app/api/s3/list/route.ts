@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { ListObjectsV2Command, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { s3Client, BUCKET_NAME } from "@/lib/s3";
 import { verifyFirebaseIdToken } from "@/lib/verifyToken";
 
@@ -28,10 +28,22 @@ export async function GET(request: Request) {
 
     const response = await s3Client.send(command);
 
-    const folders = (response.CommonPrefixes || []).map((p) => ({
-      name: p.Prefix?.replace(prefix, "").replace("/", ""),
-      path: p.Prefix,
-      type: "folder",
+    const folders = await Promise.all((response.CommonPrefixes || []).map(async (p) => {
+      let lastModified;
+      try {
+        if (p.Prefix) {
+          const headResponse = await s3Client.send(new HeadObjectCommand({ Bucket: BUCKET_NAME, Key: p.Prefix }));
+          lastModified = headResponse.LastModified;
+        }
+      } catch (e) {
+        // ignore
+      }
+      return {
+        name: p.Prefix?.replace(prefix, "").replace("/", ""),
+        path: p.Prefix,
+        type: "folder",
+        lastModified: lastModified,
+      };
     }));
 
     const files = (response.Contents || [])
