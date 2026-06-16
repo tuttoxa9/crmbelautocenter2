@@ -28,11 +28,15 @@ export async function GET(request: Request) {
 
     const response = await s3Client.send(command);
 
-    const folders = (response.CommonPrefixes || []).map((p) => ({
-      name: p.Prefix?.replace(prefix, "").replace("/", ""),
-      path: p.Prefix,
-      type: "folder",
-    }));
+    const folders = (response.CommonPrefixes || []).map((p) => {
+      const folderObj = (response.Contents || []).find((c) => c.Key === p.Prefix);
+      return {
+        name: p.Prefix?.replace(prefix, "").replace("/", ""),
+        path: p.Prefix,
+        type: "folder",
+        lastModified: folderObj?.LastModified,
+      };
+    });
 
     const files = (response.Contents || [])
       .filter((c) => c.Key !== prefix && !c.Key?.endsWith("/"))
