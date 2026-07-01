@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getTelegramSettings, saveTelegramSettings, TelegramSettings } from "@/lib/settingsService";
 import IntegrationsPage from "./integrations/page";
 import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function SettingsPage() {
   const { user, userRole } = useAuth();
@@ -294,18 +295,21 @@ export default function SettingsPage() {
                           <Label htmlFor={`status-rule-${status.id}`} className="text-xs font-bold text-zinc-600 tracking-wider">
                             {status.label}
                           </Label>
-                          <select
-                            id={`status-rule-${status.id}`}
-                            value={currentValue}
-                            onChange={(e) => handleRuleChange(status.id, Number(e.target.value))}
-                            className="w-full h-10 px-3 text-sm bg-white border border-zinc-200 rounded-xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-medium text-zinc-800"
+                          <Select
+                            value={String(currentValue)}
+                            onValueChange={(val) => handleRuleChange(status.id, Number(val))}
                           >
-                            {reminderOptions.map(option => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
+                            <SelectTrigger className="h-10 bg-white border border-zinc-200 rounded-xl focus:border-zinc-400 text-zinc-800 font-medium w-full">
+                              <SelectValue placeholder="Выберите время" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white border border-zinc-200 rounded-xl shadow-lg">
+                              {reminderOptions.map(option => (
+                                <SelectItem key={option.value} value={String(option.value)}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       );
                     })}
