@@ -8,8 +8,61 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTelegramSettings, saveTelegramSettings, TelegramSettings } from "@/lib/settingsService";
 import IntegrationsPage from "./integrations/page";
-import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange, ChevronDown, Check } from "lucide-react";
+
+interface CustomSelectProps {
+  value: number;
+  onChange: (value: number) => void;
+  options: { value: number; label: string }[];
+}
+
+function CustomSelect({ value, onChange, options }: CustomSelectProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const currentOption = options.find(opt => opt.value === value) || options[0];
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClose = () => setIsOpen(false);
+    window.addEventListener("click", handleClose);
+    return () => window.removeEventListener("click", handleClose);
+  }, [isOpen]);
+
+  return (
+    <div className="relative w-full" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full h-11 px-4 text-sm bg-white border border-zinc-200 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-semibold text-zinc-800 shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] hover:bg-zinc-50/50 cursor-pointer"
+      >
+        <span>{currentOption.label}</span>
+        <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 left-0 right-0 mt-2 p-1.5 bg-white border border-zinc-200/80 rounded-2xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-150 ease-out">
+          {options.map(option => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+              className={`flex items-center justify-between w-full px-3 py-2 text-sm rounded-xl text-left transition-colors cursor-pointer ${
+                option.value === value
+                  ? "bg-zinc-950 text-white font-semibold"
+                  : "text-zinc-700 hover:bg-zinc-100"
+              }`}
+            >
+              <span>{option.label}</span>
+              {option.value === value && <Check className="w-4 h-4 text-white" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function SettingsPage() {
   const { user, userRole } = useAuth();
@@ -295,21 +348,11 @@ export default function SettingsPage() {
                           <Label htmlFor={`status-rule-${status.id}`} className="text-xs font-bold text-zinc-600 tracking-wider">
                             {status.label}
                           </Label>
-                          <Select
-                            value={String(currentValue)}
-                            onValueChange={(val) => handleRuleChange(status.id, Number(val))}
-                          >
-                            <SelectTrigger className="h-10 bg-white border border-zinc-200 rounded-xl focus:border-zinc-400 text-zinc-800 font-medium w-full">
-                              <SelectValue placeholder="Выберите время" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white border border-zinc-200 rounded-xl shadow-lg">
-                              {reminderOptions.map(option => (
-                                <SelectItem key={option.value} value={String(option.value)}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <CustomSelect
+                            value={currentValue}
+                            onChange={(val) => handleRuleChange(status.id, val)}
+                            options={reminderOptions}
+                          />
                         </div>
                       );
                     })}
