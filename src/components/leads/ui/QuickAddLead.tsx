@@ -32,9 +32,33 @@ export function QuickAddLead({ onSuccess }: QuickAddLeadProps) {
     if (!user || isNextActionMissing) return;
     setIsSubmitting(true);
     try {
-      await createLead({
-        name: formData.name, phone: formData.phone, source: formData.source, status: formData.status, car: formData.car, notes: formData.notes, nextActionDate: formData.nextActionDate
-      }, user.email || 'unknown');
+      const leadPayload = {
+        name: formData.name,
+        phone: formData.phone,
+        source: formData.source,
+        status: formData.status,
+        car: formData.car,
+        notes: formData.notes,
+        nextActionDate: formData.nextActionDate
+      };
+
+      await createLead(leadPayload, user.email || 'unknown');
+      
+      // Отправка уведомления в Telegram (неблокирующая)
+      try {
+        const idToken = await user.getIdToken();
+        fetch("/api/notify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${idToken}`
+          },
+          body: JSON.stringify(leadPayload)
+        }).catch(err => console.error("Error in notify call:", err));
+      } catch (tokenErr) {
+        console.error("Failed to get idToken for Telegram notification:", tokenErr);
+      }
+
       setFormData({ name: "", phone: "", source: "call", car: "", status: "new", notes: "", nextActionDate: null });
       setIsOpen(false);
       if(onSuccess) onSuccess();

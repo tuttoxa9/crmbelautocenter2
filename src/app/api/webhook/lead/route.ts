@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { LeadSource, LeadStatus, Integration } from '@/lib/types';
 import crypto from 'crypto';
+import { sendTelegramNotification } from '@/lib/telegram';
 
 // Обязательная верификация для Meta Webhooks (challenge)
 export async function GET(request: Request) {
@@ -198,6 +199,19 @@ export async function POST(request: Request) {
     }
 
     const docRef = await adminDb.collection('leads').add(newLead);
+
+    // Отправка уведомления в Telegram
+    try {
+      await sendTelegramNotification({
+        name,
+        phone,
+        car,
+        source: detectedSource,
+        notes
+      });
+    } catch (err) {
+      console.error("Error sending Telegram notification from webhook:", err);
+    }
 
     return NextResponse.json(
       { success: true, id: docRef.id, message: "Lead created successfully via Webhook" },
