@@ -14,9 +14,10 @@ interface CustomSelectProps {
   value: number;
   onChange: (value: number) => void;
   options: { value: number; label: string }[];
+  openUpward?: boolean;
 }
 
-function CustomSelect({ value, onChange, options }: CustomSelectProps) {
+function CustomSelect({ value, onChange, options, openUpward }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const currentOption = options.find(opt => opt.value === value) || options[0];
 
@@ -39,7 +40,9 @@ function CustomSelect({ value, onChange, options }: CustomSelectProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 left-0 right-0 mt-2 p-1.5 bg-white border border-zinc-200/80 rounded-2xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-150 ease-out">
+        <div className={`absolute z-50 left-0 right-0 p-1.5 bg-white border border-zinc-200/80 rounded-2xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in duration-150 ease-out ${
+          openUpward ? "bottom-full mb-2 slide-in-from-bottom-2" : "top-full mt-2 slide-in-from-top-2"
+        }`}>
           {options.map(option => (
             <button
               key={option.value}
@@ -242,7 +245,7 @@ export default function SettingsPage() {
 
             <form onSubmit={handleSave} className="space-y-6">
               {/* Telegram Bot Credentials Card */}
-              <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl overflow-hidden">
+              <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold">Параметры Telegram бота</CardTitle>
                   <CardDescription>
@@ -329,7 +332,7 @@ export default function SettingsPage() {
               </Card>
 
               {/* Reminder Settings Card */}
-              <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl overflow-hidden">
+              <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold flex items-center gap-2">
                     <CalendarRange className="w-5 h-5 text-zinc-700" />
@@ -341,7 +344,7 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {statusesList.map(status => {
+                    {statusesList.map((status, index) => {
                       const currentValue = settings.reminderRules?.[status.id] ?? 0;
                       return (
                         <div key={status.id} className="flex flex-col gap-1.5 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200/50">
@@ -352,6 +355,7 @@ export default function SettingsPage() {
                             value={currentValue}
                             onChange={(val) => handleRuleChange(status.id, val)}
                             options={reminderOptions}
+                            openUpward={index >= 2}
                           />
                         </div>
                       );
