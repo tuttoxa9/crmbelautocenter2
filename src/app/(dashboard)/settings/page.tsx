@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTelegramSettings, saveTelegramSettings, TelegramSettings } from "@/lib/settingsService";
 import IntegrationsPage from "./integrations/page";
-import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange } from "lucide-react";
 
 export default function SettingsPage() {
   const { user, userRole } = useAuth();
@@ -21,8 +21,30 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<TelegramSettings>({
     botToken: "",
     chatId: "",
-    isActive: true
+    isActive: true,
+    reminderRules: {}
   });
+
+  const statusesList = [
+    { id: "callback", label: "📞 Перезвонить" },
+    { id: "visit", label: "🚗 Приезд" },
+    { id: "new", label: "🆕 Новый лид" },
+    { id: "in_progress", label: "⚙️ В работе" },
+    { id: "thinking", label: "🤔 Думает" },
+    { id: "no_answer", label: "📞🔇 Недозвон" },
+  ];
+
+  const reminderOptions = [
+    { value: 0, label: "Не напоминать" },
+    { value: 5, label: "За 5 минут" },
+    { value: 10, label: "За 10 минут" },
+    { value: 15, label: "За 15 минут" },
+    { value: 20, label: "За 20 минут" },
+    { value: 30, label: "За 30 минут" },
+    { value: 60, label: "За 1 час" },
+    { value: 120, label: "За 2 часа" },
+    { value: 1440, label: "За 24 часа (сутки)" },
+  ];
 
   useEffect(() => {
     async function loadSettings() {
@@ -84,6 +106,16 @@ export default function SettingsPage() {
     } finally {
       setIsTesting(false);
     }
+  };
+
+  const handleRuleChange = (statusId: string, minutes: number) => {
+    setSettings(prev => ({
+      ...prev,
+      reminderRules: {
+        ...(prev.reminderRules || {}),
+        [statusId]: minutes
+      }
+    }));
   };
 
   // Only admin has access to settings
@@ -154,15 +186,16 @@ export default function SettingsPage() {
               </div>
             )}
 
-            <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl overflow-hidden">
-              <CardHeader>
-                <CardTitle className="text-lg font-bold">Параметры Telegram бота</CardTitle>
-                <CardDescription>
-                  Настройте автоматические уведомления о новых лидах в вашу Telegram-группу или канал.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSave} className="space-y-5">
+            <form onSubmit={handleSave} className="space-y-6">
+              {/* Telegram Bot Credentials Card */}
+              <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold">Параметры Telegram бота</CardTitle>
+                  <CardDescription>
+                    Настройте автоматические уведомления о новых лидах в вашу Telegram-группу или канал.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
                   <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-200/50">
                     <div className="space-y-0.5">
                       <Label htmlFor="telegram-active" className="text-sm font-bold text-zinc-800">
@@ -217,27 +250,13 @@ export default function SettingsPage() {
                     </p>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                    <Button
-                      type="submit"
-                      disabled={isSaving}
-                      className="flex-1 h-11 bg-zinc-950 hover:bg-zinc-800 text-white rounded-full font-semibold transition-all"
-                    >
-                      {isSaving ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Сохранение...
-                        </>
-                      ) : (
-                        "Сохранить настройки"
-                      )}
-                    </Button>
+                  <div className="pt-2">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleTestConnection}
                       disabled={isTesting}
-                      className="h-11 border-zinc-200 hover:bg-zinc-50 text-zinc-700 rounded-full font-semibold transition-all px-6"
+                      className="w-full sm:w-auto h-10 border-zinc-200 hover:bg-zinc-50 text-zinc-700 rounded-full font-semibold transition-all px-6"
                     >
                       {isTesting ? (
                         <>
@@ -247,14 +266,71 @@ export default function SettingsPage() {
                       ) : (
                         <>
                           <Send className="w-4 h-4 mr-2" />
-                          Проверить связь
+                          Проверить связь с ботом
                         </>
                       )}
                     </Button>
                   </div>
-                </form>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+
+              {/* Reminder Settings Card */}
+              <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <CalendarRange className="w-5 h-5 text-zinc-700" />
+                    Настройка напоминаний о задачах
+                  </CardTitle>
+                  <CardDescription>
+                    Выберите, за какое время до запланированного действия («След. шаг») отправлять напоминание в Telegram-группу для каждого статуса.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {statusesList.map(status => {
+                      const currentValue = settings.reminderRules?.[status.id] ?? 0;
+                      return (
+                        <div key={status.id} className="flex flex-col gap-1.5 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200/50">
+                          <Label htmlFor={`status-rule-${status.id}`} className="text-xs font-bold text-zinc-600 tracking-wider">
+                            {status.label}
+                          </Label>
+                          <select
+                            id={`status-rule-${status.id}`}
+                            value={currentValue}
+                            onChange={(e) => handleRuleChange(status.id, Number(e.target.value))}
+                            className="w-full h-10 px-3 text-sm bg-white border border-zinc-200 rounded-xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-medium text-zinc-800"
+                          >
+                            {reminderOptions.map(option => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Submit Buttons */}
+              <div className="flex pt-2">
+                <Button
+                  type="submit"
+                  disabled={isSaving}
+                  className="w-full h-12 bg-zinc-950 hover:bg-zinc-800 text-white rounded-full font-bold transition-all shadow-[0_8px_30px_rgba(0,0,0,0.12)] text-sm"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Сохранение всех настроек...
+                    </>
+                  ) : (
+                    "Сохранить все настройки"
+                  )}
+                </Button>
+              </div>
+            </form>
 
             {testResult && (
               <div

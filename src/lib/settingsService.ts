@@ -5,6 +5,7 @@ export interface TelegramSettings {
   botToken: string;
   chatId: string;
   isActive: boolean;
+  reminderRules?: Record<string, number>;
   updatedAt?: number;
 }
 
@@ -15,6 +16,10 @@ export const DEFAULT_TELEGRAM_SETTINGS: TelegramSettings = {
   botToken: "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4",
   chatId: "-1002721193947",
   isActive: true,
+  reminderRules: {
+    callback: 10,  // Перезвонить за 10 минут
+    visit: 30      // Приезд за 30 минут
+  }
 };
 
 export const getTelegramSettings = async (): Promise<TelegramSettings> => {
@@ -28,9 +33,10 @@ export const getTelegramSettings = async (): Promise<TelegramSettings> => {
         botToken: data.botToken !== undefined ? data.botToken : DEFAULT_TELEGRAM_SETTINGS.botToken,
         chatId: data.chatId !== undefined ? data.chatId : DEFAULT_TELEGRAM_SETTINGS.chatId,
         isActive: data.isActive !== undefined ? data.isActive : DEFAULT_TELEGRAM_SETTINGS.isActive,
+        reminderRules: data.reminderRules !== undefined ? data.reminderRules : DEFAULT_TELEGRAM_SETTINGS.reminderRules,
       };
     } else {
-      // If it doesn't exist yet, we can save default settings to Firestore so it is initialized
+      // If it doesn't exist yet, we save default settings to Firestore so it is initialized
       try {
         await saveTelegramSettings(DEFAULT_TELEGRAM_SETTINGS);
       } catch (err) {
