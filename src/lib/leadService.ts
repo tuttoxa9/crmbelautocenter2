@@ -185,6 +185,35 @@ export const getPaginatedLeads = async (
   return { leads, lastDoc: lastVisible };
 };
 
+export const deleteLeadsByStatusAndDateRange = async (
+  status: LeadStatus,
+  dateFrom: number,
+  dateTo: number
+): Promise<number> => {
+  if (!db) throw new Error("Firestore is not initialized");
+
+  const leadsRef = collection(db, LEADS_COLLECTION);
+  const q = query(
+    leadsRef,
+    where("status", "==", status),
+    where("createdAt", ">=", dateFrom),
+    where("createdAt", "<=", dateTo)
+  );
+
+  const snapshot = await getDocs(q);
+  const total = snapshot.size;
+
+  // Delete in parallel with concurrency limit
+  const batchSize = 10;
+  const docs = snapshot.docs;
+  for (let i = 0; i < docs.length; i += batchSize) {
+    const batch = docs.slice(i, i + batchSize);
+    await Promise.all(batch.map(d => deleteDoc(d.ref)));
+  }
+
+  return total;
+};
+
 export const getLeadsCount = async (statuses?: LeadStatus[]) => {
   if (!db) return 0;
   const leadsRef = collection(db, LEADS_COLLECTION);

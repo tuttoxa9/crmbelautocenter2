@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTelegramSettings, saveTelegramSettings, TelegramSettings } from "@/lib/settingsService";
+import { deleteLeadsByStatusAndDateRange } from "@/lib/leadService";
+import { LEAD_STATUSES } from "@/constants/leadStatuses";
+import { LeadStatus } from "@/lib/types";
 import IntegrationsPage from "./integrations/page";
-import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange, ChevronDown, Check } from "lucide-react";
+import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange, ChevronDown, Check, Trash2, ShieldAlert } from "lucide-react";
 
 interface CustomSelectProps {
   value: number;
@@ -69,7 +72,7 @@ function CustomSelect({ value, onChange, options, openUpward }: CustomSelectProp
 
 export default function SettingsPage() {
   const { user, userRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<"telegram" | "integrations">("telegram");
+  const [activeTab, setActiveTab] = useState<"telegram" | "integrations" | "cleanup">("telegram");
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -175,6 +178,53 @@ export default function SettingsPage() {
     }));
   };
 
+  // --- Cleanup state ---
+  const [cleanupStatus, setCleanupStatus] = useState<LeadStatus | "">("")
+  const [cleanupDateFrom, setCleanupDateFrom] = useState("");
+  const [cleanupDateTo, setCleanupDateTo] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteResult, setDeleteResult] = useState<{ type: "success" | "error"; message: string; count?: number } | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const selectedStatusLabel = LEAD_STATUSES.find(s => s.value === cleanupStatus)?.label || "";
+
+  const handleCleanup = useCallback(async () => {
+    if (!cleanupStatus || !cleanupDateFrom || !cleanupDateTo) return;
+
+    const dateFrom = new Date(cleanupDateFrom);
+    dateFrom.setHours(0, 0, 0, 0);
+    const dateTo = new Date(cleanupDateTo);
+    dateTo.setHours(23, 59, 59, 999);
+
+    if (dateFrom.getTime() > dateTo.getTime()) {
+      setDeleteResult({ type: "error", message: "Дата \"От\" не может быть позже даты \"До\"." });
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteResult(null);
+    setShowConfirm(false);
+
+    try {
+      const count = await deleteLeadsByStatusAndDateRange(
+        cleanupStatus as LeadStatus,
+        dateFrom.getTime(),
+        dateTo.getTime()
+      );
+
+      if (count === 0) {
+        setDeleteResult({ type: "success", message: "Заявок для удаления не найдено.", count: 0 });
+      } else {
+        setDeleteResult({ type: "success", message: `Успешно удалено ${count} заявок.`, count });
+      }
+    } catch (error) {
+      console.error(error);
+      setDeleteResult({ type: "error", message: "Произошла ошибка при удалении заявок." });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [cleanupStatus, cleanupDateFrom, cleanupDateTo]);
+
   // Only admin has access to settings
   if (userRole !== "admin") {
     return (
@@ -219,6 +269,17 @@ export default function SettingsPage() {
         >
           <Link2 className="w-4 h-4" />
           Интеграции вебхуков
+        </button>
+        <button
+          onClick={() => setActiveTab("cleanup")}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
+            activeTab === "cleanup"
+              ? "border-zinc-950 text-zinc-950 font-bold"
+              : "border-transparent text-zinc-500 hover:text-zinc-900"
+          }`}
+        >
+          <Trash2 className="w-4 h-4" />
+          Очистка базы
         </button>
       </div>
 
@@ -403,9 +464,153 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
-        ) : (
+        ) : activeTab === "integrations" ? (
           <div className="animate-in fade-in duration-200">
             <IntegrationsPage />
+          </div>
+        ) : (
+          <div className="max-w-2xl space-y-6 animate-in fade-in duration-200">
+            {/* Cleanup result toast */}
+            {deleteResult && (
+              <div
+                className={`p-4 rounded-xl flex items-center gap-3 border animate-in fade-in duration-200 ${
+                  deleteResult.type === "success"
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                    : "bg-red-50 border-red-200 text-red-800"
+                }`}
+              >
+                {deleteResult.type === "success" ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                )}
+                <span className="text-sm font-medium">{deleteResult.message}</span>
+              </div>
+            )}
+
+            <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <Trash2 className="w-5 h-5 text-zinc-700" />
+                  Удаление заявок по статусу
+                </CardTitle>
+                <CardDescription>
+                  Выберите статус и период — все заявки с этим статусом, созданные в указанном диапазоне дат, будут безвозвратно удалены.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {/* Status selector */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                    Статус заявок
+                  </Label>
+                  <div className="relative">
+                    <select
+                      value={cleanupStatus}
+                      onChange={(e) => {
+                        setCleanupStatus(e.target.value as LeadStatus | "");
+                        setDeleteResult(null);
+                        setShowConfirm(false);
+                      }}
+                      className="w-full h-11 px-4 pr-10 text-sm bg-white border border-zinc-200 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-semibold text-zinc-800 shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] hover:bg-zinc-50/50 cursor-pointer appearance-none"
+                    >
+                      <option value="">Выберите статус...</option>
+                      {LEAD_STATUSES.map(s => (
+                        <option key={s.value} value={s.value}>{s.label}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Date range */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                      Дата от
+                    </Label>
+                    <Input
+                      type="date"
+                      value={cleanupDateFrom}
+                      onChange={(e) => {
+                        setCleanupDateFrom(e.target.value);
+                        setDeleteResult(null);
+                        setShowConfirm(false);
+                      }}
+                      className="h-11 px-4 text-sm border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl font-semibold"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                      Дата до
+                    </Label>
+                    <Input
+                      type="date"
+                      value={cleanupDateTo}
+                      onChange={(e) => {
+                        setCleanupDateTo(e.target.value);
+                        setDeleteResult(null);
+                        setShowConfirm(false);
+                      }}
+                      className="h-11 px-4 text-sm border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl font-semibold"
+                    />
+                  </div>
+                </div>
+
+                {/* Action button */}
+                <div className="pt-2">
+                  {!showConfirm ? (
+                    <Button
+                      type="button"
+                      disabled={!cleanupStatus || !cleanupDateFrom || !cleanupDateTo || isDeleting}
+                      onClick={() => setShowConfirm(true)}
+                      className="w-full h-12 bg-red-600 hover:bg-red-700 text-white rounded-full font-bold transition-all shadow-[0_8px_30px_rgba(220,38,38,0.18)] text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Удалить заявки
+                    </Button>
+                  ) : (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-2xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="flex items-start gap-3">
+                        <ShieldAlert className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-bold text-red-800">Подтвердите удаление</p>
+                          <p className="text-xs text-red-600 mt-0.5">
+                            Будут безвозвратно удалены все заявки со статусом <strong>«{selectedStatusLabel}»</strong> за период <strong>{cleanupDateFrom}</strong> — <strong>{cleanupDateTo}</strong>.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <Button
+                          type="button"
+                          disabled={isDeleting}
+                          onClick={handleCleanup}
+                          className="flex-1 h-10 bg-red-600 hover:bg-red-700 text-white rounded-full font-bold text-sm transition-all"
+                        >
+                          {isDeleting ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Удаление...
+                            </>
+                          ) : (
+                            "Да, удалить"
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={isDeleting}
+                          onClick={() => setShowConfirm(false)}
+                          className="flex-1 h-10 border-zinc-200 hover:bg-zinc-50 text-zinc-700 rounded-full font-semibold text-sm"
+                        >
+                          Отмена
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
