@@ -193,21 +193,22 @@ export const deleteLeadsByStatusAndDateRange = async (
   if (!db) throw new Error("Firestore is not initialized");
 
   const leadsRef = collection(db, LEADS_COLLECTION);
-  const q = query(
-    leadsRef,
-    where("status", "==", status),
-    where("createdAt", ">=", dateFrom),
-    where("createdAt", "<=", dateTo)
-  );
+  // Query only by status to avoid requiring a composite Firestore index.
+  // Date filtering is done client-side.
+  const q = query(leadsRef, where("status", "==", status));
 
   const snapshot = await getDocs(q);
-  const total = snapshot.size;
+  const matchingDocs = snapshot.docs.filter(d => {
+    const createdAt = d.data().createdAt as number;
+    return createdAt >= dateFrom && createdAt <= dateTo;
+  });
+
+  const total = matchingDocs.length;
 
   // Delete in parallel with concurrency limit
   const batchSize = 10;
-  const docs = snapshot.docs;
-  for (let i = 0; i < docs.length; i += batchSize) {
-    const batch = docs.slice(i, i + batchSize);
+  for (let i = 0; i < matchingDocs.length; i += batchSize) {
+    const batch = matchingDocs.slice(i, i + batchSize);
     await Promise.all(batch.map(d => deleteDoc(d.ref)));
   }
 
