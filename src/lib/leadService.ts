@@ -125,6 +125,23 @@ export const updateLeadStatus = async (
   }
 
   await updateDoc(leadRef, updateData);
+
+  // CAPI Webhook trigger
+  if (newStatus === "success" && currentData.status !== "success") {
+    try {
+      fetch('/api/webhook/zapier-capi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId: leadSnap.id,
+          source: currentData.source,
+          payload: currentData.payload
+        })
+      }).catch(err => console.error("Failed to trigger Zapier CAPI webhook:", err));
+    } catch (e) {
+      console.error("Error sending CAPI request", e);
+    }
+  }
 };
 
 export const updateLeadDetails = async (
