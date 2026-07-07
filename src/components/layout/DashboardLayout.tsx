@@ -9,13 +9,14 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, Folder, Settings, Briefcase } from "lucide-react";
+import { ClipboardList, Folder, Settings, Briefcase, Calculator } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 
 const navItems = [
   { name: "Лиды", href: "/leads", icon: ClipboardList, roles: ["admin"] },
   { name: "Комиссия", href: "/commission", icon: Briefcase, roles: ["admin", "commission"] },
+  { name: "Бюджет", href: "/budget", icon: Calculator, roles: ["admin"] },
   { name: "Файлы", href: "/files", icon: Folder, roles: ["admin"] },
   { name: "Настройки", href: "/settings", icon: Settings, roles: ["admin"] },
 ];
