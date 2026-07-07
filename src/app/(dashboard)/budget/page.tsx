@@ -99,10 +99,11 @@ function InlineEdit({ value, onSave, className }: { value: string; onSave: (v: s
   return (
     <button
       onClick={() => { setDraft(value); setEditing(true); }}
-      className={`text-left hover:text-blue-700 transition-colors group flex items-center gap-1.5 ${className}`}
+      title="Нажмите чтобы изменить название"
+      className={`text-left hover:text-blue-700 transition-colors flex items-center gap-1.5 cursor-text ${className}`}
     >
-      {value}
-      <Pencil className="w-3 h-3 opacity-0 group-hover:opacity-40 transition-opacity" />
+      <span>{value}</span>
+      <Pencil className="w-3 h-3 opacity-30 hover:opacity-70 transition-opacity shrink-0" />
     </button>
   );
 }
