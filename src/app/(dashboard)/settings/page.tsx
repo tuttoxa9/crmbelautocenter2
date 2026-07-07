@@ -81,7 +81,7 @@ function InterfaceSettings() {
         className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${crmVersion === "v1" ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:border-zinc-300"}`}
       >
         <div>
-          <p className="font-bold text-zinc-900">Классический вид (Статусы)</p>
+          <p className="font-bold text-zinc-900">Классический вид</p>
           <p className="text-sm text-zinc-500 mt-1">Отображение лидов с группировкой по вкладкам-статусам слева.</p>
         </div>
         {crmVersion === "v1" && <CheckCircle2 className="w-5 h-5 text-zinc-900" />}
@@ -92,7 +92,7 @@ function InterfaceSettings() {
         className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${crmVersion === "v2" ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:border-zinc-300"}`}
       >
         <div>
-          <p className="font-bold text-zinc-900">Повестка дня (Agenda)</p>
+          <p className="font-bold text-zinc-900">Повестка дня</p>
           <p className="text-sm text-zinc-500 mt-1">Отображение всех задач на выбранный день единым списком, без меню статусов.</p>
         </div>
         {crmVersion === "v2" && <CheckCircle2 className="w-5 h-5 text-zinc-900" />}
