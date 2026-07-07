@@ -11,7 +11,8 @@ import { deleteLeadsByStatusAndDateRange } from "@/lib/leadService";
 import { LEAD_STATUSES } from "@/constants/leadStatuses";
 import { LeadStatus } from "@/lib/types";
 import IntegrationsPage from "./integrations/page";
-import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange, ChevronDown, Check, Trash2, ShieldAlert } from "lucide-react";
+import { useSettings } from "@/contexts/SettingsContext";
+import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange, ChevronDown, Check, Trash2, ShieldAlert, LayoutGrid } from "lucide-react";
 
 interface CustomSelectProps {
   value: number;
@@ -70,9 +71,39 @@ function CustomSelect({ value, onChange, options, openUpward }: CustomSelectProp
   );
 }
 
+function InterfaceSettings() {
+  const { crmVersion, setCrmVersion } = useSettings();
+  
+  return (
+    <div className="flex flex-col gap-3 mt-2">
+      <div 
+        onClick={() => setCrmVersion("v1")}
+        className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${crmVersion === "v1" ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:border-zinc-300"}`}
+      >
+        <div>
+          <p className="font-bold text-zinc-900">Классический вид (Статусы)</p>
+          <p className="text-sm text-zinc-500 mt-1">Отображение лидов с группировкой по вкладкам-статусам слева.</p>
+        </div>
+        {crmVersion === "v1" && <CheckCircle2 className="w-5 h-5 text-zinc-900" />}
+      </div>
+      
+      <div 
+        onClick={() => setCrmVersion("v2")}
+        className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${crmVersion === "v2" ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:border-zinc-300"}`}
+      >
+        <div>
+          <p className="font-bold text-zinc-900">Повестка дня (Agenda)</p>
+          <p className="text-sm text-zinc-500 mt-1">Отображение всех задач на выбранный день единым списком, без меню статусов.</p>
+        </div>
+        {crmVersion === "v2" && <CheckCircle2 className="w-5 h-5 text-zinc-900" />}
+      </div>
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { user, userRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<"telegram" | "integrations" | "cleanup">("telegram");
+  const [activeTab, setActiveTab] = useState<"interface" | "telegram" | "integrations" | "cleanup">("interface");
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -247,10 +278,21 @@ export default function SettingsPage() {
       </div>
 
       {/* Tabs Selector */}
-      <div className="flex border-b border-zinc-200 bg-white px-6">
+      <div className="flex border-b border-zinc-200 bg-white px-6 overflow-x-auto custom-scrollbar">
+        <button
+          onClick={() => setActiveTab("interface")}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+            activeTab === "interface"
+              ? "border-zinc-950 text-zinc-950 font-bold"
+              : "border-transparent text-zinc-500 hover:text-zinc-900"
+          }`}
+        >
+          <LayoutGrid className="w-4 h-4" />
+          Интерфейс
+        </button>
         <button
           onClick={() => setActiveTab("telegram")}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
             activeTab === "telegram"
               ? "border-zinc-950 text-zinc-950 font-bold"
               : "border-transparent text-zinc-500 hover:text-zinc-900"
@@ -285,7 +327,26 @@ export default function SettingsPage() {
 
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        {activeTab === "telegram" ? (
+        {activeTab === "interface" ? (
+          <div className="max-w-2xl space-y-6">
+            <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl">
+              <CardHeader>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <LayoutGrid className="w-5 h-5 text-zinc-700" />
+                  Версия интерфейса CRM
+                </CardTitle>
+                <CardDescription>
+                  Выберите, какую версию интерфейса использовать на этом компьютере.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <InterfaceSettings />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : activeTab === "telegram" ? (
           <div className="max-w-2xl space-y-6">
             {toast && (
               <div

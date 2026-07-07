@@ -12,6 +12,8 @@ import { getPaginatedLeads } from "@/lib/leadService";
 import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { format, addDays, subDays, startOfDay, isToday, isSameDay, isBefore, isAfter } from "date-fns";
 import { ru } from "date-fns/locale";
+import { useSettings } from "@/contexts/SettingsContext";
+import { AgendaView } from "@/components/leads/views/AgendaView";
 
 type FilterTab = "new" | "in_progress" | "visit" | "no_answer" | "thinking" | "callback" | "all";
 
@@ -23,6 +25,7 @@ export default function LeadsPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>("in_progress");
   const [filterDate, setFilterDate] = useState<Date>(startOfDay(new Date()));
   const [mobileView, setMobileView] = useState<"menu" | "list">("menu");
+  const { crmVersion } = useSettings();
 
   // History Pagination State
   const [historyLeads, setHistoryLeads] = useState<Lead[]>([]);
@@ -130,6 +133,23 @@ export default function LeadsPage() {
   // The user explicitly requested to always group by nextActionDate across the table for active tabs,
   // so that tasks/leads don't get lost. We only fall back to createdAt for the "new" tab.
   const isDateTab = activeTab !== "new";
+
+  if (crmVersion === "v2") {
+    return (
+      <div className="h-full bg-zinc-950 text-zinc-900 font-sans overflow-hidden relative flex">
+        <AgendaView
+          leads={leads}
+          selectedLeadId={selectedLead?.id || null}
+          onSelectLead={setSelectedLead}
+          filterDate={filterDate}
+          setFilterDate={setFilterDate}
+        />
+        {selectedLead && (
+          <LeadFocusView lead={selectedLead} onClose={() => setSelectedLead(null)} />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="h-full bg-zinc-950 text-zinc-900 font-sans overflow-hidden relative">
