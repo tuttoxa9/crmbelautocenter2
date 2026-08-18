@@ -66,3 +66,32 @@ export interface Integration {
   createdAt: number;
   updatedAt: number;
 }
+
+export type AdCampaignType = 'rk1' | 'rk2' | 'waiting_video';
+
+export type AdPriceTier = 'tier_under_7k' | 'tier_7k_13k' | 'tier_13k_20k' | 'tier_20k_plus';
+
+export interface AdCar {
+  id?: string;
+  carId?: string; // ID авто из Neon DB
+  name: string;
+  year?: number | string;
+  priceUsd: number;
+  priceTier: AdPriceTier;
+  campaign: AdCampaignType;
+  startedAt: number; // Timestamp старта открутки в текущей РК
+  maxDays?: number; // Лимит дней
+  photoUrl?: string;
+  notes?: string;
+  lastAlertSentAt?: number; // Timestamp последней отправки TG алерта
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface AdsSettings {
+  rk1Days: number; // По умолчанию 17
+  rk2Days: number; // По умолчанию 14
+  isActive?: boolean;
+  chatId?: string;
+  botToken?: string;
+}

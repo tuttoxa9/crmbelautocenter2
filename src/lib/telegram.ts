@@ -162,3 +162,80 @@ export async function sendTelegramReminder(lead: any, minutesLeft: number) {
     console.error("Error in sendTelegramReminder:", error);
   }
 }
+
+export interface AdRotationAlertData {
+  name: string;
+  year?: string | number;
+  priceUsd: number;
+  priceTierLabel: string;
+  currentCampaign: 'rk1' | 'rk2';
+  targetCampaign: 'rk1' | 'rk2';
+  daysInAd: number;
+  photoUrl?: string;
+}
+
+export async function sendTelegramAdRotationAlert(data: AdRotationAlertData) {
+  try {
+    if (!adminDb) {
+      console.warn("Firebase Admin is not initialized. Skipping Ad Telegram notification.");
+      return;
+    }
+
+    // 1. Проверяем настройки ads или telegram
+    const adsSettingsDoc = await adminDb.collection('settings').doc('ads').get();
+    const adsSettings = adsSettingsDoc.data();
+
+    const telegramSettingsDoc = await adminDb.collection('settings').doc('telegram').get();
+    const telegramSettings = telegramSettingsDoc.data();
+
+    const botToken = adsSettings?.botToken || telegramSettings?.botToken || "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4";
+    const chatId = adsSettings?.chatId || telegramSettings?.chatId || "-1002721193947";
+    const isActive = adsSettings?.isActive !== undefined ? adsSettings.isActive : (telegramSettings?.isActive !== undefined ? telegramSettings.isActive : true);
+
+    if (!isActive) {
+      console.log("Ad Telegram notifications are disabled in settings.");
+      return;
+    }
+
+    if (!botToken || !chatId) {
+      console.warn("Telegram botToken or chatId is missing.");
+      return;
+    }
+
+    const currentCampaignLabel = data.currentCampaign === 'rk1' ? 'РК 1' : 'РК 2';
+    const targetCampaignLabel = data.targetCampaign === 'rk1' ? 'РК 1' : 'РК 2';
+
+    const formattedPrice = Number(data.priceUsd || 0).toLocaleString('ru-RU');
+    const yearStr = data.year ? ` (${data.year})` : '';
+
+    const message = [
+      `🔄 <b>РОТАЦИЯ РЕКЛАМЫ (TikTok Ads)</b>\n`,
+      `🚗 <b>Автомобиль:</b> ${data.name}${yearStr} — $${formattedPrice}`,
+      `🎯 <b>Группа:</b> ${data.priceTierLabel}`,
+      `⏱ <b>В рекламе:</b> ${data.daysInAd}-й день в <b>${currentCampaignLabel}</b>\n`,
+      `⚠️ <b>Действие:</b> Перенести автомобиль из <b>${currentCampaignLabel}</b> в <b>${targetCampaignLabel}</b>`
+    ].join('\n');
+
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: "HTML",
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Failed to send Telegram ad rotation alert:", errorData);
+    } else {
+      console.log(`Telegram ad rotation alert for ${data.name} sent successfully.`);
+    }
+  } catch (error) {
+    console.error("Error in sendTelegramAdRotationAlert:", error);
+  }
+}
