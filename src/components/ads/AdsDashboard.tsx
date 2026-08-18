@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   subscribeToAdCars,
   createAdCar,
@@ -11,15 +11,13 @@ import {
   updateAdsSettings,
   calculateDaysInAd,
   getPriceTierLabel,
-  getCampaignLabel,
   DEFAULT_ADS_SETTINGS,
 } from "@/lib/services/adsService";
-import { AdCar, AdCampaignType, AdPriceTier, AdsSettings } from "@/lib/types";
+import { AdCar, AdCampaignType, AdsSettings } from "@/lib/types";
 import { AddAdCarModal } from "./AddAdCarModal";
 import { AdsSettingsModal } from "./AdsSettingsModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Megaphone,
@@ -32,14 +30,11 @@ import {
   Video,
   Trash2,
   Clock,
-  AlertTriangle,
-  CheckCircle2,
-  DollarSign,
+  AlertCircle,
   Car,
-  SlidersHorizontal,
-  Flame,
+  ChevronDown,
   Play,
-  Layers,
+  Filter,
 } from "lucide-react";
 
 export function AdsDashboard() {
@@ -56,6 +51,27 @@ export function AdsDashboard() {
   const [selectedTier, setSelectedTier] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"urgent" | "newest" | "price_asc" | "price_desc">("urgent");
+
+  // Custom Dropdowns State
+  const [isTierDropdownOpen, setIsTierDropdownOpen] = useState(false);
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+
+  const tierRef = useRef<HTMLDivElement>(null);
+  const sortRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (tierRef.current && !tierRef.current.contains(e.target as Node)) {
+        setIsTierDropdownOpen(false);
+      }
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setIsSortDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Subscribe to ad cars
   useEffect(() => {
@@ -123,11 +139,25 @@ export function AdsDashboard() {
     };
   }, [cars, settings]);
 
+  const tierOptions = [
+    { value: "all", label: "Все ценовые группы" },
+    { value: "tier_under_7k", label: "До $7 000" },
+    { value: "tier_7k_13k", label: "$7 000 – $13 000" },
+    { value: "tier_13k_20k", label: "$13 000 – $20 000" },
+    { value: "tier_20k_plus", label: "$20 000+" },
+  ];
+
+  const sortOptions = [
+    { value: "urgent", label: "Сначала требующие ротации" },
+    { value: "newest", label: "Сначала новые" },
+    { value: "price_asc", label: "Цена: по возрастанию" },
+    { value: "price_desc", label: "Цена: по убыванию" },
+  ];
+
   // Filtered & Sorted Cars
   const displayedCars = useMemo(() => {
     return cars
       .filter((car) => {
-        // Tab Filter
         if (activeTab === "rk1" && car.campaign !== "rk1") return false;
         if (activeTab === "rk2" && car.campaign !== "rk2") return false;
         if (activeTab === "waiting" && car.campaign !== "waiting_video") return false;
@@ -138,10 +168,8 @@ export function AdsDashboard() {
           if (days < limit) return false;
         }
 
-        // Tier Filter
         if (selectedTier !== "all" && car.priceTier !== selectedTier) return false;
 
-        // Search Filter
         if (searchQuery.trim()) {
           const query = searchQuery.toLowerCase().trim();
           const nameMatch = car.name.toLowerCase().includes(query);
@@ -154,7 +182,6 @@ export function AdsDashboard() {
       })
       .sort((a, b) => {
         if (sortBy === "urgent") {
-          // Sort by urgency ratio (days / limit)
           const daysA = calculateDaysInAd(a.startedAt);
           const limitA = a.maxDays || (a.campaign === "rk1" ? settings.rk1Days : settings.rk2Days);
           const ratioA = a.campaign === "waiting_video" ? -1 : daysA / limitA;
@@ -179,515 +206,553 @@ export function AdsDashboard() {
   }, [cars, activeTab, selectedTier, searchQuery, sortBy, settings]);
 
   return (
-    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-zinc-800 pb-6">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-400">
-              <Megaphone className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-zinc-100 flex items-center gap-3">
+    <div className="flex flex-col min-h-screen bg-[#F8F9FA] text-zinc-900 font-sans">
+      {/* Top Header */}
+      <div className="bg-white border-b border-zinc-200/80 px-6 py-4 sticky top-0 z-20">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-7xl mx-auto">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">
                 Реклама TikTok Ads
-                {stats.expiredCount > 0 && (
-                  <Badge variant="destructive" className="bg-rose-500/20 border-rose-500/40 text-rose-300 text-xs px-2.5 py-0.5 animate-pulse">
-                    {stats.expiredCount} требуют ротации
-                  </Badge>
-                )}
               </h1>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Система ротации креативов между РК 1 и РК 2 и автоматических напоминаний
-              </p>
+              {stats.expiredCount > 0 && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                  {stats.expiredCount} требуют ротации
+                </span>
+              )}
             </div>
+            <p className="text-xs text-zinc-500 mt-0.5">
+              Контроль сроков открутки и ротация автомобилей между РК 1 и РК 2
+            </p>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsSettingsModalOpen(true)}
-            className="border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-300 text-xs h-9 gap-1.5"
-          >
-            <Settings className="w-4 h-4 text-zinc-400" />
-            Настройки сроков
-          </Button>
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSettingsModalOpen(true)}
+              className="bg-white border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-medium rounded-lg h-9 gap-1.5 shadow-2xs"
+            >
+              <Settings className="w-3.5 h-3.5 text-zinc-500" />
+              Настройки сроков
+            </Button>
 
-          <Button
-            onClick={() => setIsAddModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold h-9 gap-1.5 shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            Добавить авто в рекламу
-          </Button>
+            <Button
+              onClick={() => setIsAddModalOpen(true)}
+              className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium rounded-lg h-9 gap-1.5 px-3.5 shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              Добавить авто
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <div
-          onClick={() => setActiveTab("all")}
-          className={`p-4 rounded-xl border transition-all cursor-pointer ${
-            activeTab === "all"
-              ? "bg-zinc-900 border-zinc-700 shadow-md ring-1 ring-zinc-600"
-              : "bg-zinc-950/60 border-zinc-800 hover:border-zinc-700"
-          }`}
-        >
-          <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-xs font-medium">Всего в рекламе</span>
-            <Layers className="w-4 h-4 text-zinc-500" />
+      {/* Main Content Area */}
+      <div className="p-6 max-w-7xl mx-auto w-full space-y-6 flex-1">
+        {/* KPI Stat Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div
+            onClick={() => setActiveTab("all")}
+            className={`p-4 rounded-xl border transition-all cursor-pointer bg-white ${
+              activeTab === "all"
+                ? "border-zinc-900 ring-1 ring-zinc-900 shadow-xs"
+                : "border-zinc-200/80 hover:border-zinc-300 shadow-2xs"
+            }`}
+          >
+            <div className="text-xs font-medium text-zinc-500">Всего в рекламе</div>
+            <div className="text-2xl font-bold text-zinc-900 mt-1">{stats.total}</div>
           </div>
-          <div className="text-2xl font-black text-zinc-100 mt-2">{stats.total}</div>
-        </div>
 
-        <div
-          onClick={() => setActiveTab("rk1")}
-          className={`p-4 rounded-xl border transition-all cursor-pointer ${
-            activeTab === "rk1"
-              ? "bg-blue-950/40 border-blue-600 shadow-md ring-1 ring-blue-500"
-              : "bg-zinc-950/60 border-zinc-800 hover:border-zinc-700"
-          }`}
-        >
-          <div className="flex items-center justify-between text-blue-400">
-            <span className="text-xs font-semibold">РК 1</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-300 font-normal">
-              {settings.rk1Days} дн.
-            </span>
-          </div>
-          <div className="text-2xl font-black text-blue-400 mt-2">{stats.rk1Count}</div>
-        </div>
-
-        <div
-          onClick={() => setActiveTab("rk2")}
-          className={`p-4 rounded-xl border transition-all cursor-pointer ${
-            activeTab === "rk2"
-              ? "bg-purple-950/40 border-purple-600 shadow-md ring-1 ring-purple-500"
-              : "bg-zinc-950/60 border-zinc-800 hover:border-zinc-700"
-          }`}
-        >
-          <div className="flex items-center justify-between text-purple-400">
-            <span className="text-xs font-semibold">РК 2</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-300 font-normal">
-              {settings.rk2Days} дн.
-            </span>
-          </div>
-          <div className="text-2xl font-black text-purple-400 mt-2">{stats.rk2Count}</div>
-        </div>
-
-        <div
-          onClick={() => setActiveTab("waiting")}
-          className={`p-4 rounded-xl border transition-all cursor-pointer ${
-            activeTab === "waiting"
-              ? "bg-amber-950/40 border-amber-600 shadow-md ring-1 ring-amber-500"
-              : "bg-zinc-950/60 border-zinc-800 hover:border-zinc-700"
-          }`}
-        >
-          <div className="flex items-center justify-between text-amber-400">
-            <span className="text-xs font-semibold">Ожидают съёмки</span>
-            <Video className="w-4 h-4 text-amber-500" />
-          </div>
-          <div className="text-2xl font-black text-amber-400 mt-2">{stats.waitingCount}</div>
-        </div>
-
-        <div
-          onClick={() => setActiveTab("expired")}
-          className={`p-4 rounded-xl border transition-all cursor-pointer ${
-            activeTab === "expired"
-              ? "bg-rose-950/50 border-rose-500 shadow-md ring-1 ring-rose-500"
-              : stats.expiredCount > 0
-              ? "bg-rose-950/20 border-rose-800/60 hover:border-rose-600"
-              : "bg-zinc-950/60 border-zinc-800 hover:border-zinc-700"
-          }`}
-        >
-          <div className="flex items-center justify-between text-rose-400">
-            <span className="text-xs font-semibold">Требуют ротации</span>
-            <Flame className="w-4 h-4 text-rose-500" />
-          </div>
-          <div className="text-2xl font-black text-rose-400 mt-2 flex items-center gap-2">
-            {stats.expiredCount}
-            {stats.expiredCount > 0 && (
-              <span className="text-xs font-normal text-rose-300 bg-rose-500/20 px-1.5 py-0.5 rounded">
-                Срочно
+          <div
+            onClick={() => setActiveTab("rk1")}
+            className={`p-4 rounded-xl border transition-all cursor-pointer bg-white ${
+              activeTab === "rk1"
+                ? "border-blue-600 ring-1 ring-blue-600 shadow-xs"
+                : "border-zinc-200/80 hover:border-zinc-300 shadow-2xs"
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs font-medium text-blue-700">
+              <span>РК 1</span>
+              <span className="text-[11px] font-normal text-zinc-400">
+                {settings.rk1Days} дн.
               </span>
-            )}
+            </div>
+            <div className="text-2xl font-bold text-blue-700 mt-1">{stats.rk1Count}</div>
+          </div>
+
+          <div
+            onClick={() => setActiveTab("rk2")}
+            className={`p-4 rounded-xl border transition-all cursor-pointer bg-white ${
+              activeTab === "rk2"
+                ? "border-purple-600 ring-1 ring-purple-600 shadow-xs"
+                : "border-zinc-200/80 hover:border-zinc-300 shadow-2xs"
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs font-medium text-purple-700">
+              <span>РК 2</span>
+              <span className="text-[11px] font-normal text-zinc-400">
+                {settings.rk2Days} дн.
+              </span>
+            </div>
+            <div className="text-2xl font-bold text-purple-700 mt-1">{stats.rk2Count}</div>
+          </div>
+
+          <div
+            onClick={() => setActiveTab("waiting")}
+            className={`p-4 rounded-xl border transition-all cursor-pointer bg-white ${
+              activeTab === "waiting"
+                ? "border-amber-600 ring-1 ring-amber-600 shadow-xs"
+                : "border-zinc-200/80 hover:border-zinc-300 shadow-2xs"
+            }`}
+          >
+            <div className="text-xs font-medium text-amber-700">Ожидают съёмки</div>
+            <div className="text-2xl font-bold text-amber-700 mt-1">{stats.waitingCount}</div>
+          </div>
+
+          <div
+            onClick={() => setActiveTab("expired")}
+            className={`p-4 rounded-xl border transition-all cursor-pointer bg-white ${
+              activeTab === "expired"
+                ? "border-rose-600 ring-1 ring-rose-600 shadow-xs"
+                : stats.expiredCount > 0
+                ? "border-rose-200 bg-rose-50/40 hover:border-rose-300"
+                : "border-zinc-200/80 hover:border-zinc-300 shadow-2xs"
+            }`}
+          >
+            <div className="flex items-center justify-between text-xs font-medium text-rose-700">
+              <span>Требуют ротации</span>
+              {stats.expiredCount > 0 && (
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+              )}
+            </div>
+            <div className="text-2xl font-bold text-rose-700 mt-1">{stats.expiredCount}</div>
           </div>
         </div>
-      </div>
 
-      {/* Filter and Control Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-zinc-900/50 p-3 rounded-xl border border-zinc-800">
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Filter and Control Bar */}
+        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-white p-3 rounded-2xl border border-zinc-200/80 shadow-2xs">
           {/* Tabs */}
-          <div className="flex bg-zinc-950 p-1 rounded-lg border border-zinc-800 text-xs">
+          <div className="flex flex-wrap items-center gap-1.5 bg-zinc-100/80 p-1 rounded-xl">
             <button
               onClick={() => setActiveTab("all")}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                activeTab === "all" ? "bg-zinc-800 text-white font-semibold" : "text-zinc-400 hover:text-zinc-200"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                activeTab === "all"
+                  ? "bg-white text-zinc-900 shadow-xs font-semibold"
+                  : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
               Все ({stats.total})
             </button>
             <button
               onClick={() => setActiveTab("rk1")}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                activeTab === "rk1" ? "bg-blue-600 text-white font-semibold" : "text-zinc-400 hover:text-zinc-200"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                activeTab === "rk1"
+                  ? "bg-blue-600 text-white font-semibold shadow-xs"
+                  : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
               РК 1 ({stats.rk1Count})
             </button>
             <button
               onClick={() => setActiveTab("rk2")}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                activeTab === "rk2" ? "bg-purple-600 text-white font-semibold" : "text-zinc-400 hover:text-zinc-200"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                activeTab === "rk2"
+                  ? "bg-purple-600 text-white font-semibold shadow-xs"
+                  : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
               РК 2 ({stats.rk2Count})
             </button>
             <button
               onClick={() => setActiveTab("waiting")}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                activeTab === "waiting" ? "bg-amber-600 text-white font-semibold" : "text-zinc-400 hover:text-zinc-200"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                activeTab === "waiting"
+                  ? "bg-amber-600 text-white font-semibold shadow-xs"
+                  : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
               Ожидают ({stats.waitingCount})
             </button>
             <button
               onClick={() => setActiveTab("expired")}
-              className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                activeTab === "expired" ? "bg-rose-600 text-white font-semibold" : "text-zinc-400 hover:text-rose-300"
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                activeTab === "expired"
+                  ? "bg-rose-600 text-white font-semibold shadow-xs"
+                  : "text-rose-700 hover:text-rose-900"
               }`}
             >
               Срок вышел ({stats.expiredCount})
             </button>
           </div>
 
-          {/* Tier Filter */}
-          <select
-            value={selectedTier}
-            onChange={(e) => setSelectedTier(e.target.value)}
-            className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-zinc-700"
-          >
-            <option value="all">Все ценовые группы</option>
-            <option value="tier_under_7k">До $7 000</option>
-            <option value="tier_7k_13k">$7 000 – $13 000</option>
-            <option value="tier_13k_20k">$13 000 – $20 000</option>
-            <option value="tier_20k_plus">$20 000+</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Search */}
-          <div className="relative flex-1 md:w-56">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
-            <Input
-              type="text"
-              placeholder="Поиск авто..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 bg-zinc-950 border-zinc-800 text-zinc-100 placeholder:text-zinc-500 h-8 text-xs"
-            />
-          </div>
-
-          {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e: any) => setSortBy(e.target.value)}
-            className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-xs rounded-lg px-2.5 py-1.5 h-8 focus:outline-none"
-          >
-            <option value="urgent">Сначала горящие</option>
-            <option value="newest">Сначала новые</option>
-            <option value="price_asc">Цена: по возрастанию</option>
-            <option value="price_desc">Цена: по убыванию</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Main Grid */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-zinc-400 gap-3">
-          <Spinner className="w-8 h-8 text-emerald-500" />
-          <p className="text-sm">Загрузка автомобилей из рекламы...</p>
-        </div>
-      ) : displayedCars.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl border border-zinc-800 bg-zinc-900/30 space-y-4">
-          <div className="w-12 h-12 rounded-full bg-zinc-800/80 flex items-center justify-center mx-auto text-zinc-500">
-            <Car className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-zinc-200">Автомобили не найдены</h3>
-            <p className="text-xs text-zinc-500 max-w-sm mx-auto mt-1">
-              {cars.length === 0
-                ? "В рекламе пока нет автомобилей. Добавьте первый автомобиль со склада сайта."
-                : "По выбранным фильтрам ничего не найдено."}
-            </p>
-          </div>
-          {cars.length === 0 && (
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold"
-            >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Добавить первый авто
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {displayedCars.map((car) => {
-            const daysInAd = calculateDaysInAd(car.startedAt);
-            const limitDays =
-              car.maxDays ||
-              (car.campaign === "rk1"
-                ? settings.rk1Days
-                : car.campaign === "rk2"
-                ? settings.rk2Days
-                : 0);
-
-            const isExpired = car.campaign !== "waiting_video" && daysInAd >= limitDays;
-            const progressPercent =
-              car.campaign === "waiting_video" || limitDays === 0
-                ? 0
-                : Math.min(100, Math.round((daysInAd / limitDays) * 100));
-
-            return (
-              <div
-                key={car.id}
-                className={`rounded-xl border flex flex-col overflow-hidden transition-all bg-zinc-950 ${
-                  isExpired
-                    ? "border-rose-500/70 shadow-lg shadow-rose-950/20 ring-1 ring-rose-500/40"
-                    : car.campaign === "rk1"
-                    ? "border-zinc-800 hover:border-blue-500/40"
-                    : car.campaign === "rk2"
-                    ? "border-zinc-800 hover:border-purple-500/40"
-                    : "border-zinc-800 hover:border-amber-500/40"
-                }`}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Custom Rounded Tier Dropdown */}
+            <div className="relative" ref={tierRef}>
+              <button
+                type="button"
+                onClick={() => setIsTierDropdownOpen(!isTierDropdownOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-medium h-8 transition-colors shadow-2xs"
               >
-                {/* Card Top: Image & Status */}
-                <div className="relative h-36 bg-zinc-900 flex items-center justify-center overflow-hidden border-b border-zinc-800/80">
-                  {car.photoUrl ? (
-                    <img
-                      src={car.photoUrl}
-                      alt={car.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-zinc-600 gap-1">
-                      <Car className="w-8 h-8" />
-                      <span className="text-[10px]">Нет фото</span>
-                    </div>
-                  )}
+                <Filter className="w-3.5 h-3.5 text-zinc-400" />
+                <span>
+                  {tierOptions.find((t) => t.value === selectedTier)?.label || "Ценовая группа"}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-400 ml-1" />
+              </button>
 
-                  {/* Campaign Badge */}
-                  <div className="absolute top-2.5 left-2.5">
-                    {car.campaign === "rk1" && (
-                      <Badge className="bg-blue-600 text-white font-bold text-[11px] px-2 py-0.5 shadow-md">
-                        РК 1
-                      </Badge>
-                    )}
-                    {car.campaign === "rk2" && (
-                      <Badge className="bg-purple-600 text-white font-bold text-[11px] px-2 py-0.5 shadow-md">
-                        РК 2
-                      </Badge>
-                    )}
-                    {car.campaign === "waiting_video" && (
-                      <Badge className="bg-amber-600 text-white font-bold text-[11px] px-2 py-0.5 shadow-md">
-                        Ожидает съёмки
-                      </Badge>
-                    )}
-                  </div>
+              {isTierDropdownOpen && (
+                <div className="absolute left-0 mt-1.5 w-48 bg-white border border-zinc-200 rounded-xl shadow-lg z-30 py-1 text-xs">
+                  {tierOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setSelectedTier(opt.value);
+                        setIsTierDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 transition-colors flex items-center justify-between ${
+                        selectedTier === opt.value
+                          ? "bg-zinc-100 text-zinc-900 font-semibold"
+                          : "text-zinc-700 hover:bg-zinc-50"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-                  {/* Price Tier Badge */}
-                  <div className="absolute top-2.5 right-2.5">
-                    <Badge variant="outline" className="bg-zinc-950/80 backdrop-blur border-zinc-700 text-zinc-200 text-[10px] font-semibold">
-                      {getPriceTierLabel(car.priceTier)}
-                    </Badge>
-                  </div>
+            {/* Custom Rounded Sort Dropdown */}
+            <div className="relative" ref={sortRef}>
+              <button
+                type="button"
+                onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs font-medium h-8 transition-colors shadow-2xs"
+              >
+                <span>
+                  {sortOptions.find((s) => s.value === sortBy)?.label || "Сортировка"}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+              </button>
 
-                  {/* Expired Warning Overlay Tag */}
-                  {isExpired && (
-                    <div className="absolute bottom-0 inset-x-0 bg-rose-600/90 backdrop-blur text-white text-xs font-bold py-1 px-3 flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <AlertTriangle className="w-3.5 h-3.5 animate-bounce" />
-                        <span>Пора перенести в {car.campaign === "rk1" ? "РК 2" : "РК 1"}</span>
+              {isSortDropdownOpen && (
+                <div className="absolute right-0 mt-1.5 w-52 bg-white border border-zinc-200 rounded-xl shadow-lg z-30 py-1 text-xs">
+                  {sortOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setSortBy(opt.value as any);
+                        setIsSortDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-2 transition-colors flex items-center justify-between ${
+                        sortBy === opt.value
+                          ? "bg-zinc-100 text-zinc-900 font-semibold"
+                          : "text-zinc-700 hover:bg-zinc-50"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Search Input */}
+            <div className="relative flex-1 sm:w-48">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <Input
+                type="text"
+                placeholder="Поиск по марке..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 bg-zinc-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400 h-8 text-xs rounded-lg focus:bg-white"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Cars Grid */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 text-zinc-400 gap-2">
+            <Spinner className="w-6 h-6 text-zinc-600" />
+            <p className="text-xs">Загрузка автомобилей...</p>
+          </div>
+        ) : displayedCars.length === 0 ? (
+          <div className="p-12 text-center rounded-2xl border border-zinc-200/80 bg-white space-y-3">
+            <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center mx-auto text-zinc-400">
+              <Car className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-zinc-800">Автомобили не найдены</h3>
+              <p className="text-xs text-zinc-500 max-w-sm mx-auto mt-1">
+                {cars.length === 0
+                  ? "В рекламе пока нет автомобилей. Добавьте первый автомобиль со склада сайта."
+                  : "По выбранным критериям поиска ничего не найдено."}
+              </p>
+            </div>
+            {cars.length === 0 && (
+              <Button
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium rounded-lg h-8 px-3"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" />
+                Добавить первый авто
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {displayedCars.map((car) => {
+              const daysInAd = calculateDaysInAd(car.startedAt);
+              const limitDays =
+                car.maxDays ||
+                (car.campaign === "rk1"
+                  ? settings.rk1Days
+                  : car.campaign === "rk2"
+                  ? settings.rk2Days
+                  : 0);
+
+              const isExpired = car.campaign !== "waiting_video" && daysInAd >= limitDays;
+              const progressPercent =
+                car.campaign === "waiting_video" || limitDays === 0
+                  ? 0
+                  : Math.min(100, Math.round((daysInAd / limitDays) * 100));
+
+              return (
+                <div
+                  key={car.id}
+                  className={`rounded-2xl border bg-white flex flex-col overflow-hidden transition-all shadow-2xs hover:shadow-md ${
+                    isExpired
+                      ? "border-rose-300 ring-1 ring-rose-300"
+                      : "border-zinc-200/80"
+                  }`}
+                >
+                  {/* Thumbnail & Badges */}
+                  <div className="relative h-40 bg-zinc-100 flex items-center justify-center overflow-hidden border-b border-zinc-100">
+                    {car.photoUrl ? (
+                      <img
+                        src={car.photoUrl}
+                        alt={car.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-zinc-400 gap-1">
+                        <Car className="w-8 h-8" />
+                        <span className="text-[10px]">Нет фото</span>
                       </div>
-                      <span className="text-[10px] bg-rose-950/70 px-1.5 py-0.2 rounded font-mono">
-                        {daysInAd} дн.
+                    )}
+
+                    {/* Campaign Status Badge */}
+                    <div className="absolute top-3 left-3">
+                      {car.campaign === "rk1" && (
+                        <span className="bg-blue-600 text-white font-semibold text-xs px-2.5 py-1 rounded-lg shadow-sm">
+                          РК 1
+                        </span>
+                      )}
+                      {car.campaign === "rk2" && (
+                        <span className="bg-purple-600 text-white font-semibold text-xs px-2.5 py-1 rounded-lg shadow-sm">
+                          РК 2
+                        </span>
+                      )}
+                      {car.campaign === "waiting_video" && (
+                        <span className="bg-amber-500 text-white font-semibold text-xs px-2.5 py-1 rounded-lg shadow-sm">
+                          Ожидает съёмки
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Price Tier Badge */}
+                    <div className="absolute top-3 right-3">
+                      <span className="bg-white/90 backdrop-blur-xs text-zinc-800 text-[11px] font-medium px-2 py-0.5 rounded-lg border border-zinc-200/60 shadow-xs">
+                        {getPriceTierLabel(car.priceTier)}
                       </span>
                     </div>
-                  )}
-                </div>
 
-                {/* Card Body */}
-                <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
-                  <div>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <h3 className="font-bold text-base text-zinc-100 leading-tight">
-                          {car.name}
-                        </h3>
-                        {car.year && (
-                          <span className="text-xs text-zinc-400 font-normal">
-                            {car.year} г.
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="font-extrabold text-emerald-400 text-base leading-tight">
-                          ${Number(car.priceUsd).toLocaleString("ru-RU")}
+                    {/* Expired Rotation Banner */}
+                    {isExpired && (
+                      <div className="absolute bottom-0 inset-x-0 bg-rose-600 text-white text-xs font-medium py-1 px-3 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>Пора перенести в {car.campaign === "rk1" ? "РК 2" : "РК 1"}</span>
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar & Day Counter */}
-                    {car.campaign !== "waiting_video" ? (
-                      <div className="mt-3.5 space-y-1.5 p-2.5 rounded-lg bg-zinc-900/60 border border-zinc-800/80">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-zinc-400 flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                            В рекламе:
-                          </span>
-                          <span
-                            className={`font-bold font-mono ${
-                              isExpired
-                                ? "text-rose-400"
-                                : progressPercent > 70
-                                ? "text-amber-400"
-                                : "text-emerald-400"
-                            }`}
-                          >
-                            {daysInAd}-й день из {limitDays}
-                          </span>
-                        </div>
-                        <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all rounded-full ${
-                              isExpired
-                                ? "bg-rose-500"
-                                : progressPercent > 70
-                                ? "bg-amber-500"
-                                : "bg-emerald-500"
-                            }`}
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="mt-3.5 p-2.5 rounded-lg bg-amber-950/20 border border-amber-900/30 flex items-center justify-between text-xs">
-                        <span className="text-amber-400 font-medium flex items-center gap-1.5">
-                          <Video className="w-3.5 h-3.5" />
-                          Ожидает съемки видео
-                        </span>
-                        <span className="text-[10px] text-zinc-400">Таймер на паузе</span>
-                      </div>
-                    )}
-
-                    {car.notes && (
-                      <div className="mt-2 text-[11px] text-zinc-400 bg-zinc-900 p-2 rounded border border-zinc-800 truncate">
-                        📝 {car.notes}
+                        <span className="text-[11px] font-mono opacity-90">{daysInAd} дн.</span>
                       </div>
                     )}
                   </div>
 
-                  {/* Actions Bar */}
-                  <div className="pt-2 border-t border-zinc-800/80 flex flex-col gap-2">
-                    {car.campaign === "rk1" && (
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <Button
-                          size="sm"
-                          onClick={() => handleSwitchCampaign(car, "rk2")}
-                          className="bg-purple-600 hover:bg-purple-500 text-white text-xs h-8 font-semibold flex items-center justify-center gap-1"
-                        >
-                          <ArrowRight className="w-3.5 h-3.5" />
-                          Перенести в РК 2
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSwitchCampaign(car, "waiting_video")}
-                          className="border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs h-8"
-                        >
-                          <Video className="w-3.5 h-3.5 mr-1 text-amber-400" />
-                          На съёмку
-                        </Button>
+                  {/* Card Content */}
+                  <div className="p-4 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-semibold text-sm text-zinc-900 leading-snug">
+                            {car.name}
+                          </h3>
+                          {car.year && (
+                            <span className="text-xs text-zinc-500 font-normal">
+                              {car.year} г.
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-zinc-900 text-sm">
+                            ${Number(car.priceUsd).toLocaleString("ru-RU")}
+                          </div>
+                        </div>
                       </div>
-                    )}
 
-                    {car.campaign === "rk2" && (
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <Button
-                          size="sm"
-                          onClick={() => handleSwitchCampaign(car, "rk1")}
-                          className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8 font-semibold flex items-center justify-center gap-1"
-                        >
-                          <ArrowLeft className="w-3.5 h-3.5" />
-                          Перенести в РК 1
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSwitchCampaign(car, "waiting_video")}
-                          className="border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs h-8"
-                        >
-                          <Video className="w-3.5 h-3.5 mr-1 text-amber-400" />
-                          На съёмку
-                        </Button>
-                      </div>
-                    )}
+                      {/* Day Counter & Progress */}
+                      {car.campaign !== "waiting_video" ? (
+                        <div className="mt-3 p-2.5 rounded-xl bg-zinc-50 border border-zinc-200/60 space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-zinc-500 flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                              В рекламе:
+                            </span>
+                            <span
+                              className={`font-semibold font-mono ${
+                                isExpired
+                                  ? "text-rose-700"
+                                  : progressPercent > 70
+                                  ? "text-amber-700"
+                                  : "text-zinc-800"
+                              }`}
+                            >
+                              {daysInAd}-й день из {limitDays}
+                            </span>
+                          </div>
+                          <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                isExpired
+                                  ? "bg-rose-500"
+                                  : progressPercent > 70
+                                  ? "bg-amber-500"
+                                  : "bg-emerald-500"
+                              }`}
+                              style={{ width: `${progressPercent}%` }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-3 p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60 flex items-center justify-between text-xs text-amber-900">
+                          <span className="font-medium flex items-center gap-1.5">
+                            <Video className="w-3.5 h-3.5 text-amber-600" />
+                            Ожидает видео
+                          </span>
+                          <span className="text-[11px] text-amber-700">Таймер на паузе</span>
+                        </div>
+                      )}
 
-                    {car.campaign === "waiting_video" && (
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <Button
-                          size="sm"
-                          onClick={() => handleSwitchCampaign(car, "rk1")}
-                          className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8 font-semibold flex items-center justify-center gap-1"
-                        >
-                          <Play className="w-3.5 h-3.5 fill-current" />
-                          Запуск в РК 1
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => handleSwitchCampaign(car, "rk2")}
-                          className="bg-purple-600 hover:bg-purple-500 text-white text-xs h-8 font-semibold flex items-center justify-center gap-1"
-                        >
-                          <Play className="w-3.5 h-3.5 fill-current" />
-                          Запуск в РК 2
-                        </Button>
-                      </div>
-                    )}
+                      {car.notes && (
+                        <div className="mt-2 text-[11px] text-zinc-600 bg-zinc-50 p-2 rounded-lg border border-zinc-200/60 truncate">
+                          {car.notes}
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Secondary Utilities: Reset Timer & Delete */}
-                    <div className="flex items-center justify-between pt-1">
-                      {car.campaign !== "waiting_video" && (
+                    {/* Actions */}
+                    <div className="pt-3 border-t border-zinc-100 flex flex-col gap-2">
+                      {car.campaign === "rk1" && (
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSwitchCampaign(car, "rk2")}
+                            className="bg-purple-600 hover:bg-purple-500 text-white text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1"
+                          >
+                            <ArrowRight className="w-3.5 h-3.5" />
+                            В РК 2
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSwitchCampaign(car, "waiting_video")}
+                            className="border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs h-8 rounded-lg"
+                          >
+                            <Video className="w-3.5 h-3.5 mr-1 text-zinc-500" />
+                            На съёмку
+                          </Button>
+                        </div>
+                      )}
+
+                      {car.campaign === "rk2" && (
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSwitchCampaign(car, "rk1")}
+                            className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1"
+                          >
+                            <ArrowLeft className="w-3.5 h-3.5" />
+                            В РК 1
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSwitchCampaign(car, "waiting_video")}
+                            className="border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 text-xs h-8 rounded-lg"
+                          >
+                            <Video className="w-3.5 h-3.5 mr-1 text-zinc-500" />
+                            На съёмку
+                          </Button>
+                        </div>
+                      )}
+
+                      {car.campaign === "waiting_video" && (
+                        <div className="grid grid-cols-2 gap-1.5">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSwitchCampaign(car, "rk1")}
+                            className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1"
+                          >
+                            <Play className="w-3 h-3 fill-current" />
+                            Запуск в РК 1
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleSwitchCampaign(car, "rk2")}
+                            className="bg-purple-600 hover:bg-purple-500 text-white text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1"
+                          >
+                            <Play className="w-3 h-3 fill-current" />
+                            Запуск в РК 2
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Utilities */}
+                      <div className="flex items-center justify-between pt-1">
+                        {car.campaign !== "waiting_video" ? (
+                          <button
+                            type="button"
+                            onClick={() => handleResetTimer(car)}
+                            className="text-[11px] text-zinc-500 hover:text-zinc-800 flex items-center gap-1 transition-colors"
+                            title="Сбросить таймер на 0 дней"
+                          >
+                            <RotateCw className="w-3 h-3 text-zinc-400" />
+                            Сбросить таймер
+                          </button>
+                        ) : (
+                          <div />
+                        )}
+
                         <button
                           type="button"
-                          onClick={() => handleResetTimer(car)}
-                          className="text-[11px] text-zinc-400 hover:text-zinc-200 flex items-center gap-1 transition-colors"
-                          title="Сбросить таймер открутки на 0 дней"
+                          onClick={() => handleDeleteCar(car)}
+                          className="text-[11px] text-zinc-400 hover:text-rose-600 flex items-center gap-1 transition-colors ml-auto"
+                          title="Удалить из рекламы"
                         >
-                          <RotateCw className="w-3 h-3" />
-                          Сбросить таймер
+                          <Trash2 className="w-3 h-3" />
+                          Удалить
                         </button>
-                      )}
-                      {car.campaign === "waiting_video" && <div />}
-
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCar(car)}
-                        className="text-[11px] text-zinc-500 hover:text-rose-400 flex items-center gap-1 transition-colors ml-auto"
-                        title="Удалить из рекламы"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        Удалить из рекламы
-                      </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Modals */}
       <AddAdCarModal

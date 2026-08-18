@@ -11,11 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { AdCar, AdCampaignType, AdPriceTier } from "@/lib/types";
 import { calculatePriceTier, getPriceTierLabel } from "@/lib/services/adsService";
-import { Search, Car, Sparkles, Plus, Image as ImageIcon } from "lucide-react";
+import { Search, Car, Plus } from "lucide-react";
 
 interface CatalogCar {
   id: string;
@@ -60,7 +59,6 @@ export function AddAdCarModal({
   const [customDays, setCustomDays] = useState<number | "">("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load catalog cars from Neon DB API
   useEffect(() => {
     if (isOpen) {
       setIsLoadingCatalog(true);
@@ -74,7 +72,6 @@ export function AddAdCarModal({
         .catch((err) => console.error("Error fetching catalog cars:", err))
         .finally(() => setIsLoadingCatalog(false));
     } else {
-      // Reset form on close
       setSelectedCatalogCar(null);
       setName("");
       setYear("");
@@ -87,7 +84,6 @@ export function AddAdCarModal({
     }
   }, [isOpen]);
 
-  // When a catalog car is selected
   const handleSelectCatalogCar = (car: CatalogCar) => {
     setSelectedCatalogCar(car);
     setName(car.name);
@@ -146,20 +142,20 @@ export function AddAdCarModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 text-zinc-100 max-h-[90vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-4 border-b border-zinc-800">
-          <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <Plus className="w-5 h-5 text-emerald-400" />
+      <DialogContent className="max-w-2xl bg-white text-zinc-900 border border-zinc-200 shadow-2xl rounded-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-4 border-b border-zinc-100">
+          <DialogTitle className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+            <Plus className="w-5 h-5 text-zinc-600" />
             Добавить автомобиль в рекламу
           </DialogTitle>
           <div className="flex gap-2 pt-2">
             <button
               type="button"
               onClick={() => setActiveMode("catalog")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
                 activeMode === "catalog"
-                  ? "bg-zinc-800 text-white border border-zinc-700"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-zinc-900 text-white"
+                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
               <Car className="w-3.5 h-3.5" />
@@ -168,13 +164,12 @@ export function AddAdCarModal({
             <button
               type="button"
               onClick={() => setActiveMode("manual")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
                 activeMode === "manual"
-                  ? "bg-zinc-800 text-white border border-zinc-700"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-zinc-900 text-white"
+                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
               Вручную
             </button>
           </div>
@@ -190,19 +185,19 @@ export function AddAdCarModal({
                   placeholder="Поиск по складу (марка, модель, год, цена)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-500"
+                  className="pl-9 bg-zinc-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400 rounded-lg h-9 text-xs focus:bg-white"
                 />
               </div>
 
               {isLoadingCatalog ? (
-                <div className="flex items-center justify-center py-8 text-zinc-400 text-sm gap-2">
-                  <Spinner className="w-5 h-5" />
-                  Загрузка автомобилей со склада...
+                <div className="flex items-center justify-center py-8 text-zinc-400 text-xs gap-2">
+                  <Spinner className="w-4 h-4" />
+                  Загрузка склада...
                 </div>
               ) : (
-                <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 border border-zinc-800/80 rounded-lg p-2 bg-zinc-900/40">
+                <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 border border-zinc-200/80 rounded-xl p-2 bg-zinc-50/50">
                   {filteredCatalog.length === 0 ? (
-                    <div className="text-xs text-zinc-500 text-center py-4">
+                    <div className="text-xs text-zinc-400 text-center py-4">
                       Автомобили не найдены
                     </div>
                   ) : (
@@ -215,8 +210,8 @@ export function AddAdCarModal({
                           onClick={() => handleSelectCatalogCar(car)}
                           className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all border ${
                             isSelected
-                              ? "bg-emerald-950/40 border-emerald-500/50 text-white"
-                              : "bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 text-zinc-300"
+                              ? "bg-zinc-900 border-zinc-900 text-white"
+                              : "bg-white border-zinc-200/80 hover:border-zinc-300 text-zinc-800 shadow-xs"
                           }`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
@@ -224,33 +219,37 @@ export function AddAdCarModal({
                               <img
                                 src={car.photoUrl}
                                 alt={car.name}
-                                className="w-10 h-8 object-cover rounded bg-zinc-800 flex-shrink-0"
+                                className="w-10 h-8 object-cover rounded bg-zinc-100 flex-shrink-0"
                               />
                             ) : (
-                              <div className="w-10 h-8 rounded bg-zinc-800 flex items-center justify-center flex-shrink-0 text-zinc-600">
+                              <div className="w-10 h-8 rounded bg-zinc-100 flex items-center justify-center flex-shrink-0 text-zinc-400">
                                 <Car className="w-4 h-4" />
                               </div>
                             )}
                             <div className="min-w-0">
-                              <div className="font-semibold text-sm truncate flex items-center gap-2">
+                              <div className="font-medium text-xs truncate flex items-center gap-1.5">
                                 <span>{car.name}</span>
                                 {car.year && (
-                                  <span className="text-xs text-zinc-400 font-normal">
+                                  <span className={`text-[11px] font-normal ${isSelected ? "text-zinc-300" : "text-zinc-400"}`}>
                                     ({car.year})
                                   </span>
                                 )}
                                 {isAlreadyInAds && (
-                                  <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.2 rounded font-medium">
-                                    уже в рекламе
+                                  <span className={`text-[9px] px-1 py-0.2 rounded font-medium ${
+                                    isSelected
+                                      ? "bg-white/20 text-white"
+                                      : "bg-amber-100 text-amber-800"
+                                  }`}>
+                                    в рекламе
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-zinc-400">
+                              <div className={`text-[11px] ${isSelected ? "text-zinc-300" : "text-zinc-400"}`}>
                                 {getPriceTierLabel(calculatePriceTier(car.priceUsd))}
                               </div>
                             </div>
                           </div>
-                          <div className="text-right flex-shrink-0 font-bold text-sm text-emerald-400 pl-2">
+                          <div className={`text-right flex-shrink-0 font-semibold text-xs pl-2 ${isSelected ? "text-white" : "text-zinc-900"}`}>
                             ${Number(car.priceUsd).toLocaleString("ru-RU")}
                           </div>
                         </div>
@@ -262,164 +261,156 @@ export function AddAdCarModal({
             </div>
           )}
 
-          {/* Detailed Form */}
-          <div className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-4">
+          {/* Form */}
+          <div className="space-y-4 pt-1">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-zinc-300">Марка и модель *</Label>
+                <Label className="text-xs font-medium text-zinc-700">Марка и модель *</Label>
                 <Input
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Например, Chevrolet Equinox"
-                  className="bg-zinc-900 border-zinc-800 text-zinc-100"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-lg h-9 text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-zinc-300">Год выпуска</Label>
+                <Label className="text-xs font-medium text-zinc-700">Год выпуска</Label>
                 <Input
                   type="text"
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
                   placeholder="2020"
-                  className="bg-zinc-900 border-zinc-800 text-zinc-100"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-lg h-9 text-xs"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-zinc-300">Цена в $ *</Label>
+                <Label className="text-xs font-medium text-zinc-700">Цена ($) *</Label>
                 <Input
                   type="number"
                   required
                   value={priceUsd}
                   onChange={(e) => setPriceUsd(e.target.value ? Number(e.target.value) : "")}
                   placeholder="17150"
-                  className="bg-zinc-900 border-zinc-800 text-zinc-100 font-semibold"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9 text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-zinc-300">Ценовая группа TikTok Ads</Label>
-                <div className="h-9 px-3 rounded-md bg-zinc-900/80 border border-zinc-800 flex items-center">
-                  <Badge variant="outline" className="border-indigo-500/30 text-indigo-300 bg-indigo-950/20 text-xs font-semibold">
-                    {getPriceTierLabel(calculatedTier)}
-                  </Badge>
+                <Label className="text-xs font-medium text-zinc-700">Ценовая группа TikTok</Label>
+                <div className="h-9 px-3 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center text-xs font-medium text-zinc-700">
+                  {getPriceTierLabel(calculatedTier)}
                 </div>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-zinc-300">Куда отправить автомобиль?</Label>
+              <Label className="text-xs font-medium text-zinc-700">Кампания для запуска</Label>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setCampaign("rk1")}
-                  className={`p-3 rounded-lg border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all ${
                     campaign === "rk1"
-                      ? "bg-blue-950/40 border-blue-500 text-white shadow-sm"
-                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                      ? "bg-blue-50 border-blue-600 text-blue-900 ring-1 ring-blue-500/20"
+                      : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100"
                   }`}
                 >
-                  <div className="text-xs font-bold text-blue-400">РК 1</div>
-                  <div className="text-[11px] text-zinc-400 mt-0.5">Видео Владельца</div>
-                  <div className="text-[10px] text-zinc-500 mt-1">Лимит: {defaultRk1Days} дн.</div>
+                  <div className="text-xs font-semibold text-blue-700">РК 1</div>
+                  <div className="text-[11px] text-zinc-500 mt-0.5">Лимит: {defaultRk1Days} дн.</div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setCampaign("rk2")}
-                  className={`p-3 rounded-lg border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all ${
                     campaign === "rk2"
-                      ? "bg-purple-950/40 border-purple-500 text-white shadow-sm"
-                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                      ? "bg-purple-50 border-purple-600 text-purple-900 ring-1 ring-purple-500/20"
+                      : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100"
                   }`}
                 >
-                  <div className="text-xs font-bold text-purple-400">РК 2</div>
-                  <div className="text-[11px] text-zinc-400 mt-0.5">Видео SMM</div>
-                  <div className="text-[10px] text-zinc-500 mt-1">Лимит: {defaultRk2Days} дн.</div>
+                  <div className="text-xs font-semibold text-purple-700">РК 2</div>
+                  <div className="text-[11px] text-zinc-500 mt-0.5">Лимит: {defaultRk2Days} дн.</div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setCampaign("waiting_video")}
-                  className={`p-3 rounded-lg border text-left transition-all ${
+                  className={`p-3 rounded-xl border text-left transition-all ${
                     campaign === "waiting_video"
-                      ? "bg-amber-950/40 border-amber-500 text-white shadow-sm"
-                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                      ? "bg-amber-50 border-amber-600 text-amber-900 ring-1 ring-amber-500/20"
+                      : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100"
                   }`}
                 >
-                  <div className="text-xs font-bold text-amber-400">Ожидает съёмки</div>
-                  <div className="text-[11px] text-zinc-400 mt-0.5">В очередь</div>
-                  <div className="text-[10px] text-zinc-500 mt-1">Таймер на паузе</div>
+                  <div className="text-xs font-semibold text-amber-700">Ожидает съёмки</div>
+                  <div className="text-[11px] text-zinc-500 mt-0.5">В очередь</div>
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-zinc-300">Ссылка на фото (URL)</Label>
+                <Label className="text-xs font-medium text-zinc-700">Ссылка на фото (URL)</Label>
                 <Input
                   type="url"
                   value={photoUrl}
                   onChange={(e) => setPhotoUrl(e.target.value)}
                   placeholder="https://..."
-                  className="bg-zinc-900 border-zinc-800 text-zinc-100 text-xs"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-lg h-9 text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs text-zinc-300">
-                  Индивидуальный лимит дней <span className="text-zinc-500">(опционально)</span>
+                <Label className="text-xs font-medium text-zinc-700">
+                  Свой лимит дней <span className="text-zinc-400 font-normal">(опционально)</span>
                 </Label>
                 <Input
                   type="number"
                   value={customDays}
                   onChange={(e) => setCustomDays(e.target.value ? Number(e.target.value) : "")}
                   placeholder={`По умолчанию: ${campaign === "rk1" ? defaultRk1Days : defaultRk2Days}`}
-                  className="bg-zinc-900 border-zinc-800 text-zinc-100 text-xs"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-lg h-9 text-xs"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-zinc-300">Заметка к рекламе (опционально)</Label>
+              <Label className="text-xs font-medium text-zinc-700">Заметка (опционально)</Label>
               <Input
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Например: Ссылка на ролик или номер объявления"
-                className="bg-zinc-900 border-zinc-800 text-zinc-100 text-xs"
+                placeholder="Заметка или ID объявления"
+                className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-lg h-9 text-xs"
               />
             </div>
           </div>
 
-          <DialogFooter className="pt-4 border-t border-zinc-800 flex justify-between items-center">
+          <DialogFooter className="pt-4 border-t border-zinc-100 flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-zinc-800 text-zinc-400 hover:text-white"
+              className="border-zinc-200 text-zinc-700 hover:bg-zinc-100 text-xs rounded-lg h-9"
             >
               Отмена
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !name || !priceUsd}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-2"
+              className="bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs rounded-lg h-9 px-4"
             >
               {isSubmitting ? (
                 <>
-                  <Spinner className="w-4 h-4" />
+                  <Spinner className="w-3.5 h-3.5 mr-1.5" />
                   Сохранение...
                 </>
               ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  Добавить в рекламу
-                </>
+                "Добавить в рекламу"
               )}
             </Button>
           </DialogFooter>

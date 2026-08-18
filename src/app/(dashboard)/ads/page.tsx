@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AdsPage() {
   return (
-    <div className="h-full bg-zinc-950 overflow-y-auto">
+    <div className="h-full bg-[#F8F9FA] overflow-y-auto">
       <AdsDashboard />
     </div>
   );

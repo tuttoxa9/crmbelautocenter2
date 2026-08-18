@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { AdsSettings } from "@/lib/types";
-import { Settings, Bell, CheckCircle2, AlertTriangle, Send } from "lucide-react";
+import { Settings, Bell, Send, Check } from "lucide-react";
 
 interface AdsSettingsModalProps {
   isOpen: boolean;
@@ -77,7 +77,7 @@ export function AdsSettingsModal({
         setTestResult(`Ошибка: ${data.error || "Не удалось отправить"}`);
       }
     } catch (err: any) {
-      setTestResult(`Ошибка вызова: ${err.message}`);
+      setTestResult(`Ошибка: ${err.message}`);
     } finally {
       setIsTestingCron(false);
     }
@@ -85,20 +85,19 @@ export function AdsSettingsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-4 border-b border-zinc-800">
-          <DialogTitle className="text-lg font-bold flex items-center gap-2">
-            <Settings className="w-5 h-5 text-indigo-400" />
-            Настройки сроков ротации рекламы
+      <DialogContent className="max-w-md bg-white text-zinc-900 border border-zinc-200 shadow-2xl rounded-2xl p-0 overflow-hidden">
+        <DialogHeader className="px-6 py-5 border-b border-zinc-100">
+          <DialogTitle className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-zinc-500" />
+            Настройки ротации рекламы
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label className="text-xs text-zinc-300 font-semibold flex items-center justify-between">
-                <span>Лимит дней для РК 1</span>
-                <span className="text-xs text-blue-400 font-normal">Видео Владельца</span>
+              <Label className="text-xs font-medium text-zinc-700">
+                Лимит дней для РК 1
               </Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -108,19 +107,18 @@ export function AdsSettingsModal({
                   required
                   value={rk1Days}
                   onChange={(e) => setRk1Days(Number(e.target.value))}
-                  className="bg-zinc-900 border-zinc-800 text-zinc-100 font-bold"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9"
                 />
-                <span className="text-xs text-zinc-400">дней</span>
+                <span className="text-xs text-zinc-500 font-medium">дней</span>
               </div>
               <p className="text-[11px] text-zinc-500">
-                По умолчанию 17 дней (~2.5 недели). По истечении этого срока придет уведомление о ротации.
+                По умолчанию 17 дней (~2.5 недели).
               </p>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs text-zinc-300 font-semibold flex items-center justify-between">
-                <span>Лимит дней для РК 2</span>
-                <span className="text-xs text-purple-400 font-normal">Видео SMM</span>
+              <Label className="text-xs font-medium text-zinc-700">
+                Лимит дней для РК 2
               </Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -130,41 +128,41 @@ export function AdsSettingsModal({
                   required
                   value={rk2Days}
                   onChange={(e) => setRk2Days(Number(e.target.value))}
-                  className="bg-zinc-900 border-zinc-800 text-zinc-100 font-bold"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9"
                 />
-                <span className="text-xs text-zinc-400">дней</span>
+                <span className="text-xs text-zinc-500 font-medium">дней</span>
               </div>
               <p className="text-[11px] text-zinc-500">
                 По умолчанию 14 дней (2 недели).
               </p>
             </div>
 
-            <div className="pt-2 border-t border-zinc-800/80">
+            <div className="pt-2 border-t border-zinc-100">
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="w-4 h-4 rounded bg-zinc-900 border-zinc-700 text-emerald-500 focus:ring-0"
+                  className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-0 cursor-pointer"
                 />
                 <div>
-                  <div className="text-xs font-semibold text-zinc-200">
+                  <div className="text-xs font-medium text-zinc-800">
                     Включить Telegram-уведомления
                   </div>
                   <div className="text-[11px] text-zinc-500">
-                    Отправлять алерты в общий рабочий Telegram-чат
+                    Отправлять сообщения в рабочий Telegram-чат при наступлении срока
                   </div>
                 </div>
               </label>
             </div>
 
-            <div className="p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg space-y-2">
-              <div className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
-                <Bell className="w-3.5 h-3.5 text-amber-400" />
-                Ручная проверка и тест
+            <div className="p-3.5 bg-zinc-50 border border-zinc-200/80 rounded-xl space-y-2">
+              <div className="text-xs font-medium text-zinc-800 flex items-center gap-1.5">
+                <Bell className="w-3.5 h-3.5 text-zinc-500" />
+                Ручная проверка
               </div>
-              <p className="text-[11px] text-zinc-400">
-                Запустить проверку всех автомобилей и отправить уведомления по тем, у кого вышел срок:
+              <p className="text-[11px] text-zinc-500">
+                Проверить все автомобили и отправить уведомления по тем, у кого вышел срок:
               </p>
               <Button
                 type="button"
@@ -172,7 +170,7 @@ export function AdsSettingsModal({
                 size="sm"
                 onClick={handleRunManualCron}
                 disabled={isTestingCron}
-                className="w-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs h-8 flex items-center justify-center gap-1.5"
+                className="w-full bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-700 text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1.5"
               >
                 {isTestingCron ? (
                   <>
@@ -181,36 +179,36 @@ export function AdsSettingsModal({
                   </>
                 ) : (
                   <>
-                    <Send className="w-3.5 h-3.5 text-blue-400" />
+                    <Send className="w-3.5 h-3.5 text-zinc-500" />
                     Проверить и отправить в Telegram
                   </>
                 )}
               </Button>
               {testResult && (
-                <div className="text-[11px] text-emerald-400 bg-emerald-950/40 p-2 rounded border border-emerald-800/40">
+                <div className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
                   {testResult}
                 </div>
               )}
             </div>
           </div>
 
-          <DialogFooter className="pt-4 border-t border-zinc-800 flex justify-between items-center">
+          <DialogFooter className="pt-4 border-t border-zinc-100 flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-zinc-800 text-zinc-400 hover:text-white"
+              className="border-zinc-200 text-zinc-700 hover:bg-zinc-100 text-xs rounded-lg h-9"
             >
               Отмена
             </Button>
             <Button
               type="submit"
               disabled={isSaving}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-2"
+              className="bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs rounded-lg h-9 px-4"
             >
               {isSaving ? (
                 <>
-                  <Spinner className="w-4 h-4" />
+                  <Spinner className="w-3.5 h-3.5 mr-1.5" />
                   Сохранение...
                 </>
               ) : (
