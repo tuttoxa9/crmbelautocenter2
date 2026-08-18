@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 
+const IMAGE_HOST = process.env.NEXT_PUBLIC_IMAGE_HOST || 'https://images.belautocenter.by';
+
 export async function GET() {
   try {
     const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL || "postgresql://neondb_owner:npg_j7eSMifBFtd3@ep-curly-brook-ascm3kjp-pooler.c-4.eu-central-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require";
@@ -27,16 +29,25 @@ export async function GET() {
         const priceUsd = Number(d.priceUsd || d.priceUSD || d.price || d.price_usd || 0);
         const isSold = d.status === 'sold' || d.isAvailable === false || d.is_available === false;
 
-        // Ищем главное фото
+        // Определяем полный URL фото
         let photoUrl = '';
-        if (Array.isArray(d.images) && d.images.length > 0) {
-          photoUrl = d.images[0];
-        } else if (d.mainImage) {
-          photoUrl = d.mainImage;
-        } else if (d.photo) {
-          photoUrl = d.photo;
-        } else if (d.image) {
-          photoUrl = d.image;
+        const rawImages = d.imageUrls || d.images || d.photos || [];
+        let firstImg = '';
+        if (Array.isArray(rawImages) && rawImages.length > 0) {
+          firstImg = typeof rawImages[0] === 'string' ? rawImages[0] : (rawImages[0]?.url || '');
+        } else if (typeof d.mainImage === 'string') {
+          firstImg = d.mainImage;
+        } else if (typeof d.photo === 'string') {
+          firstImg = d.photo;
+        }
+
+        if (firstImg) {
+          if (firstImg.startsWith('http://') || firstImg.startsWith('https://')) {
+            photoUrl = firstImg;
+          } else {
+            const cleanPath = firstImg.replace(/^\/+/, '');
+            photoUrl = `${IMAGE_HOST}/${cleanPath}`;
+          }
         }
 
         return {

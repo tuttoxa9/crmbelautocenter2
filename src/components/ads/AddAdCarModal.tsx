@@ -1,20 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { AdCar, AdCampaignType, AdPriceTier } from "@/lib/types";
 import { calculatePriceTier, getPriceTierLabel } from "@/lib/services/adsService";
-import { Search, Car, Plus } from "lucide-react";
+import { Search, Car, X, Check } from "lucide-react";
 
 interface CatalogCar {
   id: string;
@@ -87,7 +80,7 @@ export function AddAdCarModal({
   const handleSelectCatalogCar = (car: CatalogCar) => {
     setSelectedCatalogCar(car);
     setName(car.name);
-    setYear(String(car.year || ""));
+    setYear(car.year ? String(car.year) : "");
     setPriceUsd(car.priceUsd || "");
     setPhotoUrl(car.photoUrl || "");
   };
@@ -140,64 +133,84 @@ export function AddAdCarModal({
     );
   });
 
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl bg-white text-zinc-900 border border-zinc-200 shadow-2xl rounded-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="p-6 pb-4 border-b border-zinc-100">
-          <DialogTitle className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
-            <Plus className="w-5 h-5 text-zinc-600" />
+    <div className="fixed inset-0 z-50 flex justify-end">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-zinc-900/30 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        onClick={onClose}
+      />
+
+      {/* Slide-over Drawer Panel */}
+      <div className="relative w-full max-w-xl bg-white shadow-2xl flex flex-col z-10 h-full border-l border-zinc-200 animate-in slide-in-from-right duration-300">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 shrink-0 bg-white">
+          <h2 className="text-base font-semibold text-zinc-900">
             Добавить автомобиль в рекламу
-          </DialogTitle>
-          <div className="flex gap-2 pt-2">
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-zinc-400 hover:text-zinc-700 rounded-lg hover:bg-zinc-100 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Mode Selector */}
+        <div className="px-6 pt-4 pb-2 shrink-0 bg-white">
+          <div className="flex bg-zinc-100 p-1 rounded-xl">
             <button
               type="button"
               onClick={() => setActiveMode("catalog")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 activeMode === "catalog"
-                  ? "bg-zinc-900 text-white"
-                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                  ? "bg-white text-zinc-900 shadow-xs font-semibold"
+                  : "text-zinc-500 hover:text-zinc-900"
               }`}
             >
-              <Car className="w-3.5 h-3.5" />
-              Выбрать со склада сайта ({catalogCars.length})
+              Со склада сайта
             </button>
             <button
               type="button"
               onClick={() => setActiveMode("manual")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 activeMode === "manual"
-                  ? "bg-zinc-900 text-white"
-                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                  ? "bg-white text-zinc-900 shadow-xs font-semibold"
+                  : "text-zinc-500 hover:text-zinc-900"
               }`}
             >
               Вручную
             </button>
           </div>
-        </DialogHeader>
+        </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+        {/* Content Area */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-4 space-y-5 flex flex-col">
           {activeMode === "catalog" && (
             <div className="space-y-3">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <Input
                   type="text"
-                  placeholder="Поиск по складу (марка, модель, год, цена)..."
+                  placeholder="Поиск по марке, модели, году или цене"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-zinc-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400 rounded-lg h-9 text-xs focus:bg-white"
+                  className="pl-9 bg-zinc-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400 rounded-xl h-10 text-xs focus:bg-white"
                 />
               </div>
 
               {isLoadingCatalog ? (
-                <div className="flex items-center justify-center py-8 text-zinc-400 text-xs gap-2">
+                <div className="flex items-center justify-center py-10 text-zinc-400 text-xs gap-2">
                   <Spinner className="w-4 h-4" />
-                  Загрузка склада...
+                  Загрузка автомобилей со склада...
                 </div>
               ) : (
-                <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1 border border-zinc-200/80 rounded-xl p-2 bg-zinc-50/50">
+                <div className="max-h-56 overflow-y-auto space-y-2 pr-1 border border-zinc-200/80 rounded-xl p-2 bg-zinc-50/50">
                   {filteredCatalog.length === 0 ? (
-                    <div className="text-xs text-zinc-400 text-center py-4">
+                    <div className="text-xs text-zinc-400 text-center py-6">
                       Автомобили не найдены
                     </div>
                   ) : (
@@ -208,10 +221,10 @@ export function AddAdCarModal({
                         <div
                           key={car.id}
                           onClick={() => handleSelectCatalogCar(car)}
-                          className={`flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all border ${
+                          className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all border ${
                             isSelected
-                              ? "bg-zinc-900 border-zinc-900 text-white"
-                              : "bg-white border-zinc-200/80 hover:border-zinc-300 text-zinc-800 shadow-xs"
+                              ? "bg-zinc-900 border-zinc-900 text-white shadow-xs"
+                              : "bg-white border-zinc-200/80 hover:border-zinc-300 text-zinc-800"
                           }`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
@@ -219,23 +232,23 @@ export function AddAdCarModal({
                               <img
                                 src={car.photoUrl}
                                 alt={car.name}
-                                className="w-10 h-8 object-cover rounded bg-zinc-100 flex-shrink-0"
+                                className="w-12 h-9 object-cover rounded-lg bg-zinc-100 flex-shrink-0"
                               />
                             ) : (
-                              <div className="w-10 h-8 rounded bg-zinc-100 flex items-center justify-center flex-shrink-0 text-zinc-400">
+                              <div className="w-12 h-9 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0 text-zinc-400">
                                 <Car className="w-4 h-4" />
                               </div>
                             )}
                             <div className="min-w-0">
-                              <div className="font-medium text-xs truncate flex items-center gap-1.5">
+                              <div className="font-semibold text-xs truncate flex items-center gap-1.5">
                                 <span>{car.name}</span>
                                 {car.year && (
-                                  <span className={`text-[11px] font-normal ${isSelected ? "text-zinc-300" : "text-zinc-400"}`}>
-                                    ({car.year})
+                                  <span className={`text-[11px] font-normal ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
+                                    {car.year} г.
                                   </span>
                                 )}
                                 {isAlreadyInAds && (
-                                  <span className={`text-[9px] px-1 py-0.2 rounded font-medium ${
+                                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
                                     isSelected
                                       ? "bg-white/20 text-white"
                                       : "bg-amber-100 text-amber-800"
@@ -244,13 +257,15 @@ export function AddAdCarModal({
                                   </span>
                                 )}
                               </div>
-                              <div className={`text-[11px] ${isSelected ? "text-zinc-300" : "text-zinc-400"}`}>
+                              <div className={`text-[11px] ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
                                 {getPriceTierLabel(calculatePriceTier(car.priceUsd))}
                               </div>
                             </div>
                           </div>
-                          <div className={`text-right flex-shrink-0 font-semibold text-xs pl-2 ${isSelected ? "text-white" : "text-zinc-900"}`}>
-                            ${Number(car.priceUsd).toLocaleString("ru-RU")}
+                          <div className="text-right flex-shrink-0 pl-3">
+                            <div className={`font-bold text-xs ${isSelected ? "text-white" : "text-zinc-900"}`}>
+                              ${Number(car.priceUsd).toLocaleString("ru-RU")}
+                            </div>
                           </div>
                         </div>
                       );
@@ -261,17 +276,17 @@ export function AddAdCarModal({
             </div>
           )}
 
-          {/* Form */}
-          <div className="space-y-4 pt-1">
+          {/* Form Fields */}
+          <div className="space-y-4 pt-2 border-t border-zinc-100">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-zinc-700">Марка и модель *</Label>
+                <Label className="text-xs font-medium text-zinc-700">Марка и модель</Label>
                 <Input
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Например, Chevrolet Equinox"
-                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-lg h-9 text-xs"
+                  placeholder="Chevrolet Equinox"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-xl h-10 text-xs"
                 />
               </div>
 
@@ -282,27 +297,27 @@ export function AddAdCarModal({
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
                   placeholder="2020"
-                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-lg h-9 text-xs"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-xl h-10 text-xs"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-zinc-700">Цена ($) *</Label>
+                <Label className="text-xs font-medium text-zinc-700">Цена в долларах</Label>
                 <Input
                   type="number"
                   required
                   value={priceUsd}
                   onChange={(e) => setPriceUsd(e.target.value ? Number(e.target.value) : "")}
                   placeholder="17150"
-                  className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9 text-xs"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-xl h-10 text-xs"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-zinc-700">Ценовая группа TikTok</Label>
-                <div className="h-9 px-3 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center text-xs font-medium text-zinc-700">
+                <div className="h-10 px-3.5 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center text-xs font-medium text-zinc-800">
                   {getPriceTierLabel(calculatedTier)}
                 </div>
               </div>
@@ -354,68 +369,56 @@ export function AddAdCarModal({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-zinc-700">Ссылка на фото (URL)</Label>
-                <Input
-                  type="url"
-                  value={photoUrl}
-                  onChange={(e) => setPhotoUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-lg h-9 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-zinc-700">
-                  Свой лимит дней <span className="text-zinc-400 font-normal">(опционально)</span>
-                </Label>
+                <Label className="text-xs font-medium text-zinc-700">Свой лимит дней</Label>
                 <Input
                   type="number"
                   value={customDays}
                   onChange={(e) => setCustomDays(e.target.value ? Number(e.target.value) : "")}
-                  placeholder={`По умолчанию: ${campaign === "rk1" ? defaultRk1Days : defaultRk2Days}`}
-                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-lg h-9 text-xs"
+                  placeholder={`Стандарт: ${campaign === "rk1" ? defaultRk1Days : defaultRk2Days}`}
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-xl h-10 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-zinc-700">Заметка</Label>
+                <Input
+                  type="text"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="ID объявления или примечание"
+                  className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-xl h-10 text-xs"
                 />
               </div>
             </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-zinc-700">Заметка (опционально)</Label>
-              <Input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Заметка или ID объявления"
-                className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-lg h-9 text-xs"
-              />
-            </div>
           </div>
 
-          <DialogFooter className="pt-4 border-t border-zinc-100 flex justify-end gap-2">
+          {/* Sticky Bottom Action Bar */}
+          <div className="pt-4 mt-auto border-t border-zinc-200 flex items-center justify-end gap-2.5 shrink-0 bg-white">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-zinc-200 text-zinc-700 hover:bg-zinc-100 text-xs rounded-lg h-9"
+              className="border-zinc-200 text-zinc-700 hover:bg-zinc-100 text-xs rounded-xl h-10 px-4"
             >
               Отмена
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !name || !priceUsd}
-              className="bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs rounded-lg h-9 px-4"
+              className="bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-xs rounded-xl h-10 px-5 shadow-xs"
             >
               {isSubmitting ? (
                 <>
-                  <Spinner className="w-3.5 h-3.5 mr-1.5" />
+                  <Spinner className="w-4 h-4 mr-2" />
                   Сохранение...
                 </>
               ) : (
                 "Добавить в рекламу"
               )}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
