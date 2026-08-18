@@ -28,6 +28,7 @@ export async function GET() {
         const year = d.year || '';
         const priceUsd = Number(d.priceUsd || d.priceUSD || d.price || d.price_usd || 0);
         const isSold = d.status === 'sold' || d.isAvailable === false || d.is_available === false;
+        const createdAt = d.createdAt || d.created_at || row.created_at || null;
 
         // Определяем полный URL фото
         let photoUrl = '';
@@ -59,11 +60,16 @@ export async function GET() {
           priceUsd,
           isSold,
           photoUrl,
+          createdAt,
           monthlyPayment: d.monthlyPayment || d.paymentPerMonth || null,
         };
       })
       .filter((c: any) => !c.isSold && c.priceUsd > 0)
-      .sort((a: any, b: any) => a.priceUsd - b.priceUsd);
+      .sort((a: any, b: any) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return timeB - timeA; // Сначала самые новые
+      });
 
     return NextResponse.json({
       success: true,

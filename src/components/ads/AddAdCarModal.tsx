@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { AdCar, AdCampaignType, AdPriceTier } from "@/lib/types";
 import { calculatePriceTier, getPriceTierLabel } from "@/lib/services/adsService";
-import { Search, Car, X } from "lucide-react";
+import { Search, Car, X, Calendar } from "lucide-react";
 
 interface CatalogCar {
   id: string;
@@ -17,6 +17,7 @@ interface CatalogCar {
   year?: string | number;
   priceUsd: number;
   photoUrl?: string;
+  createdAt?: string | number;
 }
 
 interface AddAdCarModalProps {
@@ -26,6 +27,30 @@ interface AddAdCarModalProps {
   existingCarIds?: string[];
   defaultRk1Days: number;
   defaultRk2Days: number;
+}
+
+function formatCarAddedDate(dateStr?: string | number | null): string {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) return "Добавлен сегодня";
+
+    const yesterday = new Date();
+    yesterday.setDate(now.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) return "Добавлен вчера";
+
+    const months = [
+      "янв", "фев", "мар", "апр", "мая", "июн",
+      "июл", "авг", "сен", "окт", "ноя", "дек"
+    ];
+    return `Добавлен ${d.getDate()} ${months[d.getMonth()]}`;
+  } catch {
+    return "";
+  }
 }
 
 export function AddAdCarModal({
@@ -202,8 +227,8 @@ export function AddAdCarModal({
                 />
               </div>
 
-              {/* Fixed Height Container to prevent jumping */}
-              <div className="h-56 border border-zinc-200/80 rounded-xl p-2 bg-zinc-50/50">
+              {/* Fixed Height Container to prevent layout shift */}
+              <div className="h-64 border border-zinc-200/80 rounded-xl p-2 bg-zinc-50/50">
                 {isLoadingCatalog ? (
                   <div className="h-full flex items-center justify-center text-zinc-400 text-xs gap-2">
                     <Spinner className="w-4 h-4" />
@@ -218,6 +243,8 @@ export function AddAdCarModal({
                     {filteredCatalog.map((car) => {
                       const isSelected = selectedCatalogCar?.id === car.id;
                       const isAlreadyInAds = existingCarIds.includes(car.id);
+                      const addedDateFormatted = formatCarAddedDate(car.createdAt);
+
                       return (
                         <div
                           key={car.id}
@@ -258,8 +285,18 @@ export function AddAdCarModal({
                                   </span>
                                 )}
                               </div>
-                              <div className={`text-[11px] ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
-                                {getPriceTierLabel(calculatePriceTier(car.priceUsd))}
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className={`text-[11px] ${isSelected ? "text-zinc-300" : "text-zinc-500"}`}>
+                                  {getPriceTierLabel(calculatePriceTier(car.priceUsd))}
+                                </span>
+                                {addedDateFormatted && (
+                                  <>
+                                    <span className={`text-[9px] ${isSelected ? "text-zinc-400" : "text-zinc-300"}`}>•</span>
+                                    <span className={`text-[11px] ${isSelected ? "text-zinc-300 font-medium" : "text-zinc-500"}`}>
+                                      {addedDateFormatted}
+                                    </span>
+                                  </>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -277,7 +314,7 @@ export function AddAdCarModal({
             </div>
           )}
 
-          {/* Form Fields without useless placeholders */}
+          {/* Form Fields without placeholders */}
           <div className="space-y-4 pt-2 border-t border-zinc-100">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
