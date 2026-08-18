@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { AdCar, AdCampaignType, AdPriceTier } from "@/lib/types";
 import { calculatePriceTier, getPriceTierLabel } from "@/lib/services/adsService";
-import { Search, Car, X, Check } from "lucide-react";
+import { Search, Car, X } from "lucide-react";
 
 interface CatalogCar {
   id: string;
@@ -195,26 +195,27 @@ export function AddAdCarModal({
                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <Input
                   type="text"
-                  placeholder="Поиск по марке, модели, году или цене"
+                  placeholder="Поиск авто..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 bg-zinc-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400 rounded-xl h-10 text-xs focus:bg-white"
                 />
               </div>
 
-              {isLoadingCatalog ? (
-                <div className="flex items-center justify-center py-10 text-zinc-400 text-xs gap-2">
-                  <Spinner className="w-4 h-4" />
-                  Загрузка автомобилей со склада...
-                </div>
-              ) : (
-                <div className="max-h-56 overflow-y-auto space-y-2 pr-1 border border-zinc-200/80 rounded-xl p-2 bg-zinc-50/50">
-                  {filteredCatalog.length === 0 ? (
-                    <div className="text-xs text-zinc-400 text-center py-6">
-                      Автомобили не найдены
-                    </div>
-                  ) : (
-                    filteredCatalog.map((car) => {
+              {/* Fixed Height Container to prevent jumping */}
+              <div className="h-56 border border-zinc-200/80 rounded-xl p-2 bg-zinc-50/50">
+                {isLoadingCatalog ? (
+                  <div className="h-full flex items-center justify-center text-zinc-400 text-xs gap-2">
+                    <Spinner className="w-4 h-4" />
+                    Загрузка склада...
+                  </div>
+                ) : filteredCatalog.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-xs text-zinc-400">
+                    Автомобили не найдены
+                  </div>
+                ) : (
+                  <div className="h-full overflow-y-auto space-y-2 pr-1">
+                    {filteredCatalog.map((car) => {
                       const isSelected = selectedCatalogCar?.id === car.id;
                       const isAlreadyInAds = existingCarIds.includes(car.id);
                       return (
@@ -251,7 +252,7 @@ export function AddAdCarModal({
                                   <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
                                     isSelected
                                       ? "bg-white/20 text-white"
-                                      : "bg-amber-100 text-amber-800"
+                                      : "bg-zinc-100 text-zinc-600 border border-zinc-200"
                                   }`}>
                                     в рекламе
                                   </span>
@@ -269,14 +270,14 @@ export function AddAdCarModal({
                           </div>
                         </div>
                       );
-                    })
-                  )}
-                </div>
-              )}
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Form Fields */}
+          {/* Form Fields without useless placeholders */}
           <div className="space-y-4 pt-2 border-t border-zinc-100">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -285,7 +286,6 @@ export function AddAdCarModal({
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Chevrolet Equinox"
                   className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-xl h-10 text-xs"
                 />
               </div>
@@ -296,7 +296,6 @@ export function AddAdCarModal({
                   type="text"
                   value={year}
                   onChange={(e) => setYear(e.target.value)}
-                  placeholder="2020"
                   className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-xl h-10 text-xs"
                 />
               </div>
@@ -310,7 +309,6 @@ export function AddAdCarModal({
                   required
                   value={priceUsd}
                   onChange={(e) => setPriceUsd(e.target.value ? Number(e.target.value) : "")}
-                  placeholder="17150"
                   className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-xl h-10 text-xs"
                 />
               </div>
@@ -318,11 +316,12 @@ export function AddAdCarModal({
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-zinc-700">Ценовая группа TikTok</Label>
                 <div className="h-10 px-3.5 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center text-xs font-medium text-zinc-800">
-                  {getPriceTierLabel(calculatedTier)}
+                  {priceUsd ? getPriceTierLabel(calculatedTier) : "—"}
                 </div>
               </div>
             </div>
 
+            {/* Campaign Selection - Clean Neutral Styling */}
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-zinc-700">Кампания для запуска</Label>
               <div className="grid grid-cols-3 gap-2">
@@ -331,12 +330,16 @@ export function AddAdCarModal({
                   onClick={() => setCampaign("rk1")}
                   className={`p-3 rounded-xl border text-left transition-all ${
                     campaign === "rk1"
-                      ? "bg-blue-50 border-blue-600 text-blue-900 ring-1 ring-blue-500/20"
-                      : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100"
+                      ? "bg-zinc-900 text-white border-zinc-900 shadow-xs"
+                      : "bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-700"
                   }`}
                 >
-                  <div className="text-xs font-semibold text-blue-700">РК 1</div>
-                  <div className="text-[11px] text-zinc-500 mt-0.5">Лимит: {defaultRk1Days} дн.</div>
+                  <div className={`text-xs font-semibold ${campaign === "rk1" ? "text-white" : "text-zinc-900"}`}>
+                    РК 1
+                  </div>
+                  <div className={`text-[11px] mt-0.5 ${campaign === "rk1" ? "text-zinc-300" : "text-zinc-500"}`}>
+                    Лимит {defaultRk1Days} дн.
+                  </div>
                 </button>
 
                 <button
@@ -344,12 +347,16 @@ export function AddAdCarModal({
                   onClick={() => setCampaign("rk2")}
                   className={`p-3 rounded-xl border text-left transition-all ${
                     campaign === "rk2"
-                      ? "bg-purple-50 border-purple-600 text-purple-900 ring-1 ring-purple-500/20"
-                      : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100"
+                      ? "bg-zinc-900 text-white border-zinc-900 shadow-xs"
+                      : "bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-700"
                   }`}
                 >
-                  <div className="text-xs font-semibold text-purple-700">РК 2</div>
-                  <div className="text-[11px] text-zinc-500 mt-0.5">Лимит: {defaultRk2Days} дн.</div>
+                  <div className={`text-xs font-semibold ${campaign === "rk2" ? "text-white" : "text-zinc-900"}`}>
+                    РК 2
+                  </div>
+                  <div className={`text-[11px] mt-0.5 ${campaign === "rk2" ? "text-zinc-300" : "text-zinc-500"}`}>
+                    Лимит {defaultRk2Days} дн.
+                  </div>
                 </button>
 
                 <button
@@ -357,12 +364,16 @@ export function AddAdCarModal({
                   onClick={() => setCampaign("waiting_video")}
                   className={`p-3 rounded-xl border text-left transition-all ${
                     campaign === "waiting_video"
-                      ? "bg-amber-50 border-amber-600 text-amber-900 ring-1 ring-amber-500/20"
-                      : "bg-zinc-50 border-zinc-200 text-zinc-700 hover:bg-zinc-100"
+                      ? "bg-zinc-900 text-white border-zinc-900 shadow-xs"
+                      : "bg-zinc-50 hover:bg-zinc-100 border-zinc-200 text-zinc-700"
                   }`}
                 >
-                  <div className="text-xs font-semibold text-amber-700">Ожидает съёмки</div>
-                  <div className="text-[11px] text-zinc-500 mt-0.5">В очередь</div>
+                  <div className={`text-xs font-semibold ${campaign === "waiting_video" ? "text-white" : "text-zinc-900"}`}>
+                    Ожидает съёмки
+                  </div>
+                  <div className={`text-[11px] mt-0.5 ${campaign === "waiting_video" ? "text-zinc-300" : "text-zinc-500"}`}>
+                    В очередь
+                  </div>
                 </button>
               </div>
             </div>
@@ -374,7 +385,6 @@ export function AddAdCarModal({
                   type="number"
                   value={customDays}
                   onChange={(e) => setCustomDays(e.target.value ? Number(e.target.value) : "")}
-                  placeholder={`Стандарт: ${campaign === "rk1" ? defaultRk1Days : defaultRk2Days}`}
                   className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-xl h-10 text-xs"
                 />
               </div>
@@ -385,7 +395,6 @@ export function AddAdCarModal({
                   type="text"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="ID объявления или примечание"
                   className="bg-zinc-50 border-zinc-200 text-zinc-900 focus:bg-white rounded-xl h-10 text-xs"
                 />
               </div>
