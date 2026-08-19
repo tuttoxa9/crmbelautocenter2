@@ -127,22 +127,25 @@ export function AddAdCarModal({
         ? defaultRk1Days
         : defaultRk2Days;
 
-      await onAddCar({
-        carId: selectedCatalogCar?.id,
+      const payload: any = {
         name: name.trim(),
-        year: year ? String(year).trim() : undefined,
         priceUsd: numericPrice,
         priceTier: tier,
         campaign,
         startedAt: Date.now(),
         maxDays,
-        photoUrl: photoUrl.trim() || undefined,
-        notes: notes.trim() || undefined,
-      });
+      };
 
+      if (selectedCatalogCar?.id) payload.carId = selectedCatalogCar.id;
+      if (year && String(year).trim()) payload.year = String(year).trim();
+      if (photoUrl && photoUrl.trim()) payload.photoUrl = photoUrl.trim();
+      if (notes && notes.trim()) payload.notes = notes.trim();
+
+      await onAddCar(payload);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error adding car to ads:", err);
+      alert("Ошибка при сохранении: " + (err?.message || "Попробуйте еще раз"));
     } finally {
       setIsSubmitting(false);
     }

@@ -113,7 +113,7 @@ export const createAdCar = async (
   const now = Date.now();
   const priceTier = carData.priceTier || calculatePriceTier(carData.priceUsd);
 
-  const newCar: Omit<AdCar, "id"> = {
+  const rawCar: any = {
     ...carData,
     priceTier,
     startedAt: carData.campaign === 'waiting_video' ? now : (carData.startedAt || now),
@@ -121,8 +121,16 @@ export const createAdCar = async (
     updatedAt: now,
   };
 
-  const docRef = await addDoc(collection(db, AD_CARS_COLLECTION), newCar);
-  return { id: docRef.id, ...newCar };
+  // Удаляем все undefined поля, иначе Firestore выбрасывает ошибку addDoc
+  const cleanCar: any = {};
+  Object.keys(rawCar).forEach((key) => {
+    if (rawCar[key] !== undefined) {
+      cleanCar[key] = rawCar[key];
+    }
+  });
+
+  const docRef = await addDoc(collection(db, AD_CARS_COLLECTION), cleanCar);
+  return { id: docRef.id, ...cleanCar };
 };
 
 export const updateAdCar = async (
@@ -141,7 +149,15 @@ export const updateAdCar = async (
     dataToUpdate.priceTier = calculatePriceTier(updates.priceUsd);
   }
 
-  await updateDoc(carRef, dataToUpdate);
+  // Удаляем все undefined поля
+  const cleanData: any = {};
+  Object.keys(dataToUpdate).forEach((key) => {
+    if (dataToUpdate[key] !== undefined) {
+      cleanData[key] = dataToUpdate[key];
+    }
+  });
+
+  await updateDoc(carRef, cleanData);
 };
 
 export const switchAdCarCampaign = async (
