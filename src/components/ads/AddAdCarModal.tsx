@@ -75,10 +75,12 @@ export function AddAdCarModal({
   const [photoUrl, setPhotoUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [customDays, setCustomDays] = useState<number | "">("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
+      setErrorMessage(null);
       setIsLoadingCatalog(true);
       fetch("/api/catalog/cars")
         .then((res) => res.json())
@@ -99,6 +101,7 @@ export function AddAdCarModal({
       setNotes("");
       setCustomDays("");
       setSearchQuery("");
+      setErrorMessage(null);
     }
   }, [isOpen]);
 
@@ -108,6 +111,7 @@ export function AddAdCarModal({
     setYear(car.year ? String(car.year) : "");
     setPriceUsd(car.priceUsd || "");
     setPhotoUrl(car.photoUrl || "");
+    setErrorMessage(null);
   };
 
   const calculatedTier: AdPriceTier = calculatePriceTier(Number(priceUsd) || 0);
@@ -118,6 +122,7 @@ export function AddAdCarModal({
 
     try {
       setIsSubmitting(true);
+      setErrorMessage(null);
       const numericPrice = Number(priceUsd);
       const tier = calculatePriceTier(numericPrice);
 
@@ -145,7 +150,7 @@ export function AddAdCarModal({
       onClose();
     } catch (err: any) {
       console.error("Error adding car to ads:", err);
-      alert("Ошибка при сохранении: " + (err?.message || "Попробуйте еще раз"));
+      setErrorMessage(err?.message || "Не удалось сохранить автомобиль. Попробуйте еще раз.");
     } finally {
       setIsSubmitting(false);
     }
@@ -439,6 +444,13 @@ export function AddAdCarModal({
                 />
               </div>
             </div>
+
+            {errorMessage && (
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center gap-2 animate-in fade-in duration-150">
+                <span className="w-2 h-2 rounded-full bg-rose-500 flex-shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
           </div>
 
           {/* Sticky Bottom Action Bar */}

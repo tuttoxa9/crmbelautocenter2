@@ -41,6 +41,7 @@ import {
   ChevronUp,
   Check,
   X,
+  CheckCircle2,
 } from "lucide-react";
 
 interface CatalogCar {
@@ -92,6 +93,13 @@ export function AdsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [addingCarId, setAddingCarId] = useState<string | null>(null);
 
+  // Inline Confirmation Popovers (no native alert/confirm)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmResetId, setConfirmResetId] = useState<string | null>(null);
+
+  // Internal Toast / Banner Message
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: "error" | "success" } | null>(null);
+
   // View Mode: "board" (Kanban by price tiers) vs "grid" (General grid)
   const [viewMode, setViewMode] = useState<"board" | "grid">("board");
 
@@ -118,7 +126,14 @@ export function AdsDashboard() {
   const tierRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns on outside click
+  const showToast = (text: string, type: "error" | "success" = "success") => {
+    setToastMessage({ text, type });
+    setTimeout(() => {
+      setToastMessage((prev) => (prev?.text === text ? null : prev));
+    }, 3500);
+  };
+
+  // Close dropdowns and popovers on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (tierRef.current && !tierRef.current.contains(e.target as Node)) {
@@ -147,6 +162,7 @@ export function AdsDashboard() {
       }
     } catch (err) {
       console.error("Error loading ads data:", err);
+      showToast("Не удалось загрузить данные рекламы", "error");
     } finally {
       setIsLoading(false);
     }
@@ -161,6 +177,7 @@ export function AdsDashboard() {
   const handleAddCar = async (carData: Omit<AdCar, "id" | "createdAt" | "updatedAt">) => {
     const newCar = await createAdCar(carData);
     setCars((prev) => [newCar, ...prev]);
+    showToast(`Автомобиль "${carData.name}" добавлен в рекламу`);
   };
 
   // Quick 1-click add from warehouse column
@@ -186,9 +203,11 @@ export function AdsDashboard() {
       });
 
       setCars((prev) => [newCar, ...prev]);
+      const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : "Очередь съёмки";
+      showToast(`"${catalogCar.name}" добавлен в ${targetLabel}`);
     } catch (err: any) {
       console.error("Error quick adding car:", err);
-      alert("Ошибка при добавлении: " + (err?.message || "Попробуйте снова"));
+      showToast(err?.message || "Ошибка при добавлении авто", "error");
     } finally {
       setAddingCarId(null);
     }
@@ -211,33 +230,36 @@ export function AdsDashboard() {
           : c
       )
     );
+    const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : "Очередь съёмки";
+    showToast(`Перенесено в ${targetLabel}: ${car.name}`);
   };
 
-  const handleResetTimer = async (car: AdCar) => {
+  const executeResetTimer = async (car: AdCar) => {
     if (!car.id) return;
-    if (confirm(`Сбросить таймер открутки для "${car.name}" на 0 дней?`)) {
-      await resetAdCarTimer(car.id);
-      setCars((prev) =>
-        prev.map((c) =>
-          c.id === car.id
-            ? { ...c, startedAt: Date.now(), lastAlertSentAt: null as any }
-            : c
-        )
-      );
-    }
+    setConfirmResetId(null);
+    await resetAdCarTimer(car.id);
+    setCars((prev) =>
+      prev.map((c) =>
+        c.id === car.id
+          ? { ...c, startedAt: Date.now(), lastAlertSentAt: null as any }
+          : c
+      )
+    );
+    showToast(`Таймер сброшен на 0 дней: ${car.name}`);
   };
 
-  const handleDeleteCar = async (car: AdCar) => {
+  const executeDeleteCar = async (car: AdCar) => {
     if (!car.id) return;
-    if (confirm(`Удалить "${car.name}" из рекламы?`)) {
-      await deleteAdCar(car.id);
-      setCars((prev) => prev.filter((c) => c.id !== car.id));
-    }
+    setConfirmDeleteId(null);
+    await deleteAdCar(car.id);
+    setCars((prev) => prev.filter((c) => c.id !== car.id));
+    showToast(`Автомобиль "${car.name}" удален из рекламы`);
   };
 
   const handleSaveSettings = async (newSettings: Partial<AdsSettings>) => {
     await updateAdsSettings(newSettings);
     setSettings((prev) => ({ ...prev, ...newSettings }));
+    showToast("Настройки сроков сохранены");
   };
 
   const toggleWarehouseCollapse = (tier: string) => {
@@ -763,8 +785,8 @@ export function AdsDashboard() {
                                     </div>
                                   )}
 
-                                  {/* Quick Actions */}
-                                  <div className="pt-2 border-t border-zinc-100 flex items-center justify-between gap-1">
+                                  {/* Quick Actions with Inline Confirmation Popovers */}
+                                  <div className="pt-2 border-t border-zinc-100 flex items-center justify-between gap-1 relative">
                                     {car.campaign === "rk1" && (
                                       <Button
                                         size="sm"
@@ -807,24 +829,83 @@ export function AdsDashboard() {
                                     )}
 
                                     <div className="flex items-center gap-1 ml-auto">
+                                      {/* Inline Reset Timer Confirmation Popover */}
                                       {car.campaign !== "waiting_video" && (
+                                        <div className="relative">
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setConfirmDeleteId(null);
+                                              setConfirmResetId(confirmResetId === car.id ? null : car.id || null);
+                                            }}
+                                            className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+                                            title="Сбросить таймер на 0"
+                                          >
+                                            <RotateCw className="w-3.5 h-3.5" />
+                                          </button>
+
+                                          {confirmResetId === car.id && (
+                                            <div className="absolute right-0 bottom-full mb-1.5 z-40 w-52 p-3 bg-white border border-zinc-200 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 text-xs">
+                                              <div className="font-semibold text-zinc-900 leading-tight">Сбросить таймер?</div>
+                                              <div className="text-[11px] text-zinc-500 mt-0.5">Отсчет начнется с 0 дней</div>
+                                              <div className="flex items-center justify-end gap-1.5 mt-2.5">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setConfirmResetId(null)}
+                                                  className="px-2.5 py-1 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+                                                >
+                                                  Отмена
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => executeResetTimer(car)}
+                                                  className="px-3 py-1 text-[11px] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg shadow-2xs transition-colors"
+                                                >
+                                                  Сбросить
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {/* Inline Delete Confirmation Popover */}
+                                      <div className="relative">
                                         <button
                                           type="button"
-                                          onClick={() => handleResetTimer(car)}
-                                          className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
-                                          title="Сбросить таймер на 0"
+                                          onClick={() => {
+                                            setConfirmResetId(null);
+                                            setConfirmDeleteId(confirmDeleteId === car.id ? null : car.id || null);
+                                          }}
+                                          className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                          title="Удалить из рекламы"
                                         >
-                                          <RotateCw className="w-3 h-3" />
+                                          <Trash2 className="w-3.5 h-3.5" />
                                         </button>
-                                      )}
-                                      <button
-                                        type="button"
-                                        onClick={() => handleDeleteCar(car)}
-                                        className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                        title="Удалить из рекламы"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </button>
+
+                                        {confirmDeleteId === car.id && (
+                                          <div className="absolute right-0 bottom-full mb-1.5 z-40 w-52 p-3 bg-white border border-zinc-200 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 text-xs">
+                                            <div className="font-semibold text-zinc-900 leading-tight">Удалить из рекламы?</div>
+                                            <div className="text-[11px] text-zinc-500 mt-0.5 truncate">{car.name}</div>
+                                            <div className="flex items-center justify-end gap-1.5 mt-2.5">
+                                              <button
+                                                type="button"
+                                                onClick={() => setConfirmDeleteId(null)}
+                                                className="px-2.5 py-1 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+                                              >
+                                                Отмена
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => executeDeleteCar(car)}
+                                                className="px-3 py-1 text-[11px] font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-2xs transition-colors"
+                                              >
+                                                Удалить
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -1345,8 +1426,8 @@ export function AdsDashboard() {
                           )}
                         </div>
 
-                        {/* Actions */}
-                        <div className="pt-3 border-t border-zinc-100 flex flex-col gap-2">
+                        {/* Actions with Inline Confirmation Popovers */}
+                        <div className="pt-3 border-t border-zinc-100 flex flex-col gap-2 relative">
                           {car.campaign === "rk1" && (
                             <div className="grid grid-cols-2 gap-1.5">
                               <Button
@@ -1412,31 +1493,87 @@ export function AdsDashboard() {
                             </div>
                           )}
 
-                          {/* Utilities */}
+                          {/* Utilities with Inline Confirmation Popovers */}
                           <div className="flex items-center justify-between pt-1">
                             {car.campaign !== "waiting_video" ? (
-                              <button
-                                type="button"
-                                onClick={() => handleResetTimer(car)}
-                                className="text-[11px] text-zinc-500 hover:text-zinc-800 flex items-center gap-1 transition-colors"
-                                title="Сбросить таймер на 0 дней"
-                              >
-                                <RotateCw className="w-3 h-3 text-zinc-400" />
-                                Сбросить таймер
-                              </button>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setConfirmDeleteId(null);
+                                    setConfirmResetId(confirmResetId === car.id ? null : car.id || null);
+                                  }}
+                                  className="text-[11px] text-zinc-500 hover:text-zinc-800 flex items-center gap-1 transition-colors"
+                                  title="Сбросить таймер на 0 дней"
+                                >
+                                  <RotateCw className="w-3 h-3 text-zinc-400" />
+                                  Сбросить таймер
+                                </button>
+
+                                {confirmResetId === car.id && (
+                                  <div className="absolute left-0 bottom-full mb-1.5 z-40 w-52 p-3 bg-white border border-zinc-200 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 text-xs">
+                                    <div className="font-semibold text-zinc-900 leading-tight">Сбросить таймер?</div>
+                                    <div className="text-[11px] text-zinc-500 mt-0.5">Отсчет начнется с 0 дней</div>
+                                    <div className="flex items-center justify-end gap-1.5 mt-2.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => setConfirmResetId(null)}
+                                        className="px-2.5 py-1 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+                                      >
+                                        Отмена
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => executeResetTimer(car)}
+                                        className="px-3 py-1 text-[11px] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg shadow-2xs transition-colors"
+                                      >
+                                        Сбросить
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             ) : (
                               <div />
                             )}
 
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteCar(car)}
-                              className="text-[11px] text-zinc-400 hover:text-rose-600 flex items-center gap-1 transition-colors ml-auto"
-                              title="Удалить из рекламы"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                              Удалить
-                            </button>
+                            <div className="relative ml-auto">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setConfirmResetId(null);
+                                  setConfirmDeleteId(confirmDeleteId === car.id ? null : car.id || null);
+                                }}
+                                className="text-[11px] text-zinc-400 hover:text-rose-600 flex items-center gap-1 transition-colors"
+                                title="Удалить из рекламы"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                Удалить
+                              </button>
+
+                              {confirmDeleteId === car.id && (
+                                <div className="absolute right-0 bottom-full mb-1.5 z-40 w-52 p-3 bg-white border border-zinc-200 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 text-xs">
+                                  <div className="font-semibold text-zinc-900 leading-tight">Удалить из рекламы?</div>
+                                  <div className="text-[11px] text-zinc-500 mt-0.5 truncate">{car.name}</div>
+                                  <div className="flex items-center justify-end gap-1.5 mt-2.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => setConfirmDeleteId(null)}
+                                      className="px-2.5 py-1 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+                                    >
+                                      Отмена
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => executeDeleteCar(car)}
+                                      className="px-3 py-1 text-[11px] font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-2xs transition-colors"
+                                    >
+                                      Удалить
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1448,6 +1585,26 @@ export function AdsDashboard() {
           </div>
         )}
       </div>
+
+      {/* Floating Internal Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-3 fade-in duration-200">
+          <div
+            className={`px-4 py-3 rounded-2xl shadow-xl border text-xs font-medium flex items-center gap-2.5 ${
+              toastMessage.type === "error"
+                ? "bg-rose-900 text-white border-rose-800"
+                : "bg-zinc-900 text-white border-zinc-800"
+            }`}
+          >
+            {toastMessage.type === "error" ? (
+              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            )}
+            <span>{toastMessage.text}</span>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <AddAdCarModal
