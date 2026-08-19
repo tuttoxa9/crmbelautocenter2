@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
-  subscribeToAdCars,
+  getAdCars,
   createAdCar,
   switchAdCarCampaign,
   resetAdCarTimer,
@@ -73,34 +73,63 @@ export function AdsDashboard() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Subscribe to ad cars
+  // Load ad cars and settings from Neon DB
+  const loadData = async () => {
+    try {
+      const [fetchedCars, fetchedSettings] = await Promise.all([
+        getAdCars(),
+        getAdsSettings(),
+      ]);
+      setCars(fetchedCars);
+      setSettings(fetchedSettings);
+    } catch (err) {
+      console.error("Error loading ads data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
-    getAdsSettings().then(setSettings);
-
-    const unsubscribe = subscribeToAdCars((data) => {
-      setCars(data);
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
+    loadData();
   }, []);
 
   // Actions
   const handleAddCar = async (carData: Omit<AdCar, "id" | "createdAt" | "updatedAt">) => {
-    await createAdCar(carData);
+    const newCar = await createAdCar(carData);
+    setCars((prev) => [newCar, ...prev]);
   };
 
   const handleSwitchCampaign = async (car: AdCar, targetCampaign: AdCampaignType) => {
     if (!car.id) return;
     const customDays = targetCampaign === "rk1" ? settings.rk1Days : settings.rk2Days;
     await switchAdCarCampaign(car.id, targetCampaign, customDays);
+    setCars((prev) =>
+      prev.map((c) =>
+        c.id === car.id
+          ? {
+              ...c,
+              campaign: targetCampaign,
+              startedAt: Date.now(),
+              maxDays: customDays,
+              lastAlertSentAt: null as any,
+            }
+          : c
+      )
+    );
   };
 
   const handleResetTimer = async (car: AdCar) => {
     if (!car.id) return;
     if (confirm(`Сбросить таймер открутки для "${car.name}" на 0 дней?`)) {
       await resetAdCarTimer(car.id);
+      setCars((prev) =>
+        prev.map((c) =>
+          c.id === car.id
+            ? { ...c, startedAt: Date.now(), lastAlertSentAt: null as any }
+            : c
+        )
+      );
     }
   };
 
@@ -108,6 +137,7 @@ export function AdsDashboard() {
     if (!car.id) return;
     if (confirm(`Удалить "${car.name}" из рекламы?`)) {
       await deleteAdCar(car.id);
+      setCars((prev) => prev.filter((c) => c.id !== car.id));
     }
   };
 

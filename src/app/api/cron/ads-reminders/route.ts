@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebaseAdmin';
+import { sql } from '@/lib/db';
 import { sendTelegramAdRotationAlert } from '@/lib/telegram';
 import { getPriceTierLabel } from '@/lib/services/adsService';
 
@@ -20,31 +20,33 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!adminDb) {
-      return NextResponse.json({ error: 'Firebase Admin not initialized' }, { status: 500 });
+    // 2. Получаем настройки Ads из Neon DB
+    const settingsRows = await sql`
+      SELECT data FROM settings WHERE id = 'ads' LIMIT 1
+    `;
+    let adsSettings: any = {};
+    if (settingsRows.length > 0) {
+      const raw = settingsRows[0].data;
+      adsSettings = typeof raw === 'string' ? JSON.parse(raw) : raw;
     }
 
-    // 2. Получаем настройки Ads
-    const settingsDoc = await adminDb.collection('settings').doc('ads').get();
-    const adsSettings = settingsDoc.data() || {};
-
-    const rk1DaysLimit = Number(adsSettings.rk1Days) || 17;
-    const rk2DaysLimit = Number(adsSettings.rk2Days) || 14;
-    const isActive = adsSettings.isActive !== undefined ? adsSettings.isActive : true;
+    const rk1DaysLimit = Number(adsSettings?.rk1Days) || 17;
+    const rk2DaysLimit = Number(adsSettings?.rk2Days) || 14;
+    const isActive = adsSettings?.isActive !== undefined ? adsSettings.isActive : true;
 
     if (!isActive && !isForce) {
       return NextResponse.json({ success: true, message: 'Ads notifications are inactive in settings.' });
     }
 
-    // 3. Получаем все активные авто в РК 1 и РК 2
-    const carsSnapshot = await adminDb.collection('ad_cars')
-      .where('campaign', 'in', ['rk1', 'rk2'])
-      .get();
+    // 3. Получаем все активные авто из таблицы ad_cars в Neon DB
+    const carRows = await sql`
+      SELECT id, data FROM ad_cars
+    `;
 
-    const cars = carsSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as any[];
+    const cars = carRows.map((r: any) => {
+      const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+      return { id: r.id, ...d };
+    }).filter((c: any) => c.campaign === 'rk1' || c.campaign === 'rk2');
 
     const now = Date.now();
     let alertsSent = 0;
@@ -90,10 +92,19 @@ export async function GET(request: Request) {
             photoUrl: car.photoUrl,
           });
 
-          await adminDb.collection('ad_cars').doc(car.id).update({
+          // Обновляем метку времени последнего алерта в Neon DB
+          const updatedData = {
+            ...car,
             lastAlertSentAt: now,
             updatedAt: now,
-          });
+          };
+          delete updatedData.id;
+
+          await sql`
+            UPDATE ad_cars 
+            SET data = ${JSON.stringify(updatedData)}, updated_at = ${new Date().toISOString()}
+            WHERE id = ${car.id}
+          `;
 
           alertsSent++;
         }
@@ -108,7 +119,7 @@ export async function GET(request: Request) {
       expiredList,
     });
   } catch (error: any) {
-    console.error('Error in ads-reminders cron route:', error);
+    console.error('Error in ads-reminders cron route with Neon DB:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to process ad reminders' },
       { status: 500 }

@@ -83,7 +83,7 @@ export interface AdCar {
   maxDays?: number; // Лимит дней
   photoUrl?: string;
   notes?: string;
-  lastAlertSentAt?: number; // Timestamp последней отправки TG алерта
+  lastAlertSentAt?: number | null; // Timestamp последней отправки TG алерта
   createdAt: number;
   updatedAt: number;
 }

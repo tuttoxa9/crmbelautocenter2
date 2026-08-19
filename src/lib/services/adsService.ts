@@ -1,22 +1,4 @@
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  doc,
-  getDocs,
-  getDoc,
-  query,
-  orderBy,
-  deleteDoc,
-  onSnapshot,
-  setDoc
-} from "firebase/firestore";
-import { db } from "../firebase";
 import { AdCar, AdCampaignType, AdPriceTier, AdsSettings } from "../types";
-
-const AD_CARS_COLLECTION = "ad_cars";
-const SETTINGS_COLLECTION = "settings";
-const ADS_SETTINGS_DOC = "ads";
 
 export const DEFAULT_ADS_SETTINGS: AdsSettings = {
   rk1Days: 17,
@@ -66,98 +48,50 @@ export function calculateDaysInAd(startedAt: number): number {
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-export const subscribeToAdCars = (callback: (cars: AdCar[]) => void) => {
-  if (!db) {
-    console.error("Firestore is not initialized");
-    callback([]);
-    return () => {};
-  }
-
-  const carsRef = collection(db, AD_CARS_COLLECTION);
-  const q = query(carsRef, orderBy("createdAt", "desc"));
-
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot) => {
-      const cars = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      })) as AdCar[];
-      callback(cars);
-    },
-    (error) => {
-      console.error("Error listening to ad cars:", error);
-    }
-  );
-
-  return unsubscribe;
-};
-
 export const getAdCars = async (): Promise<AdCar[]> => {
-  if (!db) return [];
-  const carsRef = collection(db, AD_CARS_COLLECTION);
-  const q = query(carsRef, orderBy("createdAt", "desc"));
-  const snapshot = await getDocs(q);
-
-  return snapshot.docs.map((docSnap) => ({
-    id: docSnap.id,
-    ...docSnap.data(),
-  })) as AdCar[];
+  try {
+    const res = await fetch('/api/ads/cars', { cache: 'no-store' });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.cars)) {
+      return data.cars;
+    }
+  } catch (err) {
+    console.error('Error fetching ad cars:', err);
+  }
+  return [];
 };
 
 export const createAdCar = async (
   carData: Omit<AdCar, "id" | "createdAt" | "updatedAt">
 ): Promise<AdCar> => {
-  if (!db) throw new Error("Firestore is not initialized");
-
-  const now = Date.now();
-  const priceTier = carData.priceTier || calculatePriceTier(carData.priceUsd);
-
-  const rawCar: any = {
-    ...carData,
-    priceTier,
-    startedAt: carData.campaign === 'waiting_video' ? now : (carData.startedAt || now),
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  // Удаляем все undefined поля, иначе Firestore выбрасывает ошибку addDoc
-  const cleanCar: any = {};
-  Object.keys(rawCar).forEach((key) => {
-    if (rawCar[key] !== undefined) {
-      cleanCar[key] = rawCar[key];
-    }
+  const res = await fetch('/api/ads/cars', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(carData),
   });
 
-  const docRef = await addDoc(collection(db, AD_CARS_COLLECTION), cleanCar);
-  return { id: docRef.id, ...cleanCar };
+  const data = await res.json();
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to create ad car');
+  }
+
+  return data.car;
 };
 
 export const updateAdCar = async (
   id: string,
   updates: Partial<Omit<AdCar, "id" | "createdAt">>
 ) => {
-  if (!db) throw new Error("Firestore is not initialized");
-
-  const carRef = doc(db, AD_CARS_COLLECTION, id);
-  const dataToUpdate: any = {
-    ...updates,
-    updatedAt: Date.now(),
-  };
-
-  if (updates.priceUsd !== undefined && !updates.priceTier) {
-    dataToUpdate.priceTier = calculatePriceTier(updates.priceUsd);
-  }
-
-  // Удаляем все undefined поля
-  const cleanData: any = {};
-  Object.keys(dataToUpdate).forEach((key) => {
-    if (dataToUpdate[key] !== undefined) {
-      cleanData[key] = dataToUpdate[key];
-    }
+  const res = await fetch(`/api/ads/cars/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
   });
 
-  await updateDoc(carRef, cleanData);
+  const data = await res.json();
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to update ad car');
+  }
 };
 
 export const switchAdCarCampaign = async (
@@ -165,70 +99,59 @@ export const switchAdCarCampaign = async (
   targetCampaign: AdCampaignType,
   customMaxDays?: number
 ) => {
-  if (!db) throw new Error("Firestore is not initialized");
-
-  const carRef = doc(db, AD_CARS_COLLECTION, id);
-  const now = Date.now();
-
-  const updateData: any = {
+  const updates: any = {
     campaign: targetCampaign,
-    startedAt: now,
-    updatedAt: now,
-    lastAlertSentAt: null, // сбрасываем флаг алерта для новой кампании
+    startedAt: Date.now(),
+    lastAlertSentAt: null,
   };
 
   if (customMaxDays !== undefined) {
-    updateData.maxDays = customMaxDays;
+    updates.maxDays = customMaxDays;
   }
 
-  await updateDoc(carRef, updateData);
+  await updateAdCar(id, updates);
 };
 
 export const resetAdCarTimer = async (id: string) => {
-  if (!db) throw new Error("Firestore is not initialized");
-
-  const carRef = doc(db, AD_CARS_COLLECTION, id);
-  const now = Date.now();
-
-  await updateDoc(carRef, {
-    startedAt: now,
-    updatedAt: now,
+  await updateAdCar(id, {
+    startedAt: Date.now(),
     lastAlertSentAt: null,
   });
 };
 
 export const deleteAdCar = async (id: string) => {
-  if (!db) throw new Error("Firestore is not initialized");
-  const carRef = doc(db, AD_CARS_COLLECTION, id);
-  await deleteDoc(carRef);
+  const res = await fetch(`/api/ads/cars/${id}`, {
+    method: 'DELETE',
+  });
+
+  const data = await res.json();
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to delete ad car');
+  }
 };
 
 export const getAdsSettings = async (): Promise<AdsSettings> => {
-  if (!db) return DEFAULT_ADS_SETTINGS;
-
   try {
-    const settingsRef = doc(db, SETTINGS_COLLECTION, ADS_SETTINGS_DOC);
-    const snap = await getDoc(settingsRef);
-    if (snap.exists()) {
-      return { ...DEFAULT_ADS_SETTINGS, ...snap.data() } as AdsSettings;
+    const res = await fetch('/api/ads/settings', { cache: 'no-store' });
+    const data = await res.json();
+    if (data.success && data.settings) {
+      return data.settings;
     }
   } catch (err) {
-    console.error("Error fetching ads settings:", err);
+    console.error('Error fetching ads settings:', err);
   }
-
   return DEFAULT_ADS_SETTINGS;
 };
 
 export const updateAdsSettings = async (settings: Partial<AdsSettings>) => {
-  if (!db) throw new Error("Firestore is not initialized");
+  const res = await fetch('/api/ads/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  });
 
-  const settingsRef = doc(db, SETTINGS_COLLECTION, ADS_SETTINGS_DOC);
-  await setDoc(
-    settingsRef,
-    {
-      ...settings,
-      updatedAt: Date.now(),
-    },
-    { merge: true }
-  );
+  const data = await res.json();
+  if (!data.success) {
+    throw new Error(data.error || 'Failed to save ads settings');
+  }
 };
