@@ -971,9 +971,14 @@ export function AdsDashboard() {
                                       )}
                                       <div className="min-w-0">
                                         <div className="font-semibold text-xs text-zinc-900 truncate flex items-center gap-1.5">
-                                          <span>{wCar.name}</span>
+                                          <span className="truncate">{wCar.name}</span>
+                                          {wCar.year ? (
+                                            <span className="text-[11px] font-normal text-zinc-500 shrink-0">
+                                              {wCar.year} г.
+                                            </span>
+                                          ) : null}
                                           {isSearching && (
-                                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-600 text-white">
+                                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-600 text-white shrink-0">
                                               Найдено
                                             </span>
                                           )}
