@@ -40,6 +40,7 @@ import {
   Columns,
   ChevronUp,
   Check,
+  X,
 } from "lucide-react";
 
 interface CatalogCar {
@@ -553,15 +554,24 @@ export function AdsDashboard() {
                 </button>
               </div>
 
-              <div className="relative sm:w-72">
+              <div className="relative sm:w-80">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <Input
                   type="text"
-                  placeholder="Поиск по марке, модели..."
+                  placeholder="Глобальный поиск по всем столбцам..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 bg-zinc-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400 h-9 text-xs rounded-xl focus:bg-white"
+                  className="pl-9 pr-8 bg-zinc-50 border-zinc-200 text-zinc-900 placeholder:text-zinc-400 h-9 text-xs rounded-xl focus:bg-white"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-zinc-400 hover:text-zinc-700 rounded-full hover:bg-zinc-200 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -576,18 +586,36 @@ export function AdsDashboard() {
                 {TIERS.map((tierKey) => {
                   const tierAdCars = boardAdCarsByTier[tierKey] || [];
                   const tierWarehouseCars = boardWarehouseCarsByTier[tierKey] || [];
-                  const isWarehouseCollapsed = !!collapsedWarehouse[tierKey];
+                  const isSearching = searchQuery.trim().length > 0;
+                  const totalMatches = tierAdCars.length + tierWarehouseCars.length;
+                  const hasMatches = isSearching && totalMatches > 0;
+                  const isWarehouseCollapsed = isSearching ? false : !!collapsedWarehouse[tierKey];
 
                   return (
                     <div
                       key={tierKey}
-                      className="bg-white rounded-2xl border border-zinc-200/80 shadow-2xs flex flex-col overflow-hidden"
+                      className={`bg-white rounded-2xl border transition-all flex flex-col overflow-hidden ${
+                        hasMatches
+                          ? "border-blue-500 ring-2 ring-blue-500/20 shadow-md"
+                          : "border-zinc-200/80 shadow-2xs"
+                      }`}
                     >
                       {/* Column Header */}
-                      <div className="p-4 border-b border-zinc-100 bg-zinc-50/70 flex items-center justify-between">
+                      <div
+                        className={`p-4 border-b flex items-center justify-between transition-colors ${
+                          hasMatches
+                            ? "bg-blue-50/60 border-blue-200"
+                            : "bg-zinc-50/70 border-zinc-100"
+                        }`}
+                      >
                         <div>
-                          <div className="font-semibold text-xs text-zinc-900 tracking-tight">
-                            {getPriceTierLabel(tierKey)}
+                          <div className="font-semibold text-xs text-zinc-900 tracking-tight flex items-center gap-1.5">
+                            <span>{getPriceTierLabel(tierKey)}</span>
+                            {hasMatches && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white animate-pulse">
+                                Найдено: {totalMatches}
+                              </span>
+                            )}
                           </div>
                           <div className="text-[11px] text-zinc-500 mt-0.5 flex items-center gap-1.5">
                             <span className="font-medium text-zinc-800">{tierAdCars.length} в рекламе</span>
@@ -596,7 +624,11 @@ export function AdsDashboard() {
                           </div>
                         </div>
 
-                        <span className="w-2.5 h-2.5 rounded-full bg-zinc-300" />
+                        <span
+                          className={`w-2.5 h-2.5 rounded-full ${
+                            hasMatches ? "bg-blue-600" : "bg-zinc-300"
+                          }`}
+                        />
                       </div>
 
                       {/* Section 1: Active Ads in this Tier */}
@@ -608,9 +640,11 @@ export function AdsDashboard() {
                         {tierAdCars.length === 0 ? (
                           <div className="p-6 text-center rounded-xl border border-dashed border-zinc-200 bg-white/60 text-zinc-400">
                             <Car className="w-5 h-5 mx-auto mb-1.5 opacity-40" />
-                            <p className="text-xs">Нет авто в этой группе</p>
+                            <p className="text-xs">
+                              {isSearching ? "Ничего не найдено в рекламе" : "Нет авто в этой группе"}
+                            </p>
                             <p className="text-[11px] text-zinc-400 mt-0.5">
-                              Добавьте из списка склада ниже
+                              {isSearching ? "Проверьте список склада ниже" : "Добавьте из списка склада ниже"}
                             </p>
                           </div>
                         ) : (
@@ -635,7 +669,9 @@ export function AdsDashboard() {
                                 <div
                                   key={car.id}
                                   className={`rounded-xl border bg-white p-3 space-y-2.5 shadow-2xs transition-all ${
-                                    isExpired
+                                    isSearching
+                                      ? "border-blue-400 ring-2 ring-blue-500/30 bg-blue-50/20"
+                                      : isExpired
                                       ? "border-rose-300 ring-1 ring-rose-200"
                                       : "border-zinc-200/80 hover:border-zinc-300"
                                   }`}
@@ -655,8 +691,13 @@ export function AdsDashboard() {
                                     )}
 
                                     <div className="min-w-0 flex-1">
-                                      <div className="font-semibold text-xs text-zinc-900 truncate">
-                                        {car.name}
+                                      <div className="font-semibold text-xs text-zinc-900 truncate flex items-center gap-1.5">
+                                        <span>{car.name}</span>
+                                        {isSearching && (
+                                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-600 text-white">
+                                            Найдено
+                                          </span>
+                                        )}
                                       </div>
                                       <div className="flex items-center justify-between mt-0.5">
                                         {car.year ? (
@@ -817,7 +858,9 @@ export function AdsDashboard() {
                           <div className="px-3 pb-3 space-y-2 max-h-72 overflow-y-auto">
                             {tierWarehouseCars.length === 0 ? (
                               <div className="text-[11px] text-zinc-400 text-center py-4">
-                                Нет свободных авто этой группы на складе
+                                {isSearching
+                                  ? "Нет совпадений на складе"
+                                  : "Нет свободных авто этой группы на складе"}
                               </div>
                             ) : (
                               tierWarehouseCars.map((wCar) => {
@@ -827,7 +870,11 @@ export function AdsDashboard() {
                                 return (
                                   <div
                                     key={wCar.id}
-                                    className="flex items-center justify-between p-2 rounded-xl border border-zinc-200/70 bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
+                                    className={`flex items-center justify-between p-2 rounded-xl border transition-all ${
+                                      isSearching
+                                        ? "border-blue-500 ring-2 ring-blue-500/30 bg-blue-50/40 shadow-xs"
+                                        : "border-zinc-200/70 bg-zinc-50/50 hover:bg-zinc-50"
+                                    }`}
                                   >
                                     <div className="flex items-center gap-2 min-w-0">
                                       {wCar.photoUrl ? (
@@ -842,8 +889,13 @@ export function AdsDashboard() {
                                         </div>
                                       )}
                                       <div className="min-w-0">
-                                        <div className="font-semibold text-xs text-zinc-900 truncate">
-                                          {wCar.name}
+                                        <div className="font-semibold text-xs text-zinc-900 truncate flex items-center gap-1.5">
+                                          <span>{wCar.name}</span>
+                                          {isSearching && (
+                                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-600 text-white">
+                                              Найдено
+                                            </span>
+                                          )}
                                         </div>
                                         <div className="text-[10px] text-zinc-500 flex items-center gap-1.5">
                                           <span className="font-bold text-zinc-800">
