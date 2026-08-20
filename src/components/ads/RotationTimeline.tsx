@@ -10,8 +10,9 @@ interface RotationTimelineProps {
 
 export function RotationTimeline({ cars, settings }: RotationTimelineProps) {
   const targetPerDay = settings.targetCarsPerDay || 3;
+  const DAYS_TO_SHOW = 30; // Expanded from 14 to 30
 
-  // Aggregate expiration dates for next 14 days
+  // Aggregate expiration dates for next 30 days
   const timeline = useMemo(() => {
     const daysArr = [];
     const today = new Date();
@@ -28,7 +29,7 @@ export function RotationTimeline({ cars, settings }: RotationTimelineProps) {
       countsByDayOffset[daysLeft] = (countsByDayOffset[daysLeft] || 0) + 1;
     });
 
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < DAYS_TO_SHOW; i++) {
       const d = new Date(today.getTime());
       d.setDate(d.getDate() + i);
       
@@ -51,31 +52,32 @@ export function RotationTimeline({ cars, settings }: RotationTimelineProps) {
   const months = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 
   return (
-    <div className="bg-white p-3 rounded-2xl border border-zinc-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center gap-3">
+    <div className="bg-white p-2 sm:p-3 rounded-2xl border border-zinc-200/80 shadow-2xs flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
       <div className="flex items-center gap-1.5 shrink-0 px-1">
         <CalendarDays className="w-4 h-4 text-zinc-500" />
         <span className="text-xs font-semibold text-zinc-800">График ротации</span>
       </div>
 
-      <div className="flex-1 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar flex items-center gap-1.5">
+      <div className="flex-1 overflow-x-auto pb-1 sm:pb-0 custom-scrollbar flex items-center gap-1">
         {timeline.map((day) => (
           <div
             key={day.offset}
-            className={`flex flex-col items-center justify-center shrink-0 min-w-[52px] h-[42px] rounded-lg border transition-all ${
+            className={`flex flex-col items-center justify-center shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-md border transition-all ${
               day.offset === 0 
-                ? "bg-zinc-900 border-zinc-900 text-white" 
+                ? "bg-zinc-900 border-zinc-900 text-white shadow-md" 
                 : day.status === "overload"
                 ? "bg-rose-50 border-rose-200 text-rose-800"
                 : day.status === "empty"
-                ? "bg-zinc-50 border-dashed border-zinc-200 text-zinc-400"
+                ? "bg-zinc-50/50 border-dashed border-zinc-200 text-zinc-400"
                 : "bg-emerald-50 border-emerald-200 text-emerald-800"
             }`}
+            title={`${day.date.getDate()} ${months[day.date.getMonth()]}: ${day.count} авто`}
           >
-            <span className={`text-[9px] font-medium leading-none mb-1 ${day.offset === 0 ? "text-white/70" : "opacity-60"}`}>
-              {day.offset === 0 ? "Сегодня" : `${day.date.getDate()} ${months[day.date.getMonth()]}`}
+            <span className={`text-[8px] sm:text-[9px] font-medium leading-none mb-0.5 ${day.offset === 0 ? "text-white/80" : "opacity-60"}`}>
+              {day.offset === 0 ? "Сег" : `${day.date.getDate()} ${months[day.date.getMonth()]}`}
             </span>
-            <span className="text-xs font-bold leading-none">
-              {day.count} <span className="font-normal opacity-70 text-[9px]">авто</span>
+            <span className="text-sm sm:text-base font-bold leading-none tracking-tight">
+              {day.count}
             </span>
           </div>
         ))}
