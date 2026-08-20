@@ -5,22 +5,29 @@ import { verifyFirebaseIdToken } from "@/lib/verifyToken";
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const idToken = authHeader.split("Bearer ")[1];
-
-    try {
-        await verifyFirebaseIdToken(idToken);
-    } catch {
-        return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
-    const { keys } = await request.json();
+    const body = await request.json();
+    const { keys } = body;
 
     if (!keys || !Array.isArray(keys) || keys.length === 0) {
       return NextResponse.json({ error: "No keys provided" }, { status: 400 });
+    }
+
+    const authHeader = request.headers.get("Authorization");
+    
+    // Check if ALL keys to delete are inside the public SMM folder
+    const allSmm = keys.every((k: string) => k.startsWith("videos/smm/"));
+
+    if (!allSmm) {
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      const idToken = authHeader.split("Bearer ")[1];
+
+      try {
+          await verifyFirebaseIdToken(idToken);
+      } catch {
+          return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      }
     }
 
     const results = await Promise.all(keys.map(async (key: string) => {

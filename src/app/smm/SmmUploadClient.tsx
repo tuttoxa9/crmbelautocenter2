@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Search, Loader2, Video, Car, CheckCircle2 } from "lucide-react";
+import { Search, Loader2, Video, Car, CheckCircle2, Image as ImageIcon } from "lucide-react";
 import { auth } from "@/lib/firebase";
 
 interface AdCar {
@@ -18,9 +18,15 @@ export default function SmmUploadClient() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCar, setSelectedCar] = useState<AdCar | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
+  
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [uploadProgressVideo, setUploadProgressVideo] = useState(0);
+  const [uploadSuccessVideo, setUploadSuccessVideo] = useState(false);
+  
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [uploadProgressPhoto, setUploadProgressPhoto] = useState(0);
+  const [uploadSuccessPhoto, setUploadSuccessPhoto] = useState(false);
+
   const [error, setError] = useState("");
 
   // Guest Verification state
@@ -28,7 +34,8 @@ export default function SmmUploadClient() {
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchCars();
@@ -72,80 +79,122 @@ export default function SmmUploadClient() {
     car.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const deleteOldFile = async (url: string) => {
+    if (!url) return;
+    try {
+      const match = url.match(/cloudflarestorage\.com\/(.+)$/);
+      if (match && match[1]) {
+        const key = match[1];
+        if (key.startsWith("videos/smm/")) {
+          const user = auth?.currentUser;
+          const token = user ? await user.getIdToken() : "";
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (token) headers["Authorization"] = `Bearer ${token}`;
 
+          await fetch("/api/s3/delete", {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ keys: [key] })
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete old file:", err);
+    }
+  };
+
+  const handleUpload = async (file: File, type: "video" | "photo") => {
     if (!selectedCar) {
       setError("Пожалуйста, сначала выберите автомобиль.");
       return;
     }
 
-    if (!file.type.startsWith("video/")) {
+    if (type === "video" && !file.type.startsWith("video/")) {
       setError("Пожалуйста, выберите видео файл.");
+      return;
+    }
+
+    if (type === "photo" && !file.type.startsWith("image/")) {
+      setError("Пожалуйста, выберите изображение.");
       return;
     }
 
     // Reset state
     setError("");
-    setUploadSuccess(false);
-    setIsUploading(true);
-    setUploadProgress(0);
+    if (type === "video") {
+      setUploadSuccessVideo(false);
+      setIsUploadingVideo(true);
+      setUploadProgressVideo(0);
+    } else {
+      setUploadSuccessPhoto(false);
+      setIsUploadingPhoto(true);
+      setUploadProgressPhoto(0);
+    }
 
     try {
       const user = auth?.currentUser;
       const token = user ? await user.getIdToken() : "";
-
-      // 1. Get presigned URL
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
+      // 1. Delete old file if replacing
+      if (type === "video" && selectedCar.videoUrl) {
+        await deleteOldFile(selectedCar.videoUrl);
+      }
+      if (type === "photo" && selectedCar.photoUrl) {
+        await deleteOldFile(selectedCar.photoUrl);
+      }
+
+      // 2. Get presigned URL
       const presignedRes = await fetch("/api/s3/presigned", {
         method: "POST",
         headers,
         body: JSON.stringify({
           fileName: file.name,
-          contentType: file.type || "video/mp4",
-          prefix: "videos/smm/"
+          contentType: file.type,
+          prefix: "videos/smm/" // Use smm prefix to allow anonymous uploads
         }),
       });
 
       if (!presignedRes.ok) throw new Error("Failed to get upload URL");
       
       const { url, key } = await presignedRes.json();
-      const videoUrl = `https://belautocenter.72bb8ab6e404181c3422963f832c005e.r2.cloudflarestorage.com/${key}`;
+      const newFileUrl = `https://belautocenter.72bb8ab6e404181c3422963f832c005e.r2.cloudflarestorage.com/${key}`;
 
-      // 2. Upload file directly to S3/R2 using XMLHttpRequest to track progress
+      // 3. Upload file directly to S3/R2 using XMLHttpRequest
       await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.upload.addEventListener("progress", (event) => {
           if (event.lengthComputable) {
             const percent = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percent);
+            if (type === "video") setUploadProgressVideo(percent);
+            else setUploadProgressPhoto(percent);
           }
         });
 
         xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(null);
-          } else {
-            reject(new Error(`S3 upload failed with status ${xhr.status}`));
-          }
+          if (xhr.status >= 200 && xhr.status < 300) resolve(null);
+          else reject(new Error(`S3 upload failed with status ${xhr.status}`));
         });
 
         xhr.addEventListener("error", () => reject(new Error("Network error during upload")));
         xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
 
         xhr.open("PUT", url);
-        xhr.setRequestHeader("Content-Type", file.type || "video/mp4");
+        xhr.setRequestHeader("Content-Type", file.type);
         xhr.send(file);
       });
 
-      // 3. Update AdCar in Database
-      const updatePayload: any = { videoUrl };
-      // Only move to ready_for_ads if it was currently waiting for a video
-      if (selectedCar.campaign === "waiting_video") {
-        updatePayload.campaign = "ready_for_ads";
+      // 4. Update AdCar in Database
+      const updatePayload: any = {};
+      if (type === "video") {
+        updatePayload.videoUrl = newFileUrl;
+        // Only move to ready_for_ads if it was currently waiting for a video
+        if (selectedCar.campaign === "waiting_video") {
+          updatePayload.campaign = "ready_for_ads";
+        }
+      } else {
+        updatePayload.photoUrl = newFileUrl;
       }
 
       const updateRes = await fetch(`/api/ads/cars/${selectedCar.id}`, {
@@ -156,24 +205,33 @@ export default function SmmUploadClient() {
 
       if (!updateRes.ok) throw new Error("Failed to update car status");
 
-      setUploadSuccess(true);
+      if (type === "video") setUploadSuccessVideo(true);
+      else setUploadSuccessPhoto(true);
+
+      // Update local state so user sees new files if they stay on page
+      setSelectedCar((prev) => prev ? { ...prev, ...updatePayload } : null);
       
-      // Remove car from list
-      setCars(prev => prev.filter(c => c.id !== selectedCar.id));
+      // Update in main list
+      setCars(prev => prev.map(c => c.id === selectedCar.id ? { ...c, ...updatePayload } : c));
       
       setTimeout(() => {
-        setSelectedCar(null);
-        setUploadSuccess(false);
-        setSearchQuery("");
-      }, 3000);
+        if (type === "video") setUploadSuccessVideo(false);
+        else setUploadSuccessPhoto(false);
+      }, 4000);
 
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Ошибка загрузки. Попробуйте еще раз.");
     } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (type === "video") {
+        setIsUploadingVideo(false);
+        setUploadProgressVideo(0);
+        if (videoInputRef.current) videoInputRef.current.value = "";
+      } else {
+        setIsUploadingPhoto(false);
+        setUploadProgressPhoto(0);
+        if (photoInputRef.current) photoInputRef.current.value = "";
+      }
     }
   };
 
@@ -181,7 +239,10 @@ export default function SmmUploadClient() {
     <div className="min-h-screen w-full bg-zinc-50 flex flex-col items-center pt-6 sm:pt-12 px-4">
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-zinc-900">Загрузка видео</h1>
+          <h1 className="text-2xl font-bold text-zinc-900">Медиафайлы для авто</h1>
+          <p className="text-sm text-zinc-500">
+            Загрузите фото или видео для выбранного автомобиля
+          </p>
         </div>
 
         {!selectedCar ? (
@@ -226,8 +287,15 @@ export default function SmmUploadClient() {
                         <div className="text-xs text-zinc-500">{car.year}</div>
                       </div>
                     </div>
-                    <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 shrink-0 ml-2">
-                      <CheckCircle2 className="w-4 h-4 opacity-0" />
+                    <div className="flex gap-2 items-center">
+                      {car.videoUrl && (
+                        <div className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[10px] font-bold shrink-0">
+                          ЕСТЬ ВИДЕО
+                        </div>
+                      )}
+                      <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 shrink-0">
+                        <CheckCircle2 className="w-4 h-4 opacity-0" />
+                      </div>
                     </div>
                   </button>
                 ))
@@ -252,52 +320,103 @@ export default function SmmUploadClient() {
               </div>
             )}
 
-            {uploadSuccess ? (
-              <div className="py-10 flex flex-col items-center justify-center text-emerald-600 space-y-3">
-                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <CheckCircle2 className="w-8 h-8" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Photo Upload Box */}
+              {uploadSuccessPhoto ? (
+                <div className="h-48 flex flex-col items-center justify-center text-emerald-600 space-y-3 border-2 border-emerald-100 bg-emerald-50 rounded-2xl">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <p className="font-semibold text-center text-sm">Фото загружено!</p>
                 </div>
-                <p className="font-semibold text-center">Видео успешно загружено!</p>
-                <p className="text-xs text-emerald-600/70 text-center">
-                  {selectedCar.campaign === "waiting_video" 
-                    ? "Автомобиль переведен в ожидание запуска" 
-                    : "Видео прикреплено к автомобилю"}
-                </p>
-              </div>
-            ) : (
-              <label className={`block border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center cursor-pointer transition-colors ${
-                isUploading ? "border-blue-300 bg-blue-50" : "border-zinc-200 hover:border-blue-400 hover:bg-zinc-50"
-              }`}>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="video/*"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                  disabled={isUploading}
-                />
-                
-                <div className="flex flex-col items-center space-y-3">
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                      <div className="font-semibold text-blue-900">Загрузка... {uploadProgress}%</div>
-                      <div className="w-full max-w-xs h-2 bg-blue-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 mb-2">
-                        <Video className="w-6 h-6" />
-                      </div>
-                      <div className="font-semibold text-zinc-900 px-4">Нажмите чтобы выбрать видео</div>
-                      <div className="text-xs text-zinc-500">До 1 ГБ, MP4/MOV</div>
-                    </>
-                  )}
+              ) : (
+                <label className={`block border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors h-48 flex flex-col justify-center ${
+                  isUploadingPhoto ? "border-blue-300 bg-blue-50" : "border-zinc-200 hover:border-blue-400 hover:bg-zinc-50"
+                }`}>
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleUpload(file, "photo");
+                    }}
+                    disabled={isUploadingPhoto || isUploadingVideo}
+                  />
+                  
+                  <div className="flex flex-col items-center space-y-3">
+                    {isUploadingPhoto ? (
+                      <>
+                        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                        <div className="font-semibold text-blue-900 text-sm">Загрузка... {uploadProgressPhoto}%</div>
+                        <div className="w-full max-w-xs h-1.5 bg-blue-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${uploadProgressPhoto}%` }} />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 mb-2">
+                          <ImageIcon className="w-5 h-5" />
+                        </div>
+                        <div className="font-semibold text-zinc-900 px-4 text-sm">
+                          {selectedCar.photoUrl ? "Заменить фото" : "Загрузить фото"}
+                        </div>
+                        <div className="text-xs text-zinc-500">JPG/PNG</div>
+                      </>
+                    )}
+                  </div>
+                </label>
+              )}
+
+              {/* Video Upload Box */}
+              {uploadSuccessVideo ? (
+                <div className="h-48 flex flex-col items-center justify-center text-emerald-600 space-y-3 border-2 border-emerald-100 bg-emerald-50 rounded-2xl">
+                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <p className="font-semibold text-center text-sm">Видео загружено!</p>
                 </div>
-              </label>
-            )}
+              ) : (
+                <label className={`block border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors h-48 flex flex-col justify-center ${
+                  isUploadingVideo ? "border-blue-300 bg-blue-50" : "border-zinc-200 hover:border-blue-400 hover:bg-zinc-50"
+                }`}>
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleUpload(file, "video");
+                    }}
+                    disabled={isUploadingVideo || isUploadingPhoto}
+                  />
+                  
+                  <div className="flex flex-col items-center space-y-3">
+                    {isUploadingVideo ? (
+                      <>
+                        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                        <div className="font-semibold text-blue-900 text-sm">Загрузка... {uploadProgressVideo}%</div>
+                        <div className="w-full max-w-xs h-1.5 bg-blue-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${uploadProgressVideo}%` }} />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 mb-2">
+                          <Video className="w-5 h-5" />
+                        </div>
+                        <div className="font-semibold text-zinc-900 px-4 text-sm">
+                          {selectedCar.videoUrl ? "Заменить видео" : "Загрузить видео"}
+                        </div>
+                        <div className="text-xs text-zinc-500">До 1 ГБ, MP4/MOV</div>
+                      </>
+                    )}
+                  </div>
+                </label>
+              )}
+            </div>
           </div>
         )}
       </div>
