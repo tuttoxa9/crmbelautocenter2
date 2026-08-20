@@ -330,15 +330,19 @@ export function AdsDashboard() {
     { value: "price_desc", label: "Цена: по убыванию" },
   ];
 
-  // Active tracked car IDs in current campaign
-  const activeCarIdsInCampaign = useMemo(() => {
-    return new Set(
-      cars
-        .filter((c) => c.campaign === boardCampaign)
-        .map((c) => c.carId)
-        .filter(Boolean)
-    );
-  }, [cars, boardCampaign]);
+  // All active tracked cars across ALL campaigns (РК 1, РК 2, Ожидают съёмки)
+  const activeCarFilterAcrossAllAds = useMemo(() => {
+    const idSet = new Set<string>();
+    const nameSet = new Set<string>();
+
+    cars.forEach((c) => {
+      if (c.carId) idSet.add(c.carId);
+      if (c.id) idSet.add(c.id);
+      if (c.name) nameSet.add(c.name.trim().toLowerCase());
+    });
+
+    return { idSet, nameSet };
+  }, [cars]);
 
   // Grouped active ad cars by tier for the current Board campaign
   const boardAdCarsByTier = useMemo(() => {
@@ -371,7 +375,7 @@ export function AdsDashboard() {
     return map;
   }, [cars, boardCampaign, searchQuery]);
 
-  // Grouped available warehouse catalog cars by tier (not in current campaign)
+  // Grouped available warehouse catalog cars by tier (excluded if already in ANY campaign)
   const boardWarehouseCarsByTier = useMemo(() => {
     const map: Record<AdPriceTier, CatalogCar[]> = {
       tier_under_7k: [],
@@ -383,7 +387,11 @@ export function AdsDashboard() {
     const query = searchQuery.toLowerCase().trim();
 
     catalogCars
-      .filter((c) => !activeCarIdsInCampaign.has(c.id))
+      .filter((c) => {
+        if (activeCarFilterAcrossAllAds.idSet.has(c.id)) return false;
+        if (activeCarFilterAcrossAllAds.nameSet.has(c.name.trim().toLowerCase())) return false;
+        return true;
+      })
       .filter((c) => {
         if (!query) return true;
         return (
@@ -400,7 +408,7 @@ export function AdsDashboard() {
       });
 
     return map;
-  }, [catalogCars, activeCarIdsInCampaign, searchQuery]);
+  }, [catalogCars, activeCarFilterAcrossAllAds, searchQuery]);
 
   // Filtered & Sorted Cars for Grid View
   const displayedGridCars = useMemo(() => {
