@@ -970,6 +970,27 @@ export function AdsDashboard() {
                                         </button>
                                       )}
 
+                                      {car.campaign === "ready_for_ads" && (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSwitchCampaign(car, "rk1")}
+                                            className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-6 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                          >
+                                            <Play className="w-2.5 h-2.5 fill-current" />
+                                            В РК 1
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSwitchCampaign(car, "rk2")}
+                                            className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-6 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                          >
+                                            <Play className="w-2.5 h-2.5 fill-current" />
+                                            В РК 2
+                                          </button>
+                                        </>
+                                      )}
+
                                       {car.campaign === "rk1" && (
                                         <button
                                           type="button"
@@ -1742,6 +1763,27 @@ export function AdsDashboard() {
                                 <CheckCircle2 className="w-3 h-3" />
                                 Отснято
                               </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleSwitchCampaign(car, "rk1")}
+                                className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-8 font-medium rounded-lg flex items-center justify-center gap-1 px-1"
+                              >
+                                <Play className="w-3 h-3 fill-current" />
+                                В РК 1
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleSwitchCampaign(car, "rk2")}
+                                className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-8 font-medium rounded-lg flex items-center justify-center gap-1 px-1"
+                              >
+                                <Play className="w-3 h-3 fill-current" />
+                                В РК 2
+                              </Button>
+                            </div>
+                          )}
+
+                          {car.campaign === "ready_for_ads" && (
+                            <div className="grid grid-cols-2 gap-1.5">
                               <Button
                                 size="sm"
                                 onClick={() => handleSwitchCampaign(car, "rk1")}
