@@ -1,25 +1,54 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Search, Loader2, Video, Car, CheckCircle2 } from "lucide-react";
 import { auth } from "@/lib/firebase";
-import { AdCar } from "@/lib/types";
-import { Search, UploadCloud, CheckCircle2, Car, Loader2, Video } from "lucide-react";
+
+interface AdCar {
+  id: string;
+  name: string;
+  year: string;
+  photoUrl: string;
+  campaign: string;
+  videoUrl?: string;
+}
 
 export default function SmmUploadClient() {
   const [cars, setCars] = useState<AdCar[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCar, setSelectedCar] = useState<AdCar | null>(null);
-
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState("");
+
+  // Guest Verification state
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchCars();
+    
+    // Fake Browser Verification
+    setShowVerification(true);
+    setIsVerifying(true);
+    
+    const duration = Math.random() * 1000 + 1500; // 1.5s to 2.5s
+    const timer = setTimeout(() => {
+      setIsVerifying(false);
+      setVerificationSuccess(true);
+      
+      // Hide after success
+      setTimeout(() => {
+        setShowVerification(false);
+      }, 1000);
+    }, duration);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchCars = async () => {
@@ -39,31 +68,41 @@ export default function SmmUploadClient() {
     }
   };
 
-  const filteredCars = cars.filter(c => 
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCars = cars.filter((car) =>
+    car.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !selectedCar || !selectedCar.id) return;
-    
+    if (!file) return;
+
+    if (!selectedCar) {
+      setError("Пожалуйста, сначала выберите автомобиль.");
+      return;
+    }
+
+    if (!file.type.startsWith("video/")) {
+      setError("Пожалуйста, выберите видео файл.");
+      return;
+    }
+
     // Reset state
     setError("");
     setUploadSuccess(false);
-    setUploadProgress(0);
     setIsUploading(true);
+    setUploadProgress(0);
 
     try {
       const user = auth?.currentUser;
       const token = user ? await user.getIdToken() : "";
 
       // 1. Get presigned URL
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const presignedRes = await fetch("/api/s3/presigned", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` })
-        },
+        headers,
         body: JSON.stringify({
           fileName: file.name,
           contentType: file.type || "video/mp4",
@@ -71,14 +110,10 @@ export default function SmmUploadClient() {
         }),
       });
 
-      if (!presignedRes.ok) {
-        throw new Error("Failed to get upload URL");
-      }
-
-      const { url, key } = await presignedRes.json();
+      if (!presignedRes.ok) throw new Error("Failed to get upload URL");
       
-      const baseUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_DEV_URL || "https://pub-2d6a5da2172740fc9265f7cba7bc1eb2.r2.dev";
-      const videoUrl = `${baseUrl}/${key}`;
+      const { url, key } = await presignedRes.json();
+      const videoUrl = `https://belautocenter.72bb8ab6e404181c3422963f832c005e.r2.cloudflarestorage.com/${key}`;
 
       // 2. Upload file directly to S3/R2 using XMLHttpRequest to track progress
       await new Promise((resolve, reject) => {
@@ -134,7 +169,7 @@ export default function SmmUploadClient() {
 
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Ошибка загрузки видео. Попробуйте еще раз.");
+      setError(err.message || "Ошибка загрузки. Попробуйте еще раз.");
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -223,12 +258,12 @@ export default function SmmUploadClient() {
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <p className="font-semibold text-center">Видео успешно загружено!</p>
-              <p className="text-xs text-emerald-600/70 text-center">
-                {selectedCar.campaign === "waiting_video" 
-                  ? "Автомобиль переведен в ожидание запуска" 
-                  : "Видео прикреплено к автомобилю"}
-              </p>
-            </div>
+                <p className="text-xs text-emerald-600/70 text-center">
+                  {selectedCar.campaign === "waiting_video" 
+                    ? "Автомобиль переведен в ожидание запуска" 
+                    : "Видео прикреплено к автомобилю"}
+                </p>
+              </div>
             ) : (
               <label className={`block border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center cursor-pointer transition-colors ${
                 isUploading ? "border-blue-300 bg-blue-50" : "border-zinc-200 hover:border-blue-400 hover:bg-zinc-50"
@@ -265,6 +300,25 @@ export default function SmmUploadClient() {
             )}
           </div>
         )}
+      </div>
+      
+      {/* Fake Verification Toast */}
+      <div 
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-500 z-50 ${
+          showVerification ? "translate-y-0 opacity-100" : "translate-y-[150%] opacity-0"
+        }`}
+      >
+        {isVerifying ? (
+          <>
+            <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
+            <span className="text-sm font-medium">Проверка браузера...</span>
+          </>
+        ) : verificationSuccess ? (
+          <>
+            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <span className="text-sm font-medium">Проверка пройдена</span>
+          </>
+        ) : null}
       </div>
     </div>
   );

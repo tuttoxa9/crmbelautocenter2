@@ -6,20 +6,24 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const idToken = authHeader.split("Bearer ")[1];
-
-    try {
-      await verifyFirebaseIdToken(idToken);
-    } catch {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
     const body = await request.json();
     const { fileName, contentType, prefix = "" } = body;
+
+    const authHeader = request.headers.get("Authorization");
+    
+    // Allow anonymous uploads ONLY for the SMM folder
+    if (prefix !== "videos/smm/") {
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      const idToken = authHeader.split("Bearer ")[1];
+
+      try {
+        await verifyFirebaseIdToken(idToken);
+      } catch {
+        return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      }
+    }
 
     if (!fileName) {
       return NextResponse.json({ error: "No fileName provided" }, { status: 400 });
