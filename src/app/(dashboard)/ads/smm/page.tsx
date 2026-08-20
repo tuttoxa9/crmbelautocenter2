@@ -2,7 +2,7 @@ import React from "react";
 import SmmUploadClient from "./SmmUploadClient";
 
 export const metadata = {
-  title: "Загрузка видео (SMM) | Bel Auto Center",
+  title: "Загрузка видео",
 };
 
 export default function SmmUploadPage() {
