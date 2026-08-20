@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   getAdCars,
   createAdCar,
+  updateAdCar,
   switchAdCarCampaign,
   resetAdCarTimer,
   deleteAdCar,
@@ -42,6 +43,7 @@ import {
   Check,
   X,
   CheckCircle2,
+  Pencil,
 } from "lucide-react";
 
 interface CatalogCar {
@@ -86,6 +88,8 @@ const TIERS: AdPriceTier[] = [
   "tier_20k_plus",
 ];
 
+const QUICK_DAY_PRESETS = [7, 10, 14, 21, 30];
+
 export function AdsDashboard() {
   const [cars, setCars] = useState<AdCar[]>([]);
   const [catalogCars, setCatalogCars] = useState<CatalogCar[]>([]);
@@ -93,9 +97,13 @@ export function AdsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [addingCarId, setAddingCarId] = useState<string | null>(null);
 
-  // Inline Confirmation Popovers (no native alert/confirm)
+  // Inline Confirmation Popovers
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [confirmResetId, setConfirmResetId] = useState<string | null>(null);
+
+  // Inline Days Edit Popover
+  const [editingDaysCarId, setEditingDaysCarId] = useState<string | null>(null);
+  const [editingDaysValue, setEditingDaysValue] = useState<number>(14);
 
   // Internal Toast / Banner Message
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "error" | "success" } | null>(null);
@@ -215,7 +223,7 @@ export function AdsDashboard() {
 
   const handleSwitchCampaign = async (car: AdCar, targetCampaign: AdCampaignType) => {
     if (!car.id) return;
-    const customDays = targetCampaign === "rk1" ? settings.rk1Days : settings.rk2Days;
+    const customDays = car.maxDays || (targetCampaign === "rk1" ? settings.rk1Days : settings.rk2Days);
     await switchAdCarCampaign(car.id, targetCampaign, customDays);
     setCars((prev) =>
       prev.map((c) =>
@@ -232,6 +240,21 @@ export function AdsDashboard() {
     );
     const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : "Очередь съёмки";
     showToast(`Перенесено в ${targetLabel}: ${car.name}`);
+  };
+
+  const handleSaveCarDays = async (car: AdCar, newDays: number) => {
+    if (!car.id || !newDays || newDays <= 0) return;
+    try {
+      setEditingDaysCarId(null);
+      await updateAdCar(car.id, { maxDays: newDays });
+      setCars((prev) =>
+        prev.map((c) => (c.id === car.id ? { ...c, maxDays: newDays } : c))
+      );
+      showToast(`Срок для "${car.name}" установлен на ${newDays} дн.`);
+    } catch (err: any) {
+      console.error("Error updating car days:", err);
+      showToast("Не удалось сохранить срок", "error");
+    }
   };
 
   const executeResetTimer = async (car: AdCar) => {
@@ -734,27 +757,94 @@ export function AdsDashboard() {
                                     </div>
                                   </div>
 
-                                  {/* Line 2: Days in ad pill + Fast action button + Icons */}
+                                  {/* Line 2: Days in ad pill (editable!) + Fast action button + Icons */}
                                   <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-zinc-100">
-                                    {/* Days Status Pill */}
+                                    {/* Days Status Pill with Clickable Popover Editor */}
                                     {car.campaign !== "waiting_video" ? (
-                                      <div className="flex items-center gap-1.5">
-                                        <span
-                                          className={`inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md ${
+                                      <div className="relative">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setConfirmDeleteId(null);
+                                            setConfirmResetId(null);
+                                            if (editingDaysCarId === car.id) {
+                                              setEditingDaysCarId(null);
+                                            } else {
+                                              setEditingDaysCarId(car.id || null);
+                                              setEditingDaysValue(limitDays);
+                                            }
+                                          }}
+                                          className={`inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md transition-all hover:ring-1 hover:ring-zinc-400 cursor-pointer ${
                                             isExpired
                                               ? "bg-rose-50 text-rose-700 border border-rose-200"
                                               : progressPercent > 70
                                               ? "bg-amber-50 text-amber-700 border border-amber-200"
-                                              : "bg-zinc-100 text-zinc-700"
+                                              : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
                                           }`}
+                                          title="Нажмите, чтобы изменить срок (дней)"
                                         >
                                           <Clock className="w-2.5 h-2.5 opacity-60" />
-                                          {daysInAd} / {limitDays} дн.
-                                        </span>
-                                        {isExpired && (
-                                          <span className="text-[9px] text-rose-600 font-bold hidden sm:inline">
-                                            Ротация!
-                                          </span>
+                                          <span>{daysInAd} / {limitDays} дн.</span>
+                                          <Pencil className="w-2 h-2 opacity-50 ml-0.5" />
+                                        </button>
+
+                                        {/* Inline Days Editor Popover */}
+                                        {editingDaysCarId === car.id && (
+                                          <div className="absolute left-0 bottom-full mb-1.5 z-50 w-56 p-3 bg-white border border-zinc-200 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 text-xs">
+                                            <div className="font-semibold text-zinc-900 leading-tight">Срок в рекламе</div>
+                                            <div className="text-[10px] text-zinc-500 mt-0.5">Лимит дней для {car.name}</div>
+                                            
+                                            {/* Quick preset buttons */}
+                                            <div className="flex items-center gap-1 mt-2 mb-2">
+                                              {QUICK_DAY_PRESETS.map((p) => (
+                                                <button
+                                                  key={p}
+                                                  type="button"
+                                                  onClick={() => setEditingDaysValue(p)}
+                                                  className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                                                    editingDaysValue === p
+                                                      ? "bg-zinc-900 text-white font-bold"
+                                                      : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                                                  }`}
+                                                >
+                                                  {p}д
+                                                </button>
+                                              ))}
+                                            </div>
+
+                                            <div className="flex items-center gap-1.5">
+                                              <input
+                                                type="number"
+                                                min={1}
+                                                max={90}
+                                                value={editingDaysValue}
+                                                onChange={(e) => setEditingDaysValue(Number(e.target.value))}
+                                                className="w-14 h-7 px-2 border border-zinc-200 rounded-lg text-xs font-semibold text-zinc-900 bg-zinc-50 focus:bg-white"
+                                                autoFocus
+                                                onKeyDown={(e) => {
+                                                  if (e.key === "Enter") handleSaveCarDays(car, editingDaysValue);
+                                                  if (e.key === "Escape") setEditingDaysCarId(null);
+                                                }}
+                                              />
+                                              <span className="text-zinc-500 text-xs">дн.</span>
+                                              <div className="flex items-center gap-1 ml-auto">
+                                                <button
+                                                  type="button"
+                                                  onClick={() => setEditingDaysCarId(null)}
+                                                  className="px-2 h-7 text-[11px] text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+                                                >
+                                                  Отмена
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleSaveCarDays(car, editingDaysValue)}
+                                                  className="px-2.5 h-7 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+                                                >
+                                                  OK
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
                                         )}
                                       </div>
                                     ) : (
@@ -813,6 +903,7 @@ export function AdsDashboard() {
                                           <button
                                             type="button"
                                             onClick={() => {
+                                              setEditingDaysCarId(null);
                                               setConfirmDeleteId(null);
                                               setConfirmResetId(confirmResetId === car.id ? null : car.id || null);
                                             }}
@@ -852,6 +943,7 @@ export function AdsDashboard() {
                                         <button
                                           type="button"
                                           onClick={() => {
+                                            setEditingDaysCarId(null);
                                             setConfirmResetId(null);
                                             setConfirmDeleteId(confirmDeleteId === car.id ? null : car.id || null);
                                           }}
@@ -1359,25 +1451,96 @@ export function AdsDashboard() {
                             </div>
                           </div>
 
-                          {/* Day Counter & Progress */}
+                          {/* Day Counter & Progress (Clickable to Edit!) */}
                           {car.campaign !== "waiting_video" ? (
-                            <div className="mt-3 p-2.5 rounded-xl bg-zinc-50 border border-zinc-200/60 space-y-1.5">
+                            <div className="mt-3 p-2.5 rounded-xl bg-zinc-50 border border-zinc-200/60 space-y-1.5 relative">
                               <div className="flex items-center justify-between text-xs">
                                 <span className="text-zinc-500 flex items-center gap-1">
                                   <Clock className="w-3.5 h-3.5 text-zinc-400" />
                                   В рекламе:
                                 </span>
-                                <span
-                                  className={`font-semibold font-mono ${
-                                    isExpired
-                                      ? "text-rose-700"
-                                      : progressPercent > 70
-                                      ? "text-amber-700"
-                                      : "text-zinc-800"
-                                  }`}
-                                >
-                                  {daysInAd}-й день из {limitDays}
-                                </span>
+                                
+                                <div className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (editingDaysCarId === car.id) {
+                                        setEditingDaysCarId(null);
+                                      } else {
+                                        setEditingDaysCarId(car.id || null);
+                                        setEditingDaysValue(limitDays);
+                                      }
+                                    }}
+                                    className={`font-semibold font-mono flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-zinc-200/80 transition-colors cursor-pointer ${
+                                      isExpired
+                                        ? "text-rose-700 font-bold"
+                                        : progressPercent > 70
+                                        ? "text-amber-700"
+                                        : "text-zinc-800"
+                                    }`}
+                                    title="Нажмите, чтобы изменить срок"
+                                  >
+                                    <span>{daysInAd}-й день из {limitDays}</span>
+                                    <Pencil className="w-2.5 h-2.5 opacity-40" />
+                                  </button>
+
+                                  {editingDaysCarId === car.id && (
+                                    <div className="absolute right-0 bottom-full mb-1.5 z-50 w-56 p-3 bg-white border border-zinc-200 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 text-xs">
+                                      <div className="font-semibold text-zinc-900 leading-tight">Срок в рекламе</div>
+                                      <div className="text-[10px] text-zinc-500 mt-0.5">Лимит дней для {car.name}</div>
+                                      
+                                      <div className="flex items-center gap-1 mt-2 mb-2">
+                                        {QUICK_DAY_PRESETS.map((p) => (
+                                          <button
+                                            key={p}
+                                            type="button"
+                                            onClick={() => setEditingDaysValue(p)}
+                                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                                              editingDaysValue === p
+                                                ? "bg-zinc-900 text-white font-bold"
+                                                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                                            }`}
+                                          >
+                                            {p}д
+                                          </button>
+                                        ))}
+                                      </div>
+
+                                      <div className="flex items-center gap-1.5">
+                                        <input
+                                          type="number"
+                                          min={1}
+                                          max={90}
+                                          value={editingDaysValue}
+                                          onChange={(e) => setEditingDaysValue(Number(e.target.value))}
+                                          className="w-14 h-7 px-2 border border-zinc-200 rounded-lg text-xs font-semibold text-zinc-900 bg-zinc-50 focus:bg-white"
+                                          autoFocus
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter") handleSaveCarDays(car, editingDaysValue);
+                                            if (e.key === "Escape") setEditingDaysCarId(null);
+                                          }}
+                                        />
+                                        <span className="text-zinc-500 text-xs">дн.</span>
+                                        <div className="flex items-center gap-1 ml-auto">
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditingDaysCarId(null)}
+                                            className="px-2 h-7 text-[11px] text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+                                          >
+                                            Отмена
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSaveCarDays(car, editingDaysValue)}
+                                            className="px-2.5 h-7 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors"
+                                          >
+                                            OK
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                               <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
                                 <div
@@ -1483,6 +1646,7 @@ export function AdsDashboard() {
                                 <button
                                   type="button"
                                   onClick={() => {
+                                    setEditingDaysCarId(null);
                                     setConfirmDeleteId(null);
                                     setConfirmResetId(confirmResetId === car.id ? null : car.id || null);
                                   }}
@@ -1524,6 +1688,7 @@ export function AdsDashboard() {
                               <button
                                 type="button"
                                 onClick={() => {
+                                  setEditingDaysCarId(null);
                                   setConfirmResetId(null);
                                   setConfirmDeleteId(confirmDeleteId === car.id ? null : car.id || null);
                                 }}
