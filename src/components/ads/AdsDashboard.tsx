@@ -659,7 +659,7 @@ export function AdsDashboard() {
                       : "text-zinc-600 hover:text-zinc-900"
                   }`}
                 >
-                  <span>Отснято (Запуск)</span>
+                  <span>Отснято</span>
                   <span
                     className={`text-[11px] px-1.5 py-0.2 rounded-full font-mono ${
                       boardCampaign === "ready_for_ads"
@@ -947,6 +947,17 @@ export function AdsDashboard() {
                                         >
                                           <Download className="w-3.5 h-3.5" />
                                         </a>
+                                      )}
+
+                                      {car.campaign === "waiting_video" && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSwitchCampaign(car, "ready_for_ads")}
+                                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] h-6 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                        >
+                                          <CheckCircle2 className="w-2.5 h-2.5" />
+                                          Отснято
+                                        </button>
                                       )}
 
                                       {car.campaign === "rk1" && (
@@ -1649,12 +1660,12 @@ export function AdsDashboard() {
                               </div>
                             </div>
                           ) : (
-                            <div className="mt-3 p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/60 flex items-center justify-between text-xs text-amber-900">
+                            <div className={`mt-3 p-2.5 rounded-xl border flex items-center justify-between text-xs ${car.campaign === "waiting_video" ? "bg-amber-50/70 border-amber-200/60 text-amber-900" : "bg-emerald-50/70 border-emerald-200/60 text-emerald-900"}`}>
                               <span className="font-medium flex items-center gap-1.5">
-                                <Video className="w-3.5 h-3.5 text-amber-600" />
-                                Ожидает видео
+                                <Video className={`w-3.5 h-3.5 ${car.campaign === "waiting_video" ? "text-amber-600" : "text-emerald-600"}`} />
+                                {car.campaign === "waiting_video" ? "Ожидает съёмки" : "Готово к запуску"}
                               </span>
-                              <span className="text-[11px] text-amber-700">Таймер на паузе</span>
+                              <span className={`text-[11px] ${car.campaign === "waiting_video" ? "text-amber-700" : "text-emerald-700"}`}>Таймер на паузе</span>
                             </div>
                           )}
 
@@ -1712,22 +1723,30 @@ export function AdsDashboard() {
                           )}
 
                           {car.campaign === "waiting_video" && (
-                            <div className="grid grid-cols-2 gap-1.5">
+                            <div className="grid grid-cols-3 gap-1.5">
+                              <Button
+                                size="sm"
+                                onClick={() => handleSwitchCampaign(car, "ready_for_ads")}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] h-8 font-medium rounded-lg flex items-center justify-center gap-1 px-1"
+                              >
+                                <CheckCircle2 className="w-3 h-3" />
+                                Отснято
+                              </Button>
                               <Button
                                 size="sm"
                                 onClick={() => handleSwitchCampaign(car, "rk1")}
-                                className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1"
+                                className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-8 font-medium rounded-lg flex items-center justify-center gap-1 px-1"
                               >
                                 <Play className="w-3 h-3 fill-current" />
-                                Запуск в РК 1
+                                В РК 1
                               </Button>
                               <Button
                                 size="sm"
                                 onClick={() => handleSwitchCampaign(car, "rk2")}
-                                className="bg-purple-600 hover:bg-purple-500 text-white text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1"
+                                className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-8 font-medium rounded-lg flex items-center justify-center gap-1 px-1"
                               >
                                 <Play className="w-3 h-3 fill-current" />
-                                Запуск в РК 2
+                                В РК 2
                               </Button>
                             </div>
                           )}

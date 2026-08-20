@@ -39,7 +39,7 @@ export function getCampaignLabel(campaign: AdCampaignType): string {
     case 'waiting_video':
       return 'Ожидают съёмки';
     case 'ready_for_ads':
-      return 'Отснято (Запуск)';
+      return 'Отснято';
     default:
       return campaign;
   }
