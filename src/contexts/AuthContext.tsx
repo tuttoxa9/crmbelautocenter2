@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Ignore
     }
 
-    if (!user && pathname !== "/login") {
+    if (!user && pathname !== "/login" && !pathname.startsWith("/smm")) {
       router.push("/login");
     } else if (user && (pathname === "/login" || pathname === "/")) {
       if (userRole === "commission") {
