@@ -91,6 +91,7 @@ export interface AdCar {
 export interface AdsSettings {
   rk1Days: number; // По умолчанию 17
   rk2Days: number; // По умолчанию 14
+  targetCarsPerDay?: number; // Target number of cars to rotate per day
   isActive?: boolean;
   chatId?: string;
   botToken?: string;

@@ -30,6 +30,7 @@ export function AdsSettingsModal({
 }: AdsSettingsModalProps) {
   const [rk1Days, setRk1Days] = useState<number>(settings.rk1Days || 17);
   const [rk2Days, setRk2Days] = useState<number>(settings.rk2Days || 14);
+  const [targetCarsPerDay, setTargetCarsPerDay] = useState<number>(settings.targetCarsPerDay || 3);
   const [botToken, setBotToken] = useState<string>(settings.botToken || "");
   const [chatId, setChatId] = useState<string>(settings.chatId || "");
   const [isActive, setIsActive] = useState<boolean>(
@@ -43,6 +44,7 @@ export function AdsSettingsModal({
     if (isOpen) {
       setRk1Days(settings.rk1Days || 17);
       setRk2Days(settings.rk2Days || 14);
+      setTargetCarsPerDay(settings.targetCarsPerDay || 3);
       setBotToken(settings.botToken || "");
       setChatId(settings.chatId || "");
       setIsActive(settings.isActive !== undefined ? settings.isActive : true);
@@ -57,6 +59,7 @@ export function AdsSettingsModal({
       await onSaveSettings({
         rk1Days: Number(rk1Days) || 17,
         rk2Days: Number(rk2Days) || 14,
+        targetCarsPerDay: Number(targetCarsPerDay) || 3,
         botToken: botToken.trim() || undefined,
         chatId: chatId.trim() || undefined,
         isActive,
@@ -107,40 +110,62 @@ export function AdsSettingsModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
           <div className="space-y-4">
             {/* Days Limits */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-zinc-700">
-                  Срок РК 1
-                </Label>
-                <div className="flex items-center gap-1.5">
-                  <Input
-                    type="number"
-                    min="1"
-                    max="90"
-                    required
-                    value={rk1Days}
-                    onChange={(e) => setRk1Days(Number(e.target.value))}
-                    className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9"
-                  />
-                  <span className="text-xs text-zinc-500 font-medium">дней</span>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-zinc-700">
+                    Срок РК 1
+                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="90"
+                      required
+                      value={rk1Days}
+                      onChange={(e) => setRk1Days(Number(e.target.value))}
+                      className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9"
+                    />
+                    <span className="text-xs text-zinc-500 font-medium">дней</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-zinc-700">
+                    Срок РК 2
+                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="90"
+                      required
+                      value={rk2Days}
+                      onChange={(e) => setRk2Days(Number(e.target.value))}
+                      className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9"
+                    />
+                    <span className="text-xs text-zinc-500 font-medium">дней</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 pt-2 border-t border-zinc-100">
                 <Label className="text-xs font-medium text-zinc-700">
-                  Срок РК 2
+                  Баланс: Автомобилей в день (Цель)
                 </Label>
                 <div className="flex items-center gap-1.5">
                   <Input
                     type="number"
                     min="1"
-                    max="90"
+                    max="10"
                     required
-                    value={rk2Days}
-                    onChange={(e) => setRk2Days(Number(e.target.value))}
-                    className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9"
+                    value={targetCarsPerDay}
+                    onChange={(e) => setTargetCarsPerDay(Number(e.target.value))}
+                    className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9 w-24"
                   />
-                  <span className="text-xs text-zinc-500 font-medium">дней</span>
+                  <span className="text-[10px] text-zinc-500 leading-tight">
+                    Алгоритм распределения попытается установить такие сроки,<br/>чтобы каждый день истекало не больше указанного кол-ва машин.
+                  </span>
                 </div>
               </div>
             </div>

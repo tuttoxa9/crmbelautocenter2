@@ -3,6 +3,7 @@ import { AdCar, AdCampaignType, AdPriceTier, AdsSettings } from "../types";
 export const DEFAULT_ADS_SETTINGS: AdsSettings = {
   rk1Days: 17,
   rk2Days: 14,
+  targetCarsPerDay: 3,
   isActive: true,
 };
 

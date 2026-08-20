@@ -18,6 +18,7 @@ import {
 import { AdCar, AdCampaignType, AdPriceTier, AdsSettings } from "@/lib/types";
 import { AddAdCarModal } from "./AddAdCarModal";
 import { AdsSettingsModal } from "./AdsSettingsModal";
+import { RotationTimeline } from "./RotationTimeline";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -181,6 +182,41 @@ export function AdsDashboard() {
     loadData();
   }, []);
 
+  // Staggering Engine: Calculate optimal days to balance rotation load
+  const calculateOptimalMaxDays = (targetCampaign: AdCampaignType) => {
+    const defaultDays = targetCampaign === "rk1" ? settings.rk1Days : targetCampaign === "rk2" ? settings.rk2Days : 0;
+    if (defaultDays === 0) return 0; // for waiting_video
+    
+    const targetPerDay = settings.targetCarsPerDay || 3;
+    const activeAdCars = cars.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
+    
+    // Count expirations per day offset
+    const expCounts: Record<number, number> = {};
+    activeAdCars.forEach(c => {
+      const limitDays = c.maxDays || (c.campaign === "rk1" ? settings.rk1Days : settings.rk2Days);
+      const daysIn = calculateDaysInAd(c.startedAt);
+      const offset = Math.max(0, limitDays - daysIn);
+      expCounts[offset] = (expCounts[offset] || 0) + 1;
+    });
+
+    // Spiral search: check base day, then +/- 1, +/- 2, up to max deviation
+    const MAX_DEVIATION = 5;
+    for (let radius = 0; radius <= MAX_DEVIATION; radius++) {
+      for (const sign of [1, -1]) {
+        if (radius === 0 && sign === -1) continue;
+        const testOffset = defaultDays + (radius * sign);
+        if (testOffset < 1) continue;
+        
+        const count = expCounts[testOffset] || 0;
+        if (count < targetPerDay) {
+          return testOffset; // Found an optimal slot
+        }
+      }
+    }
+    
+    return defaultDays; // Fallback if fully saturated
+  };
+
   // Actions
   const handleAddCar = async (carData: Omit<AdCar, "id" | "createdAt" | "updatedAt">) => {
     const newCar = await createAdCar(carData);
@@ -196,7 +232,7 @@ export function AdsDashboard() {
     try {
       setAddingCarId(catalogCar.id);
       const tier = calculatePriceTier(catalogCar.priceUsd);
-      const maxDays = targetCampaign === "rk1" ? settings.rk1Days : settings.rk2Days;
+      const maxDays = calculateOptimalMaxDays(targetCampaign);
 
       const newCar = await createAdCar({
         carId: catalogCar.id,
@@ -223,7 +259,12 @@ export function AdsDashboard() {
 
   const handleSwitchCampaign = async (car: AdCar, targetCampaign: AdCampaignType) => {
     if (!car.id) return;
-    const customDays = car.maxDays || (targetCampaign === "rk1" ? settings.rk1Days : settings.rk2Days);
+    
+    // Auto-calculate optimal days if moving TO an active ad campaign
+    // If we're keeping custom days, we might want to respect them, but since we are switching campaigns, 
+    // it's better to reset to optimal for the new campaign.
+    const customDays = calculateOptimalMaxDays(targetCampaign);
+    
     await switchAdCarCampaign(car.id, targetCampaign, customDays);
     setCars((prev) =>
       prev.map((c) =>
@@ -627,6 +668,8 @@ export function AdsDashboard() {
                 )}
               </div>
             </div>
+
+            <RotationTimeline cars={cars} settings={settings} />
 
             {/* 4 Columns Board */}
             {isLoading ? (
