@@ -212,14 +212,14 @@ export async function sendTelegramAdRotationAlert(data: AdRotationAlertData) {
     const targetCampaignLabel = data.targetCampaign === 'rk1' ? 'РК 1' : 'РК 2';
 
     const formattedPrice = Number(data.priceUsd || 0).toLocaleString('ru-RU');
-    const yearStr = data.year ? ` (${data.year})` : '';
+    const yearStr = data.year ? ` ${data.year} г.` : '';
 
     const message = [
-      `🔄 <b>РОТАЦИЯ РЕКЛАМЫ (TikTok Ads)</b>\n`,
+      `🔄 <b>РОТАЦИЯ РЕКЛАМЫ (TikTok)</b>\n`,
       `🚗 <b>Автомобиль:</b> ${data.name}${yearStr} — $${formattedPrice}`,
-      `🎯 <b>Группа:</b> ${data.priceTierLabel}`,
-      `⏱ <b>В рекламе:</b> ${data.daysInAd}-й день в <b>${currentCampaignLabel}</b>\n`,
-      `⚠️ <b>Действие:</b> Перенести автомобиль из <b>${currentCampaignLabel}</b> в <b>${targetCampaignLabel}</b>`
+      `🎯 <b>Категория:</b> ${data.priceTierLabel}`,
+      `⏱ <b>Срок:</b> ${data.daysInAd}-й день в <b>${currentCampaignLabel}</b>\n`,
+      `⚠️ <b>Действие:</b> Перенести авто из <b>${currentCampaignLabel}</b> в <b>${targetCampaignLabel}</b>`
     ].join('\n');
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
