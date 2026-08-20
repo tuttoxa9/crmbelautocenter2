@@ -29,8 +29,7 @@ export default function SmmUploadClient() {
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       if (data.success) {
-        // Filter ONLY cars waiting for video
-        setCars(data.cars.filter((c: AdCar) => c.campaign === "waiting_video"));
+        setCars(data.cars);
       }
     } catch (err: any) {
       console.error(err);
@@ -108,13 +107,16 @@ export default function SmmUploadClient() {
       });
 
       // 3. Update AdCar in Database
+      const updatePayload: any = { videoUrl };
+      // Only move to ready_for_ads if it was currently waiting for a video
+      if (selectedCar.campaign === "waiting_video") {
+        updatePayload.campaign = "ready_for_ads";
+      }
+
       const updateRes = await fetch(`/api/ads/cars/${selectedCar.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          campaign: "ready_for_ads",
-          videoUrl,
-        }),
+        body: JSON.stringify(updatePayload),
       });
 
       if (!updateRes.ok) throw new Error("Failed to update car status");
@@ -145,9 +147,6 @@ export default function SmmUploadClient() {
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold text-zinc-900">Загрузка видео</h1>
-          <p className="text-sm text-zinc-500">
-            Выберите автомобиль и загрузите исходник без сжатия
-          </p>
         </div>
 
         {!selectedCar ? (
@@ -170,7 +169,7 @@ export default function SmmUploadClient() {
                 </div>
               ) : filteredCars.length === 0 ? (
                 <div className="text-center py-8 text-zinc-500 text-sm">
-                  Нет автомобилей ожидающих съёмки
+                  Нет автомобилей
                 </div>
               ) : (
                 filteredCars.map((car) => (
@@ -224,8 +223,12 @@ export default function SmmUploadClient() {
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <p className="font-semibold text-center">Видео успешно загружено!</p>
-                <p className="text-xs text-emerald-600/70 text-center">Автомобиль переведен в ожидание запуска</p>
-              </div>
+              <p className="text-xs text-emerald-600/70 text-center">
+                {selectedCar.campaign === "waiting_video" 
+                  ? "Автомобиль переведен в ожидание запуска" 
+                  : "Видео прикреплено к автомобилю"}
+              </p>
+            </div>
             ) : (
               <label className={`block border-2 border-dashed rounded-2xl p-6 sm:p-10 text-center cursor-pointer transition-colors ${
                 isUploading ? "border-blue-300 bg-blue-50" : "border-zinc-200 hover:border-blue-400 hover:bg-zinc-50"
