@@ -654,23 +654,23 @@ export function AdsDashboard() {
                       </div>
 
                       {/* Section 1: Active Ads in this Tier */}
-                      <div className="p-3 space-y-3 min-h-[160px] bg-zinc-50/30">
-                        <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider px-1">
-                          В рекламе ({tierAdCars.length})
+                      <div className="p-2.5 space-y-2 min-h-[120px] bg-zinc-50/30">
+                        <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider px-1 flex items-center justify-between">
+                          <span>В рекламе ({tierAdCars.length})</span>
                         </div>
 
                         {tierAdCars.length === 0 ? (
-                          <div className="p-6 text-center rounded-xl border border-dashed border-zinc-200 bg-white/60 text-zinc-400">
-                            <Car className="w-5 h-5 mx-auto mb-1.5 opacity-40" />
+                          <div className="p-4 text-center rounded-xl border border-dashed border-zinc-200 bg-white/60 text-zinc-400">
+                            <Car className="w-4 h-4 mx-auto mb-1 opacity-40" />
                             <p className="text-xs">
                               {isSearching ? "Ничего не найдено в рекламе" : "Нет авто в этой группе"}
                             </p>
-                            <p className="text-[11px] text-zinc-400 mt-0.5">
+                            <p className="text-[10px] text-zinc-400 mt-0.5">
                               {isSearching ? "Проверьте список склада ниже" : "Добавьте из списка склада ниже"}
                             </p>
                           </div>
                         ) : (
-                          <div className="space-y-2.5">
+                          <div className="space-y-1.5">
                             {tierAdCars.map((car) => {
                               const daysInAd = calculateDaysInAd(car.startedAt);
                               const limitDays =
@@ -690,7 +690,7 @@ export function AdsDashboard() {
                               return (
                                 <div
                                   key={car.id}
-                                  className={`rounded-xl border bg-white p-3 space-y-2.5 shadow-2xs transition-all ${
+                                  className={`rounded-xl border bg-white p-2.5 space-y-2 shadow-2xs transition-all ${
                                     isSearching
                                       ? "border-blue-400 ring-2 ring-blue-500/30 bg-blue-50/20"
                                       : isExpired
@@ -698,138 +698,116 @@ export function AdsDashboard() {
                                       : "border-zinc-200/80 hover:border-zinc-300"
                                   }`}
                                 >
-                                  {/* Top row: thumbnail + title + price */}
-                                  <div className="flex items-start gap-2.5">
+                                  {/* Line 1: Thumbnail + Title & Year + Price */}
+                                  <div className="flex items-center gap-2">
                                     {car.photoUrl ? (
                                       <img
                                         src={car.photoUrl}
                                         alt={car.name}
-                                        className="w-12 h-10 object-cover rounded-lg bg-zinc-100 flex-shrink-0"
+                                        className="w-9 h-7 object-cover rounded-md bg-zinc-100 flex-shrink-0"
                                       />
                                     ) : (
-                                      <div className="w-12 h-10 rounded-lg bg-zinc-100 flex items-center justify-center flex-shrink-0 text-zinc-400">
-                                        <Car className="w-4 h-4" />
+                                      <div className="w-9 h-7 rounded-md bg-zinc-100 flex items-center justify-center flex-shrink-0 text-zinc-400">
+                                        <Car className="w-3 h-3" />
                                       </div>
                                     )}
 
-                                    <div className="min-w-0 flex-1">
-                                      <div className="font-semibold text-xs text-zinc-900 truncate flex items-center gap-1.5">
-                                        <span>{car.name}</span>
-                                        {isSearching && (
-                                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-600 text-white">
-                                            Найдено
-                                          </span>
-                                        )}
+                                    <div className="min-w-0 flex-1 flex items-center justify-between gap-1.5">
+                                      <div className="min-w-0">
+                                        <div className="font-semibold text-xs text-zinc-900 truncate flex items-center gap-1">
+                                          <span className="truncate">{car.name}</span>
+                                          {car.year && (
+                                            <span className="text-[10px] text-zinc-400 font-normal shrink-0">
+                                              {car.year} г.
+                                            </span>
+                                          )}
+                                          {isSearching && (
+                                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-600 text-white shrink-0">
+                                              Найдено
+                                            </span>
+                                          )}
+                                        </div>
                                       </div>
-                                      <div className="flex items-center justify-between mt-0.5">
-                                        {car.year ? (
-                                          <span className="text-[11px] text-zinc-500">
-                                            {car.year} г.
-                                          </span>
-                                        ) : (
-                                          <span />
-                                        )}
-                                        <span className="font-bold text-xs text-zinc-900">
-                                          ${Number(car.priceUsd).toLocaleString("ru-RU")}
-                                        </span>
+                                      <div className="font-bold text-xs text-zinc-900 shrink-0">
+                                        ${Number(car.priceUsd).toLocaleString("ru-RU")}
                                       </div>
                                     </div>
                                   </div>
 
-                                  {/* Progress / Status */}
-                                  {car.campaign !== "waiting_video" ? (
-                                    <div className="space-y-1">
-                                      <div className="flex items-center justify-between text-[11px]">
-                                        <span className="text-zinc-500 flex items-center gap-1">
-                                          <Clock className="w-3 h-3 text-zinc-400" />
-                                          В рекламе:
-                                        </span>
+                                  {/* Line 2: Days in ad pill + Fast action button + Icons */}
+                                  <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-zinc-100">
+                                    {/* Days Status Pill */}
+                                    {car.campaign !== "waiting_video" ? (
+                                      <div className="flex items-center gap-1.5">
                                         <span
-                                          className={`font-semibold font-mono ${
+                                          className={`inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-md ${
                                             isExpired
-                                              ? "text-rose-700 font-bold"
+                                              ? "bg-rose-50 text-rose-700 border border-rose-200"
                                               : progressPercent > 70
-                                              ? "text-amber-700"
-                                              : "text-zinc-800"
+                                              ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                              : "bg-zinc-100 text-zinc-700"
                                           }`}
                                         >
-                                          {daysInAd}-й / {limitDays} дн.
+                                          <Clock className="w-2.5 h-2.5 opacity-60" />
+                                          {daysInAd} / {limitDays} дн.
                                         </span>
+                                        {isExpired && (
+                                          <span className="text-[9px] text-rose-600 font-bold hidden sm:inline">
+                                            Ротация!
+                                          </span>
+                                        )}
                                       </div>
-                                      <div className="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
-                                        <div
-                                          className={`h-full rounded-full transition-all ${
-                                            isExpired
-                                              ? "bg-rose-500"
-                                              : progressPercent > 70
-                                              ? "bg-amber-500"
-                                              : "bg-emerald-500"
-                                          }`}
-                                          style={{ width: `${progressPercent}%` }}
-                                        />
-                                      </div>
-                                      {isExpired && (
-                                        <div className="text-[10px] text-rose-700 bg-rose-50 font-medium px-2 py-0.5 rounded flex items-center gap-1">
-                                          <AlertCircle className="w-3 h-3 text-rose-600 flex-shrink-0" />
-                                          Пора перенести в {car.campaign === "rk1" ? "РК 2" : "РК 1"}
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60 font-medium">
+                                        <Video className="w-2.5 h-2.5 text-amber-600" />
+                                        На съёмке
+                                      </span>
+                                    )}
+
+                                    {/* Actions & Utilities */}
+                                    <div className="flex items-center gap-1 ml-auto">
+                                      {car.campaign === "rk1" && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSwitchCampaign(car, "rk2")}
+                                          className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-6 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                        >
+                                          <ArrowRight className="w-2.5 h-2.5" />
+                                          В РК 2
+                                        </button>
+                                      )}
+
+                                      {car.campaign === "rk2" && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSwitchCampaign(car, "rk1")}
+                                          className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-6 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                        >
+                                          <ArrowLeft className="w-2.5 h-2.5" />
+                                          В РК 1
+                                        </button>
+                                      )}
+
+                                      {car.campaign === "waiting_video" && (
+                                        <div className="flex items-center gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSwitchCampaign(car, "rk1")}
+                                            className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-6 px-1.5 rounded-md font-semibold"
+                                          >
+                                            В РК 1
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSwitchCampaign(car, "rk2")}
+                                            className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-6 px-1.5 rounded-md font-semibold"
+                                          >
+                                            В РК 2
+                                          </button>
                                         </div>
                                       )}
-                                    </div>
-                                  ) : (
-                                    <div className="text-[11px] text-amber-800 bg-amber-50 p-1.5 rounded-lg flex items-center justify-between">
-                                      <span className="flex items-center gap-1">
-                                        <Video className="w-3 h-3 text-amber-600" />
-                                        Ожидает видео
-                                      </span>
-                                      <span className="text-[10px] text-amber-600">Пауза</span>
-                                    </div>
-                                  )}
 
-                                  {/* Quick Actions with Inline Confirmation Popovers */}
-                                  <div className="pt-2 border-t border-zinc-100 flex items-center justify-between gap-1 relative">
-                                    {car.campaign === "rk1" && (
-                                      <Button
-                                        size="sm"
-                                        onClick={() => handleSwitchCampaign(car, "rk2")}
-                                        className="bg-purple-600 hover:bg-purple-500 text-white text-[11px] h-7 px-2.5 rounded-lg font-medium"
-                                      >
-                                        <ArrowRight className="w-3 h-3 mr-1" />
-                                        В РК 2
-                                      </Button>
-                                    )}
-
-                                    {car.campaign === "rk2" && (
-                                      <Button
-                                        size="sm"
-                                        onClick={() => handleSwitchCampaign(car, "rk1")}
-                                        className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] h-7 px-2.5 rounded-lg font-medium"
-                                      >
-                                        <ArrowLeft className="w-3 h-3 mr-1" />
-                                        В РК 1
-                                      </Button>
-                                    )}
-
-                                    {car.campaign === "waiting_video" && (
-                                      <div className="flex items-center gap-1">
-                                        <Button
-                                          size="sm"
-                                          onClick={() => handleSwitchCampaign(car, "rk1")}
-                                          className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-6 px-2 rounded-lg font-medium"
-                                        >
-                                          В РК 1
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          onClick={() => handleSwitchCampaign(car, "rk2")}
-                                          className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-6 px-2 rounded-lg font-medium"
-                                        >
-                                          В РК 2
-                                        </Button>
-                                      </div>
-                                    )}
-
-                                    <div className="flex items-center gap-1 ml-auto">
-                                      {/* Inline Reset Timer Confirmation Popover */}
+                                      {/* Inline Reset Timer Popover */}
                                       {car.campaign !== "waiting_video" && (
                                         <div className="relative">
                                           <button
@@ -838,28 +816,28 @@ export function AdsDashboard() {
                                               setConfirmDeleteId(null);
                                               setConfirmResetId(confirmResetId === car.id ? null : car.id || null);
                                             }}
-                                            className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
+                                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
                                             title="Сбросить таймер на 0"
                                           >
-                                            <RotateCw className="w-3.5 h-3.5" />
+                                            <RotateCw className="w-3 h-3" />
                                           </button>
 
                                           {confirmResetId === car.id && (
-                                            <div className="absolute right-0 bottom-full mb-1.5 z-40 w-52 p-3 bg-white border border-zinc-200 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 text-xs">
+                                            <div className="absolute right-0 bottom-full mb-1.5 z-40 w-48 p-2.5 bg-white border border-zinc-200 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 text-xs">
                                               <div className="font-semibold text-zinc-900 leading-tight">Сбросить таймер?</div>
                                               <div className="text-[11px] text-zinc-500 mt-0.5">Отсчет начнется с 0 дней</div>
-                                              <div className="flex items-center justify-end gap-1.5 mt-2.5">
+                                              <div className="flex items-center justify-end gap-1.5 mt-2">
                                                 <button
                                                   type="button"
                                                   onClick={() => setConfirmResetId(null)}
-                                                  className="px-2.5 py-1 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+                                                  className="px-2 py-0.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
                                                 >
                                                   Отмена
                                                 </button>
                                                 <button
                                                   type="button"
                                                   onClick={() => executeResetTimer(car)}
-                                                  className="px-3 py-1 text-[11px] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-lg shadow-2xs transition-colors"
+                                                  className="px-2.5 py-0.5 text-[11px] font-semibold text-white bg-zinc-900 hover:bg-zinc-800 rounded-md shadow-2xs transition-colors"
                                                 >
                                                   Сбросить
                                                 </button>
@@ -869,7 +847,7 @@ export function AdsDashboard() {
                                         </div>
                                       )}
 
-                                      {/* Inline Delete Confirmation Popover */}
+                                      {/* Inline Delete Popover */}
                                       <div className="relative">
                                         <button
                                           type="button"
@@ -877,28 +855,28 @@ export function AdsDashboard() {
                                             setConfirmResetId(null);
                                             setConfirmDeleteId(confirmDeleteId === car.id ? null : car.id || null);
                                           }}
-                                          className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                          className="p-1 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
                                           title="Удалить из рекламы"
                                         >
-                                          <Trash2 className="w-3.5 h-3.5" />
+                                          <Trash2 className="w-3 h-3" />
                                         </button>
 
                                         {confirmDeleteId === car.id && (
-                                          <div className="absolute right-0 bottom-full mb-1.5 z-40 w-52 p-3 bg-white border border-zinc-200 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 text-xs">
+                                          <div className="absolute right-0 bottom-full mb-1.5 z-40 w-48 p-2.5 bg-white border border-zinc-200 rounded-xl shadow-xl animate-in fade-in zoom-in-95 duration-150 text-xs">
                                             <div className="font-semibold text-zinc-900 leading-tight">Удалить из рекламы?</div>
                                             <div className="text-[11px] text-zinc-500 mt-0.5 truncate">{car.name}</div>
-                                            <div className="flex items-center justify-end gap-1.5 mt-2.5">
+                                            <div className="flex items-center justify-end gap-1.5 mt-2">
                                               <button
                                                 type="button"
                                                 onClick={() => setConfirmDeleteId(null)}
-                                                className="px-2.5 py-1 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+                                                className="px-2 py-0.5 text-[11px] font-medium text-zinc-600 hover:bg-zinc-100 rounded-md transition-colors"
                                               >
                                                 Отмена
                                               </button>
                                               <button
                                                 type="button"
                                                 onClick={() => executeDeleteCar(car)}
-                                                className="px-3 py-1 text-[11px] font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-2xs transition-colors"
+                                                className="px-2.5 py-0.5 text-[11px] font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-md shadow-2xs transition-colors"
                                               >
                                                 Удалить
                                               </button>
