@@ -176,21 +176,27 @@ export interface AdRotationAlertData {
 
 export async function sendTelegramAdRotationAlert(data: AdRotationAlertData) {
   try {
-    if (!adminDb) {
-      console.warn("Firebase Admin is not initialized. Skipping Ad Telegram notification.");
-      return;
+    let botToken = "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4";
+    let chatId = "-1002721193947";
+    let isActive = true;
+
+    try {
+      const { sql } = await import('./db');
+      const settingsRows = await sql`
+        SELECT id, data FROM settings WHERE id IN ('ads', 'telegram')
+      `;
+
+      for (const row of settingsRows) {
+        const d = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+        if (d?.botToken) botToken = d.botToken;
+        if (d?.chatId) chatId = d.chatId;
+        if (row.id === 'ads' && d?.isActive !== undefined) {
+          isActive = Boolean(d.isActive);
+        }
+      }
+    } catch (dbErr) {
+      console.warn("Could not load telegram settings from Neon DB, using defaults:", dbErr);
     }
-
-    // 1. Проверяем настройки ads или telegram
-    const adsSettingsDoc = await adminDb.collection('settings').doc('ads').get();
-    const adsSettings = adsSettingsDoc.data();
-
-    const telegramSettingsDoc = await adminDb.collection('settings').doc('telegram').get();
-    const telegramSettings = telegramSettingsDoc.data();
-
-    const botToken = adsSettings?.botToken || telegramSettings?.botToken || "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4";
-    const chatId = adsSettings?.chatId || telegramSettings?.chatId || "-1002721193947";
-    const isActive = adsSettings?.isActive !== undefined ? adsSettings.isActive : (telegramSettings?.isActive !== undefined ? telegramSettings.isActive : true);
 
     if (!isActive) {
       console.log("Ad Telegram notifications are disabled in settings.");

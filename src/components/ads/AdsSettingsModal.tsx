@@ -63,6 +63,26 @@ export function AdsSettingsModal({
     }
   };
 
+  const [isSendingSample, setIsSendingSample] = useState(false);
+
+  const handleSendTestTelegramAlert = async () => {
+    try {
+      setIsSendingSample(true);
+      setTestResult(null);
+      const res = await fetch("/api/ads/test-telegram", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        setTestResult("✅ Тестовое уведомление успешно отправлено в Telegram-чат!");
+      } else {
+        setTestResult(`❌ Ошибка: ${data.error || "Не удалось отправить"}`);
+      }
+    } catch (err: any) {
+      setTestResult(`❌ Ошибка: ${err.message}`);
+    } finally {
+      setIsSendingSample(false);
+    }
+  };
+
   const handleRunManualCron = async () => {
     try {
       setIsTestingCron(true);
@@ -71,13 +91,13 @@ export function AdsSettingsModal({
       const data = await res.json();
       if (data.success) {
         setTestResult(
-          `Проверено ${data.totalActiveCars} авто. Отправлено ${data.alertsSent} уведомлений в Telegram.`
+          `✅ Проверено ${data.totalActiveCars} авто. Отправлено ${data.alertsSent} уведомлений в Telegram.`
         );
       } else {
-        setTestResult(`Ошибка: ${data.error || "Не удалось отправить"}`);
+        setTestResult(`❌ Ошибка: ${data.error || "Не удалось отправить"}`);
       }
     } catch (err: any) {
-      setTestResult(`Ошибка: ${err.message}`);
+      setTestResult(`❌ Ошибка: ${err.message}`);
     } finally {
       setIsTestingCron(false);
     }
@@ -156,36 +176,61 @@ export function AdsSettingsModal({
               </label>
             </div>
 
-            <div className="p-3.5 bg-zinc-50 border border-zinc-200/80 rounded-xl space-y-2">
-              <div className="text-xs font-medium text-zinc-800 flex items-center gap-1.5">
+            <div className="p-3.5 bg-zinc-50 border border-zinc-200/80 rounded-xl space-y-2.5">
+              <div className="text-xs font-semibold text-zinc-800 flex items-center gap-1.5">
                 <Bell className="w-3.5 h-3.5 text-zinc-500" />
-                Ручная проверка
+                Тест и проверка Telegram
               </div>
               <p className="text-[11px] text-zinc-500">
-                Проверить все автомобили и отправить уведомления по тем, у кого вышел срок:
+                Отправьте тестовое сообщение в чат или запустите проверку всех автомобилей прямо сейчас:
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleRunManualCron}
-                disabled={isTestingCron}
-                className="w-full bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-700 text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1.5"
-              >
-                {isTestingCron ? (
-                  <>
-                    <Spinner className="w-3.5 h-3.5" />
-                    Проверка...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5 text-zinc-500" />
-                    Проверить и отправить в Telegram
-                  </>
-                )}
-              </Button>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSendTestTelegramAlert}
+                  disabled={isSendingSample}
+                  className="bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-700 text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1.5 shadow-2xs"
+                >
+                  {isSendingSample ? (
+                    <>
+                      <Spinner className="w-3.5 h-3.5" />
+                      Отправка...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5 text-zinc-500" />
+                      Тест в Telegram
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRunManualCron}
+                  disabled={isTestingCron}
+                  className="bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-700 text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1.5 shadow-2xs"
+                >
+                  {isTestingCron ? (
+                    <>
+                      <Spinner className="w-3.5 h-3.5" />
+                      Проверка...
+                    </>
+                  ) : (
+                    <>
+                      <Bell className="w-3.5 h-3.5 text-zinc-500" />
+                      Проверить все авто
+                    </>
+                  )}
+                </Button>
+              </div>
+
               {testResult && (
-                <div className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-lg border border-emerald-200">
+                <div className="text-[11px] font-medium p-2.5 rounded-lg border bg-white shadow-2xs border-zinc-200 text-zinc-800">
                   {testResult}
                 </div>
               )}
