@@ -46,6 +46,7 @@ import {
   CheckCircle2,
   Pencil,
   Download,
+  Image as ImageIcon,
 } from "lucide-react";
 
 interface CatalogCar {
@@ -933,6 +934,18 @@ export function AdsDashboard() {
 
                                     {/* Actions & Utilities */}
                                     <div className="flex items-center gap-1 ml-auto">
+                                      {car.videoCoverUrl && (
+                                        <a
+                                          href={car.videoCoverUrl}
+                                          download
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="p-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md transition-colors mr-1"
+                                          title="Скачать обложку"
+                                        >
+                                          <ImageIcon className="w-3.5 h-3.5" />
+                                        </a>
+                                      )}
                                       {car.videoUrl && (
                                         <a
                                           href={car.videoUrl}

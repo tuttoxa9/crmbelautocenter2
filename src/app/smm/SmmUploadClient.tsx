@@ -11,6 +11,7 @@ interface AdCar {
   photoUrl: string;
   campaign: string;
   videoUrl?: string;
+  videoCoverUrl?: string;
 }
 
 export default function SmmUploadClient() {
@@ -141,8 +142,8 @@ export default function SmmUploadClient() {
       if (type === "video" && selectedCar.videoUrl) {
         await deleteOldFile(selectedCar.videoUrl);
       }
-      if (type === "photo" && selectedCar.photoUrl) {
-        await deleteOldFile(selectedCar.photoUrl);
+      if (type === "photo" && selectedCar.videoCoverUrl) {
+        await deleteOldFile(selectedCar.videoCoverUrl);
       }
 
       // 2. Get presigned URL
@@ -194,7 +195,7 @@ export default function SmmUploadClient() {
           updatePayload.campaign = "ready_for_ads";
         }
       } else {
-        updatePayload.photoUrl = newFileUrl;
+        updatePayload.videoCoverUrl = newFileUrl;
       }
 
       const updateRes = await fetch(`/api/ads/cars/${selectedCar.id}`, {
@@ -241,7 +242,7 @@ export default function SmmUploadClient() {
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold text-zinc-900">Медиафайлы для авто</h1>
           <p className="text-sm text-zinc-500">
-            Загрузите фото или видео для выбранного автомобиля
+            Загрузите обложку или видео для выбранного автомобиля
           </p>
         </div>
 
@@ -287,7 +288,12 @@ export default function SmmUploadClient() {
                         <div className="text-xs text-zinc-500">{car.year}</div>
                       </div>
                     </div>
-                    <div className="flex gap-2 items-center">
+                    <div className="flex gap-2 items-center flex-wrap justify-end pl-2">
+                      {car.videoCoverUrl && (
+                        <div className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-[10px] font-bold shrink-0">
+                          ЕСТЬ ОБЛОЖКА
+                        </div>
+                      )}
                       {car.videoUrl && (
                         <div className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[10px] font-bold shrink-0">
                           ЕСТЬ ВИДЕО
@@ -323,15 +329,15 @@ export default function SmmUploadClient() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Photo Upload Box */}
               {uploadSuccessPhoto ? (
-                <div className="h-48 flex flex-col items-center justify-center text-emerald-600 space-y-3 border-2 border-emerald-100 bg-emerald-50 rounded-2xl">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                <div className="h-48 flex flex-col items-center justify-center text-amber-600 space-y-3 border-2 border-amber-100 bg-amber-50 rounded-2xl">
+                  <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
-                  <p className="font-semibold text-center text-sm">Фото загружено!</p>
+                  <p className="font-semibold text-center text-sm">Обложка загружена!</p>
                 </div>
               ) : (
                 <label className={`block border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors h-48 flex flex-col justify-center ${
-                  isUploadingPhoto ? "border-blue-300 bg-blue-50" : "border-zinc-200 hover:border-blue-400 hover:bg-zinc-50"
+                  isUploadingPhoto ? "border-amber-300 bg-amber-50" : "border-zinc-200 hover:border-amber-400 hover:bg-zinc-50"
                 }`}>
                   <input
                     ref={photoInputRef}
@@ -348,10 +354,10 @@ export default function SmmUploadClient() {
                   <div className="flex flex-col items-center space-y-3">
                     {isUploadingPhoto ? (
                       <>
-                        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                        <div className="font-semibold text-blue-900 text-sm">Загрузка... {uploadProgressPhoto}%</div>
-                        <div className="w-full max-w-xs h-1.5 bg-blue-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${uploadProgressPhoto}%` }} />
+                        <Loader2 className="w-8 h-8 text-amber-600 animate-spin" />
+                        <div className="font-semibold text-amber-900 text-sm">Загрузка... {uploadProgressPhoto}%</div>
+                        <div className="w-full max-w-xs h-1.5 bg-amber-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-amber-600 transition-all duration-300" style={{ width: `${uploadProgressPhoto}%` }} />
                         </div>
                       </>
                     ) : (
@@ -360,7 +366,7 @@ export default function SmmUploadClient() {
                           <ImageIcon className="w-5 h-5" />
                         </div>
                         <div className="font-semibold text-zinc-900 px-4 text-sm">
-                          {selectedCar.photoUrl ? "Заменить фото" : "Загрузить фото"}
+                          {selectedCar.videoCoverUrl ? "Заменить обложку" : "Загрузить обложку"}
                         </div>
                         <div className="text-xs text-zinc-500">JPG/PNG</div>
                       </>
@@ -379,7 +385,7 @@ export default function SmmUploadClient() {
                 </div>
               ) : (
                 <label className={`block border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors h-48 flex flex-col justify-center ${
-                  isUploadingVideo ? "border-blue-300 bg-blue-50" : "border-zinc-200 hover:border-blue-400 hover:bg-zinc-50"
+                  isUploadingVideo ? "border-emerald-300 bg-emerald-50" : "border-zinc-200 hover:border-emerald-400 hover:bg-zinc-50"
                 }`}>
                   <input
                     ref={videoInputRef}
@@ -396,10 +402,10 @@ export default function SmmUploadClient() {
                   <div className="flex flex-col items-center space-y-3">
                     {isUploadingVideo ? (
                       <>
-                        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                        <div className="font-semibold text-blue-900 text-sm">Загрузка... {uploadProgressVideo}%</div>
-                        <div className="w-full max-w-xs h-1.5 bg-blue-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-blue-600 transition-all duration-300" style={{ width: `${uploadProgressVideo}%` }} />
+                        <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+                        <div className="font-semibold text-emerald-900 text-sm">Загрузка... {uploadProgressVideo}%</div>
+                        <div className="w-full max-w-xs h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-600 transition-all duration-300" style={{ width: `${uploadProgressVideo}%` }} />
                         </div>
                       </>
                     ) : (
