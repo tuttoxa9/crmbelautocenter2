@@ -11,22 +11,41 @@ export async function GET() {
       ORDER BY created_at DESC
     `;
 
-    const cars = rows.map((row: any) => {
+    // Fetch catalog cars to check for sold status
+    const catalogRows = await sql`SELECT id, data FROM cars`;
+    const soldCarIds = new Set();
+    for (const row of catalogRows) {
       let d = row.data;
       if (typeof d === 'string') {
-        try {
-          d = JSON.parse(d);
-        } catch {
-          d = {};
-        }
+        try { d = JSON.parse(d); } catch { d = {}; }
       }
-      return {
+      if (!d || typeof d !== 'object') d = {};
+      const isSold = d.status === 'sold' || d.isAvailable === false || d.is_available === false;
+      if (isSold) soldCarIds.add(row.id);
+    }
+
+    const cars: any[] = [];
+    
+    for (const row of rows) {
+      let d = row.data;
+      if (typeof d === 'string') {
+        try { d = JSON.parse(d); } catch { d = {}; }
+      }
+      
+      const carData = {
         id: row.id,
         ...d,
         createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
         updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
       };
-    });
+
+      if (carData.carId && soldCarIds.has(carData.carId)) {
+        // Automatically clean up sold cars from the ads tracking board
+        sql`DELETE FROM ad_cars WHERE id = ${row.id}`.catch(e => console.error("Auto-cleanup error:", e));
+      } else {
+        cars.push(carData);
+      }
+    }
 
     return NextResponse.json({ success: true, cars });
   } catch (error: any) {
