@@ -36,8 +36,7 @@ export function AdsSettingsModal({
     settings.isActive !== undefined ? settings.isActive : true
   );
   const [isSaving, setIsSaving] = useState(false);
-  const [isTestingCron, setIsTestingCron] = useState(false);
-  const [isSendingSample, setIsSendingSample] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,7 +71,7 @@ export function AdsSettingsModal({
 
   const handleSendTestTelegramAlert = async () => {
     try {
-      setIsSendingSample(true);
+      setIsTesting(true);
       setTestResult(null);
       const res = await fetch("/api/ads/test-telegram", {
         method: "POST",
@@ -84,34 +83,14 @@ export function AdsSettingsModal({
       });
       const data = await res.json();
       if (data.success) {
-        setTestResult("✅ Тестовое уведомление успешно отправлено в Telegram!");
+        setTestResult("Тестовое уведомление успешно отправлено в Telegram");
       } else {
-        setTestResult(`❌ Ошибка: ${data.error || "Не удалось отправить"}`);
+        setTestResult(`Ошибка: ${data.error || "Не удалось отправить"}`);
       }
     } catch (err: any) {
-      setTestResult(`❌ Ошибка: ${err.message}`);
+      setTestResult(`Ошибка: ${err.message}`);
     } finally {
-      setIsSendingSample(false);
-    }
-  };
-
-  const handleRunManualCron = async () => {
-    try {
-      setIsTestingCron(true);
-      setTestResult(null);
-      const res = await fetch("/api/cron/ads-reminders?force=true");
-      const data = await res.json();
-      if (data.success) {
-        setTestResult(
-          `✅ Проверено ${data.totalActiveCars} авто. Отправлено ${data.alertsSent} уведомлений в Telegram.`
-        );
-      } else {
-        setTestResult(`❌ Ошибка: ${data.error || "Не удалось отправить"}`);
-      }
-    } catch (err: any) {
-      setTestResult(`❌ Ошибка: ${err.message}`);
-    } finally {
-      setIsTestingCron(false);
+      setIsTesting(false);
     }
   };
 
@@ -131,7 +110,7 @@ export function AdsSettingsModal({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-zinc-700">
-                  Лимит дней РК 1
+                  Срок РК 1
                 </Label>
                 <div className="flex items-center gap-1.5">
                   <Input
@@ -149,7 +128,7 @@ export function AdsSettingsModal({
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-zinc-700">
-                  Лимит дней РК 2
+                  Срок РК 2
                 </Label>
                 <div className="flex items-center gap-1.5">
                   <Input
@@ -175,7 +154,7 @@ export function AdsSettingsModal({
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-zinc-700">
-                  Токен бота (Bot Token)
+                  Токен бота
                 </Label>
                 <Input
                   type="text"
@@ -185,13 +164,13 @@ export function AdsSettingsModal({
                   className="bg-zinc-50 border-zinc-200 text-zinc-900 font-mono text-xs focus:bg-white rounded-lg h-9"
                 />
                 <p className="text-[10px] text-zinc-500">
-                  Токен из @BotFather. Если пусто — используется общий бот CRM.
+                  Токен из @BotFather. Если пусто, используется общий бот CRM.
                 </p>
               </div>
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-zinc-700">
-                  ID группы или чата (Chat ID)
+                  ID чата или группы
                 </Label>
                 <Input
                   type="text"
@@ -201,7 +180,7 @@ export function AdsSettingsModal({
                   className="bg-zinc-50 border-zinc-200 text-zinc-900 font-mono text-xs focus:bg-white rounded-lg h-9"
                 />
                 <p className="text-[10px] text-zinc-500">
-                  ID группы Telegram (начинается с -100). Если пусто — используется основной чат.
+                  ID группы Telegram, обычно начинается с -100. Если пусто, используется основной чат.
                 </p>
               </div>
             </div>
@@ -226,59 +205,33 @@ export function AdsSettingsModal({
               </label>
             </div>
 
-            {/* Test Block */}
+            {/* Test Block with Single Button */}
             <div className="p-3.5 bg-zinc-50 border border-zinc-200/80 rounded-xl space-y-2.5">
               <div className="text-xs font-semibold text-zinc-800 flex items-center gap-1.5">
                 <Bell className="w-3.5 h-3.5 text-zinc-500" />
-                Тест отправки
+                Проверка бота
               </div>
-              <p className="text-[11px] text-zinc-500">
-                Проверьте работу бота с указанными выше настройками:
-              </p>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSendTestTelegramAlert}
-                  disabled={isSendingSample}
-                  className="bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-700 text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1.5 shadow-2xs"
-                >
-                  {isSendingSample ? (
-                    <>
-                      <Spinner className="w-3.5 h-3.5" />
-                      Отправка...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5 text-zinc-500" />
-                      Тест в Telegram
-                    </>
-                  )}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRunManualCron}
-                  disabled={isTestingCron}
-                  className="bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-700 text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1.5 shadow-2xs"
-                >
-                  {isTestingCron ? (
-                    <>
-                      <Spinner className="w-3.5 h-3.5" />
-                      Проверка...
-                    </>
-                  ) : (
-                    <>
-                      <Bell className="w-3.5 h-3.5 text-zinc-500" />
-                      Проверить все авто
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSendTestTelegramAlert}
+                disabled={isTesting}
+                className="w-full bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-700 text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1.5 shadow-2xs"
+              >
+                {isTesting ? (
+                  <>
+                    <Spinner className="w-3.5 h-3.5" />
+                    Отправка...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-3.5 h-3.5 text-zinc-500" />
+                    Проверить связь с Telegram
+                  </>
+                )}
+              </Button>
 
               {testResult && (
                 <div className="text-[11px] font-medium p-2.5 rounded-lg border bg-white shadow-2xs border-zinc-200 text-zinc-800">

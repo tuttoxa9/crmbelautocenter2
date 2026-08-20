@@ -215,7 +215,7 @@ export async function sendTelegramAdRotationAlert(data: AdRotationAlertData) {
     const yearStr = data.year ? ` ${data.year} г.` : '';
 
     const message = [
-      `🔄 <b>РОТАЦИЯ РЕКЛАМЫ (TikTok)</b>\n`,
+      `🔄 <b>РОТАЦИЯ РЕКЛАМЫ TikTok</b>\n`,
       `🚗 <b>Автомобиль:</b> ${data.name}${yearStr} — $${formattedPrice}`,
       `🎯 <b>Категория:</b> ${data.priceTierLabel}`,
       `⏱ <b>Срок:</b> ${data.daysInAd}-й день в <b>${currentCampaignLabel}</b>\n`,

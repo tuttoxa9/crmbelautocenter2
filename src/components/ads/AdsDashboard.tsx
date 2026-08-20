@@ -679,7 +679,7 @@ export function AdsDashboard() {
                       {/* Section 1: Active Ads in this Tier */}
                       <div className="p-2.5 space-y-2 min-h-[120px] bg-zinc-50/30">
                         <div className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider px-1 flex items-center justify-between">
-                          <span>В рекламе ({tierAdCars.length})</span>
+                          <span>В рекламе • {tierAdCars.length}</span>
                         </div>
 
                         {tierAdCars.length === 0 ? (
@@ -995,7 +995,7 @@ export function AdsDashboard() {
                           <span className="flex items-center gap-1.5">
                             <span>Со склада</span>
                             <span className="text-[11px] text-zinc-500 font-normal">
-                              ({tierWarehouseCars.length})
+                              • {tierWarehouseCars.length}
                             </span>
                           </span>
                           {isWarehouseCollapsed ? (
@@ -1194,7 +1194,7 @@ export function AdsDashboard() {
                       : "text-zinc-600 hover:text-zinc-900"
                   }`}
                 >
-                  Все ({stats.total})
+                  Все • {stats.total}
                 </button>
                 <button
                   type="button"
@@ -1205,7 +1205,7 @@ export function AdsDashboard() {
                       : "text-zinc-600 hover:text-zinc-900"
                   }`}
                 >
-                  РК 1 ({stats.rk1Count})
+                  РК 1 • {stats.rk1Count}
                 </button>
                 <button
                   type="button"
@@ -1216,7 +1216,7 @@ export function AdsDashboard() {
                       : "text-zinc-600 hover:text-zinc-900"
                   }`}
                 >
-                  РК 2 ({stats.rk2Count})
+                  РК 2 • {stats.rk2Count}
                 </button>
                 <button
                   type="button"
@@ -1227,7 +1227,7 @@ export function AdsDashboard() {
                       : "text-zinc-600 hover:text-zinc-900"
                   }`}
                 >
-                  Ожидают ({stats.waitingCount})
+                  Ожидают • {stats.waitingCount}
                 </button>
                 <button
                   type="button"
@@ -1238,7 +1238,7 @@ export function AdsDashboard() {
                       : "text-rose-700 hover:text-rose-900"
                   }`}
                 >
-                  Срок вышел ({stats.expiredCount})
+                  Срок вышел • {stats.expiredCount}
                 </button>
               </div>
 

@@ -69,12 +69,11 @@ export async function POST(request: Request) {
     const daysInAd = realCar?.startedAt ? calculateDaysInAd(realCar.startedAt) : 14;
 
     const message = [
-      `🔄 <b>ТЕСТ РОТАЦИИ РЕКЛАМЫ (TikTok)</b>\n`,
+      `🔄 <b>ТЕСТ РОТАЦИИ РЕКЛАМЫ TikTok</b>\n`,
       `🚗 <b>Автомобиль:</b> ${carName}${carYear}${carPrice}`,
       `🎯 <b>Категория:</b> ${tierLabel}`,
       `⏱ <b>Срок:</b> ${daysInAd}-й день в <b>${currentCamp}</b>\n`,
-      `⚠️ <b>Действие:</b> Перенести авто из <b>${currentCamp}</b> в <b>${targetCamp}</b>\n`,
-      `<i>(Тестовая проверка связи с ботом)</i>`
+      `⚠️ <b>Действие:</b> Перенести авто из <b>${currentCamp}</b> в <b>${targetCamp}</b>`
     ].join('\n');
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
