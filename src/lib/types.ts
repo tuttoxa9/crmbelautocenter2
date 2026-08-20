@@ -67,7 +67,7 @@ export interface Integration {
   updatedAt: number;
 }
 
-export type AdCampaignType = 'rk1' | 'rk2' | 'waiting_video';
+export type AdCampaignType = 'rk1' | 'rk2' | 'waiting_video' | 'ready_for_ads';
 
 export type AdPriceTier = 'tier_under_7k' | 'tier_7k_13k' | 'tier_13k_20k' | 'tier_20k_plus';
 
@@ -82,6 +82,7 @@ export interface AdCar {
   startedAt: number; // Timestamp старта открутки в текущей РК
   maxDays?: number; // Лимит дней
   photoUrl?: string;
+  videoUrl?: string; // Ссылка на загруженное видео без сжатия в S3/R2
   notes?: string;
   lastAlertSentAt?: number | null; // Timestamp последней отправки TG алерта
   createdAt: number;

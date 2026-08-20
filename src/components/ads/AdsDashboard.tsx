@@ -45,6 +45,7 @@ import {
   X,
   CheckCircle2,
   Pencil,
+  Download,
 } from "lucide-react";
 
 interface CatalogCar {
@@ -339,9 +340,10 @@ export function AdsDashboard() {
     const rk1Count = cars.filter((c) => c.campaign === "rk1").length;
     const rk2Count = cars.filter((c) => c.campaign === "rk2").length;
     const waitingCount = cars.filter((c) => c.campaign === "waiting_video").length;
+    const readyCount = cars.filter((c) => c.campaign === "ready_for_ads").length;
 
     const expiredCars = cars.filter((c) => {
-      if (c.campaign === "waiting_video") return false;
+      if (c.campaign === "waiting_video" || c.campaign === "ready_for_ads") return false;
       const days = calculateDaysInAd(c.startedAt);
       const limit = c.maxDays || (c.campaign === "rk1" ? settings.rk1Days : settings.rk2Days);
       return days >= limit;
@@ -352,6 +354,7 @@ export function AdsDashboard() {
       rk1Count,
       rk2Count,
       waitingCount,
+      readyCount,
       expiredCount: expiredCars.length,
     };
   }, [cars, settings]);
@@ -646,6 +649,27 @@ export function AdsDashboard() {
                     {stats.waitingCount}
                   </span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setBoardCampaign("ready_for_ads")}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                    boardCampaign === "ready_for_ads"
+                      ? "bg-emerald-600 text-white font-semibold shadow-xs"
+                      : "text-zinc-600 hover:text-zinc-900"
+                  }`}
+                >
+                  <span>Отснято (Запуск)</span>
+                  <span
+                    className={`text-[11px] px-1.5 py-0.2 rounded-full font-mono ${
+                      boardCampaign === "ready_for_ads"
+                        ? "bg-white/20 text-white"
+                        : "bg-zinc-200 text-zinc-600"
+                    }`}
+                  >
+                    {stats.readyCount}
+                  </span>
+                </button>
               </div>
 
               <div className="relative sm:w-80">
@@ -755,9 +779,9 @@ export function AdsDashboard() {
                                   ? settings.rk2Days
                                   : 0);
 
-                              const isExpired = car.campaign !== "waiting_video" && daysInAd >= limitDays;
+                              const isExpired = car.campaign !== "waiting_video" && car.campaign !== "ready_for_ads" && daysInAd >= limitDays;
                               const progressPercent =
-                                car.campaign === "waiting_video" || limitDays === 0
+                                car.campaign === "waiting_video" || car.campaign === "ready_for_ads" || limitDays === 0
                                   ? 0
                                   : Math.min(100, Math.round((daysInAd / limitDays) * 100));
 
@@ -811,7 +835,7 @@ export function AdsDashboard() {
                                   {/* Line 2: Days in ad pill (editable!) + Fast action button + Icons */}
                                   <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-zinc-100">
                                     {/* Days Status Pill with Clickable Popover Editor */}
-                                    {car.campaign !== "waiting_video" ? (
+                                    {car.campaign === "rk1" || car.campaign === "rk2" ? (
                                       <div className="relative">
                                         <button
                                           type="button"
@@ -898,6 +922,11 @@ export function AdsDashboard() {
                                           </div>
                                         )}
                                       </div>
+                                    ) : car.campaign === "ready_for_ads" ? (
+                                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 font-medium">
+                                        <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                                        Ждёт запуска
+                                      </span>
                                     ) : (
                                       <span className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60 font-medium">
                                         <Video className="w-2.5 h-2.5 text-amber-600" />
@@ -907,6 +936,19 @@ export function AdsDashboard() {
 
                                     {/* Actions & Utilities */}
                                     <div className="flex items-center gap-1 ml-auto">
+                                      {car.videoUrl && (
+                                        <a
+                                          href={car.videoUrl}
+                                          download
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="p-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors mr-1"
+                                          title="Скачать видео"
+                                        >
+                                          <Download className="w-3.5 h-3.5" />
+                                        </a>
+                                      )}
+
                                       {car.campaign === "rk1" && (
                                         <button
                                           type="button"
@@ -1413,9 +1455,9 @@ export function AdsDashboard() {
                       ? settings.rk2Days
                       : 0);
 
-                  const isExpired = car.campaign !== "waiting_video" && daysInAd >= limitDays;
+                  const isExpired = car.campaign !== "waiting_video" && car.campaign !== "ready_for_ads" && daysInAd >= limitDays;
                   const progressPercent =
-                    car.campaign === "waiting_video" || limitDays === 0
+                    car.campaign === "waiting_video" || car.campaign === "ready_for_ads" || limitDays === 0
                       ? 0
                       : Math.min(100, Math.round((daysInAd / limitDays) * 100));
 

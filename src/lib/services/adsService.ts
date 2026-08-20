@@ -37,7 +37,9 @@ export function getCampaignLabel(campaign: AdCampaignType): string {
     case 'rk2':
       return 'РК 2';
     case 'waiting_video':
-      return 'Ожидает съёмки';
+      return 'Ожидают съёмки';
+    case 'ready_for_ads':
+      return 'Отснято (Запуск)';
     default:
       return campaign;
   }
