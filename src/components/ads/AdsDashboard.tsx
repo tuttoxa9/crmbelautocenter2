@@ -19,6 +19,7 @@ import { AdCar, AdCampaignType, AdPriceTier, AdsSettings } from "@/lib/types";
 import { AddAdCarModal } from "./AddAdCarModal";
 import { AdsSettingsModal } from "./AdsSettingsModal";
 import { RotationTimeline } from "./RotationTimeline";
+import { DailyTasksModal } from "./DailyTasksModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -123,6 +124,7 @@ export function AdsDashboard() {
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [selectedDayTasks, setSelectedDayTasks] = useState<{ isOpen: boolean; date: Date; offset: number; cars: AdCar[] }>({ isOpen: false, date: new Date(), offset: 0, cars: [] });
 
   // Grid Filters & Tabs
   const [gridTab, setGridTab] = useState<"all" | "rk1" | "rk2" | "waiting" | "expired">("all");
@@ -691,7 +693,11 @@ export function AdsDashboard() {
               </div>
             </div>
 
-            <RotationTimeline cars={cars} settings={settings} />
+            <RotationTimeline 
+              cars={cars} 
+              settings={settings} 
+              onDayClick={(offset, date, dayCars) => setSelectedDayTasks({ isOpen: true, date, offset, cars: dayCars })}
+            />
 
             {/* 4 Columns Board */}
             {isLoading ? (
@@ -1933,6 +1939,14 @@ export function AdsDashboard() {
         onClose={() => setIsSettingsModalOpen(false)}
         settings={settings}
         onSaveSettings={handleSaveSettings}
+      />
+
+      <DailyTasksModal
+        isOpen={selectedDayTasks.isOpen}
+        onClose={() => setSelectedDayTasks(prev => ({ ...prev, isOpen: false }))}
+        date={selectedDayTasks.date}
+        offset={selectedDayTasks.offset}
+        cars={selectedDayTasks.cars}
       />
     </div>
   );

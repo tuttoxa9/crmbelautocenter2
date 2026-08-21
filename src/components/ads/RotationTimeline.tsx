@@ -6,9 +6,10 @@ import { CalendarDays } from "lucide-react";
 interface RotationTimelineProps {
   cars: AdCar[];
   settings: AdsSettings;
+  onDayClick?: (offset: number, date: Date, dayCars: AdCar[]) => void;
 }
 
-export function RotationTimeline({ cars, settings }: RotationTimelineProps) {
+export function RotationTimeline({ cars, settings, onDayClick }: RotationTimelineProps) {
   const targetPerDay = settings.targetCarsPerDay || 3;
   const DAYS_TO_SHOW = 30; // Expanded from 14 to 30
 
@@ -21,19 +22,21 @@ export function RotationTimeline({ cars, settings }: RotationTimelineProps) {
     const activeAdCars = cars.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
 
     // Precalculate counts by days-from-today
-    const countsByDayOffset: Record<number, number> = {};
+    const carsByDayOffset: Record<number, AdCar[]> = {};
     activeAdCars.forEach(car => {
       const limitDays = car.maxDays || (car.campaign === "rk1" ? settings.rk1Days : settings.rk2Days);
       const daysIn = calculateDaysInAd(car.startedAt);
       const daysLeft = Math.max(0, limitDays - daysIn);
-      countsByDayOffset[daysLeft] = (countsByDayOffset[daysLeft] || 0) + 1;
+      if (!carsByDayOffset[daysLeft]) carsByDayOffset[daysLeft] = [];
+      carsByDayOffset[daysLeft].push(car);
     });
 
     for (let i = 0; i < DAYS_TO_SHOW; i++) {
       const d = new Date(today.getTime());
       d.setDate(d.getDate() + i);
       
-      const count = countsByDayOffset[i] || 0;
+      const dayCars = carsByDayOffset[i] || [];
+      const count = dayCars.length;
       let status: "good" | "empty" | "overload" = "good";
       
       if (count === 0) status = "empty";
@@ -42,6 +45,7 @@ export function RotationTimeline({ cars, settings }: RotationTimelineProps) {
       daysArr.push({
         date: d,
         count,
+        cars: dayCars,
         status,
         offset: i,
       });
@@ -60,16 +64,17 @@ export function RotationTimeline({ cars, settings }: RotationTimelineProps) {
 
       <div className="flex-1 overflow-x-auto pb-1 sm:pb-0 custom-scrollbar flex items-center gap-1">
         {timeline.map((day) => (
-          <div
+          <button
             key={day.offset}
-            className={`flex flex-col items-center justify-center shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-md border transition-all ${
+            onClick={() => onDayClick && onDayClick(day.offset, day.date, day.cars)}
+            className={`flex flex-col items-center justify-center shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-md border transition-all hover:scale-105 cursor-pointer ${
               day.offset === 0 
                 ? "bg-zinc-900 border-zinc-900 text-white shadow-md" 
                 : day.status === "overload"
                 ? "bg-rose-50 border-rose-200 text-rose-800"
                 : day.status === "empty"
-                ? "bg-zinc-50/50 border-dashed border-zinc-200 text-zinc-400"
-                : "bg-emerald-50 border-emerald-200 text-emerald-800"
+                ? "bg-zinc-50/50 border-dashed border-zinc-200 text-zinc-400 hover:border-zinc-300"
+                : "bg-emerald-50 border-emerald-200 text-emerald-800 hover:border-emerald-300"
             }`}
             title={`${day.date.getDate()} ${months[day.date.getMonth()]}: ${day.count} авто`}
           >
@@ -79,7 +84,7 @@ export function RotationTimeline({ cars, settings }: RotationTimelineProps) {
             <span className="text-sm sm:text-base font-bold leading-none tracking-tight">
               {day.count}
             </span>
-          </div>
+          </button>
         ))}
       </div>
     </div>
