@@ -200,33 +200,57 @@ export function AdsDashboard() {
     return Math.max(7, Math.ceil(totalCatalog / targetPerDay / 2));
   };
 
-  // ── UNIFIED SLOT FINDER (used by BOTH auto-add AND balance button) ──
-  // Scans ALL possible offsets (1 to baseDays*2), finds the slot with the
-  // minimum expiration count. Among ties, prefers the one closest to baseDays.
-  // This guarantees that auto-add and "Сбалансировать" always produce
-  // identical distributions.
+  // ── UNIFIED REALISTIC SLOT FINDER ──
+  // Finds the best expiration day offset for a car based on:
+  // 1. How long it has ALREADY been running (daysIn).
+  // 2. Minimum lifespan for an ad creative (cannot expire in 1-4 days if just added!).
+  // 3. Staggers around natural expiration (baseDays - daysIn) with max targetPerDay cars/day.
   const findBestSlot = (
     expCounts: Record<number, number>,
     baseDays: number,
-    targetPerDay: number
+    targetPerDay: number,
+    daysIn: number
   ): number => {
-    const maxRange = Math.max(baseDays * 2, 30);
-    let bestOffset = baseDays;
-    let bestCount = Infinity;
-    let bestDistance = Infinity;
+    // A video creative must run for at least minLifespan total days
+    const minLifespan = Math.max(7, Math.floor(baseDays * 0.75));
+    // Natural remaining days from today until standard expiration
+    const naturalOffset = Math.max(0, baseDays - daysIn);
 
-    for (let offset = 1; offset <= maxRange; offset++) {
-      const count = expCounts[offset] || 0;
-      const distance = Math.abs(offset - baseDays);
+    let bestOffset = naturalOffset;
+    let found = false;
 
-      if (
-        count < bestCount ||
-        (count === bestCount && distance < bestDistance)
-      ) {
-        bestCount = count;
-        bestOffset = offset;
-        bestDistance = distance;
+    // 1. Search in spiral around naturalOffset: natural, +1, -1, +2, -2, ...
+    for (let r = 0; r <= 35; r++) {
+      for (const sign of [0, 1, -1]) {
+        if (r === 0 && sign !== 0) continue;
+        if (r > 0 && sign === 0) continue;
+
+        const testOffset = naturalOffset + (r * sign);
+        if (testOffset < 0) continue;
+        // Total lifespan in campaign must be >= minLifespan (unless already overdue)
+        if (daysIn < minLifespan && daysIn + testOffset < minLifespan) continue;
+
+        if ((expCounts[testOffset] || 0) < targetPerDay) {
+          bestOffset = testOffset;
+          found = true;
+          break;
+        }
       }
+      if (found) break;
+    }
+
+    // 2. Fallback: if all nearby slots are full, find the slot with lowest count >= minLifespan
+    if (!found) {
+      let minCount = Infinity;
+      let fallbackOffset = naturalOffset;
+      for (let offset = Math.max(0, minLifespan - daysIn); offset <= baseDays * 2 + 10; offset++) {
+        const count = expCounts[offset] || 0;
+        if (count < minCount) {
+          minCount = count;
+          fallbackOffset = offset;
+        }
+      }
+      bestOffset = fallbackOffset;
     }
 
     return bestOffset;
@@ -245,14 +269,16 @@ export function AdsDashboard() {
     return expCounts;
   };
 
-  const calculateOptimalMaxDays = (targetCampaign: AdCampaignType, currentCarsList: AdCar[]) => {
+  const calculateOptimalMaxDays = (targetCampaign: AdCampaignType, currentCarsList: AdCar[], carStartedAt?: number) => {
     if (targetCampaign === "waiting_video" || targetCampaign === "ready_for_ads") return 0;
     
     const baseDays = getAutoBaseDays();
     const targetPerDay = settings.targetCarsPerDay || 3;
     const expCounts = buildExpCounts(currentCarsList, baseDays);
+    const daysIn = carStartedAt ? calculateDaysInAd(carStartedAt) : 0;
 
-    return findBestSlot(expCounts, baseDays, targetPerDay);
+    const bestOffset = findBestSlot(expCounts, baseDays, targetPerDay, daysIn);
+    return daysIn + bestOffset;
   };
 
   // ── BALANCE BUTTON: re-runs the SAME findBestSlot for every active car ──
@@ -261,14 +287,11 @@ export function AdsDashboard() {
     const baseDays = getAutoBaseDays();
     const activeCars = carsRef.current.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
     
-    // Sort cars by current days left (closest to expiring first → placed first)
+    // Sort cars by startedAt ascending (cars that started earlier expire earlier)
     const sortedCars = [...activeCars].sort((a, b) => {
-      const aLeft = (a.maxDays || baseDays) - calculateDaysInAd(a.startedAt);
-      const bLeft = (b.maxDays || baseDays) - calculateDaysInAd(b.startedAt);
-      return aLeft - bLeft;
+      return (Number(a.startedAt) || 0) - (Number(b.startedAt) || 0);
     });
 
-    // Rebuild from scratch — assign every car using the same findBestSlot
     const assignedCounts: Record<number, number> = {};
     const updates: { id: string; maxDays: number }[] = [];
     const newCarsState = [...carsRef.current];
@@ -277,7 +300,7 @@ export function AdsDashboard() {
       const daysIn = calculateDaysInAd(car.startedAt);
 
       // Use the SAME findBestSlot that auto-add uses
-      const bestOffset = findBestSlot(assignedCounts, baseDays, targetPerDay);
+      const bestOffset = findBestSlot(assignedCounts, baseDays, targetPerDay, daysIn);
       assignedCounts[bestOffset] = (assignedCounts[bestOffset] || 0) + 1;
       
       const newMaxDays = bestOffset + daysIn;
