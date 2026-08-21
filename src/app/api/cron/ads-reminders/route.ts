@@ -32,13 +32,22 @@ export async function GET(request: Request) {
 
     const rk1DaysLimit = Number(adsSettings?.rk1Days) || 17;
     const rk2DaysLimit = Number(adsSettings?.rk2Days) || 14;
+    const targetPerDay = Number(adsSettings?.targetCarsPerDay) || 3;
     const isActive = adsSettings?.isActive !== undefined ? adsSettings.isActive : true;
 
     if (!isActive && !isForce) {
       return NextResponse.json({ success: true, message: 'Ads notifications are inactive in settings.' });
     }
 
-    // 3. Получаем все активные авто из таблицы ad_cars в Neon DB
+    // 3. Get total catalog cars count for smart base days calculation
+    const catalogCountRows = await sql`
+      SELECT COUNT(*) as count FROM catalog_cars WHERE is_active = true
+    `;
+    const totalCatalogCars = Number(catalogCountRows[0]?.count) || 75;
+    // Smart auto-calculated base days: totalCatalog / targetPerDay / 2 campaigns
+    const autoBaseDays = Math.max(7, Math.ceil(totalCatalogCars / targetPerDay / 2));
+
+    // 4. Получаем все активные авто из таблицы ad_cars в Neon DB
     const carRows = await sql`
       SELECT id, data FROM ad_cars
     `;
@@ -58,7 +67,8 @@ export async function GET(request: Request) {
       const daysInAd = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 
       const campaign = car.campaign as 'rk1' | 'rk2';
-      const limitDays = Number(car.maxDays) || (campaign === 'rk1' ? rk1DaysLimit : rk2DaysLimit);
+      // Use car's own maxDays first, then auto-calculated base days as fallback
+      const limitDays = Number(car.maxDays) || autoBaseDays;
 
       // Проверяем, наступил ли срок ротации
       if (daysInAd >= limitDays) {

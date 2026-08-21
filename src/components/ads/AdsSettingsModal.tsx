@@ -13,13 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { AdsSettings } from "@/lib/types";
-import { Settings, Bell, Send, MessageSquare } from "lucide-react";
+import { Settings, Bell, Send, MessageSquare, Sparkles } from "lucide-react";
 
 interface AdsSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   settings: AdsSettings;
   onSaveSettings: (settings: Partial<AdsSettings>) => Promise<void>;
+  totalCatalogCars?: number;
 }
 
 export function AdsSettingsModal({
@@ -27,9 +28,8 @@ export function AdsSettingsModal({
   onClose,
   settings,
   onSaveSettings,
+  totalCatalogCars = 0,
 }: AdsSettingsModalProps) {
-  const [rk1Days, setRk1Days] = useState<number>(settings.rk1Days || 17);
-  const [rk2Days, setRk2Days] = useState<number>(settings.rk2Days || 14);
   const [targetCarsPerDay, setTargetCarsPerDay] = useState<number>(settings.targetCarsPerDay || 3);
   const [botToken, setBotToken] = useState<string>(settings.botToken || "");
   const [chatId, setChatId] = useState<string>(settings.chatId || "");
@@ -42,8 +42,6 @@ export function AdsSettingsModal({
 
   useEffect(() => {
     if (isOpen) {
-      setRk1Days(settings.rk1Days || 17);
-      setRk2Days(settings.rk2Days || 14);
       setTargetCarsPerDay(settings.targetCarsPerDay || 3);
       setBotToken(settings.botToken || "");
       setChatId(settings.chatId || "");
@@ -52,13 +50,16 @@ export function AdsSettingsModal({
     }
   }, [isOpen, settings]);
 
+  // Auto-calculated optimal days per stint
+  const autoBaseDays = totalCatalogCars > 0 && targetCarsPerDay > 0
+    ? Math.max(7, Math.ceil(totalCatalogCars / targetCarsPerDay / 2))
+    : 14;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setIsSaving(true);
       await onSaveSettings({
-        rk1Days: Number(rk1Days) || 17,
-        rk2Days: Number(rk2Days) || 14,
         targetCarsPerDay: Number(targetCarsPerDay) || 3,
         botToken: botToken.trim() || undefined,
         chatId: chatId.trim() || undefined,
@@ -109,47 +110,9 @@ export function AdsSettingsModal({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
           <div className="space-y-4">
-            {/* Days Limits */}
+            {/* Smart Balance Settings */}
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-zinc-700">
-                    Срок РК 1
-                  </Label>
-                  <div className="flex items-center gap-1.5">
-                    <Input
-                      type="number"
-                      min="1"
-                      max="90"
-                      required
-                      value={rk1Days}
-                      onChange={(e) => setRk1Days(Number(e.target.value))}
-                      className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9"
-                    />
-                    <span className="text-xs text-zinc-500 font-medium">дней</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium text-zinc-700">
-                    Срок РК 2
-                  </Label>
-                  <div className="flex items-center gap-1.5">
-                    <Input
-                      type="number"
-                      min="1"
-                      max="90"
-                      required
-                      value={rk2Days}
-                      onChange={(e) => setRk2Days(Number(e.target.value))}
-                      className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9"
-                    />
-                    <span className="text-xs text-zinc-500 font-medium">дней</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-1.5 pt-2 border-t border-zinc-100">
+              <div className="space-y-1.5">
                 <Label className="text-xs font-medium text-zinc-700">
                   Баланс: Автомобилей в день (Цель)
                 </Label>
@@ -164,8 +127,25 @@ export function AdsSettingsModal({
                     className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9 w-24"
                   />
                   <span className="text-[10px] text-zinc-500 leading-tight">
-                    Алгоритм распределения попытается установить такие сроки,<br/>чтобы каждый день истекало не больше указанного кол-ва машин.
+                    Максимум авто, которые могут выгорать в один день.
                   </span>
+                </div>
+              </div>
+
+              {/* Auto-calculated info box */}
+              <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-xl space-y-1.5">
+                <div className="text-xs font-semibold text-amber-800 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Умный алгоритм
+                </div>
+                <div className="text-[11px] text-amber-700 leading-relaxed">
+                  Система автоматически рассчитывает оптимальный срок для каждой машины.
+                  <br />
+                  <span className="font-semibold">
+                    Сейчас: {totalCatalogCars} авто на сайте ÷ {targetCarsPerDay} в день ÷ 2 кампании = ~{autoBaseDays} дней на одну кампанию.
+                  </span>
+                  <br />
+                  Алгоритм балансировки автоматически раздвигает даты, чтобы каждый день было ровно не более {targetCarsPerDay} авто.
                 </div>
               </div>
             </div>

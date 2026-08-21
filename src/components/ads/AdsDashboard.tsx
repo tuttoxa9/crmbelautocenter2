@@ -192,39 +192,46 @@ export function AdsDashboard() {
     loadData();
   }, []);
 
-  // Staggering Engine: Calculate optimal days to balance rotation load
+  // Smart Staggering Engine: auto-calculates base days from catalog size
+  const getAutoBaseDays = () => {
+    const totalCatalog = catalogCars.length || 1;
+    const targetPerDay = settings.targetCarsPerDay || 3;
+    // Full cycle = totalCatalog / targetPerDay, each stint = cycle / 2
+    return Math.max(7, Math.ceil(totalCatalog / targetPerDay / 2));
+  };
+
   const calculateOptimalMaxDays = (targetCampaign: AdCampaignType, currentCarsList: AdCar[]) => {
-    const defaultDays = targetCampaign === "rk1" ? settings.rk1Days : targetCampaign === "rk2" ? settings.rk2Days : 0;
-    if (defaultDays === 0) return 0; // for waiting_video
+    if (targetCampaign === "waiting_video" || targetCampaign === "ready_for_ads") return 0;
     
+    const baseDays = getAutoBaseDays();
     const targetPerDay = settings.targetCarsPerDay || 3;
     const activeAdCars = currentCarsList.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
     
     // Count expirations per day offset
     const expCounts: Record<number, number> = {};
     activeAdCars.forEach(c => {
-      const limitDays = c.maxDays || (c.campaign === "rk1" ? settings.rk1Days : settings.rk2Days);
+      const limitDays = c.maxDays || baseDays;
       const daysIn = calculateDaysInAd(c.startedAt);
       const offset = Math.max(0, limitDays - daysIn);
       expCounts[offset] = (expCounts[offset] || 0) + 1;
     });
 
-    // Spiral search: check base day, then +/- 1, +/- 2, up to max deviation
-    const MAX_DEVIATION = 14;
+    // Spiral search around baseDays, expanding outward
+    const MAX_DEVIATION = baseDays;
     for (let radius = 0; radius <= MAX_DEVIATION; radius++) {
       for (const sign of [1, -1]) {
         if (radius === 0 && sign === -1) continue;
-        const testOffset = defaultDays + (radius * sign);
+        const testOffset = baseDays + (radius * sign);
         if (testOffset < 1) continue;
         
         const count = expCounts[testOffset] || 0;
         if (count < targetPerDay) {
-          return testOffset; // Found an optimal slot
+          return testOffset;
         }
       }
     }
     
-    return defaultDays; // Fallback if fully saturated
+    return baseDays; // Fallback
   };
 
   // Actions
@@ -299,12 +306,13 @@ export function AdsDashboard() {
 
   const handleBalanceTimeline = async () => {
     const targetPerDay = settings.targetCarsPerDay || 3;
+    const baseDays = getAutoBaseDays();
     const activeCars = carsRef.current.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
     
     // Sort cars by current days left (closest to expiring first)
     const sortedCars = [...activeCars].sort((a, b) => {
-      const aLeft = (a.maxDays || 14) - calculateDaysInAd(a.startedAt);
-      const bLeft = (b.maxDays || 14) - calculateDaysInAd(b.startedAt);
+      const aLeft = (a.maxDays || baseDays) - calculateDaysInAd(a.startedAt);
+      const bLeft = (b.maxDays || baseDays) - calculateDaysInAd(b.startedAt);
       return aLeft - bLeft;
     });
 
@@ -314,17 +322,17 @@ export function AdsDashboard() {
 
     for (const car of sortedCars) {
       const daysIn = calculateDaysInAd(car.startedAt);
-      const currentOffset = Math.max(0, (car.maxDays || 14) - daysIn);
+      const currentOffset = Math.max(0, (car.maxDays || baseDays) - daysIn);
       
       let bestOffset = currentOffset;
       let found = false;
       
       // Spiral search around the current offset
-      for (let radius = 0; radius <= 60; radius++) {
+      for (let radius = 0; radius <= baseDays * 2; radius++) {
         for (const sign of [1, -1]) {
           if (radius === 0 && sign === -1) continue;
           const testOffset = currentOffset + (radius * sign);
-          if (testOffset < 0) continue; // Can't expire in the past more than offset 0 UI-wise, but mathematically we could. Let's keep it >= 0 for UI clarity.
+          if (testOffset < 0) continue;
           
           if ((assignedCounts[testOffset] || 0) < targetPerDay) {
             bestOffset = testOffset;
@@ -335,14 +343,13 @@ export function AdsDashboard() {
         if (found) break;
       }
       
-      if (!found) bestOffset = currentOffset; // Fallback
+      if (!found) bestOffset = currentOffset;
       assignedCounts[bestOffset] = (assignedCounts[bestOffset] || 0) + 1;
       
       const newMaxDays = bestOffset + daysIn;
       if (newMaxDays !== car.maxDays && car.id) {
         updates.push({ id: car.id, maxDays: newMaxDays });
         
-        // Update in new state array
         const idx = newCarsState.findIndex(c => c.id === car.id);
         if (idx !== -1) {
           newCarsState[idx] = { ...newCarsState[idx], maxDays: newMaxDays };
@@ -356,18 +363,15 @@ export function AdsDashboard() {
     }
 
     try {
-      // Optimistic UI update
       carsRef.current = newCarsState;
       setCars(newCarsState);
       
-      // Batch API updates
       await Promise.all(updates.map(u => updateAdCar(u.id, { maxDays: u.maxDays })));
       
       showToast(`Сбалансировано ${updates.length} авто!`);
     } catch (err: any) {
       console.error("Error balancing timeline:", err);
       showToast("Ошибка при балансировке", "error");
-      // Could revert state here if needed, but optimistic is usually fine
     }
   };
 
@@ -2015,8 +2019,8 @@ export function AdsDashboard() {
         onClose={() => setIsAddModalOpen(false)}
         onAddCar={handleAddCar}
         existingCarIds={cars.map((c) => c.carId).filter(Boolean) as string[]}
-        defaultRk1Days={settings.rk1Days}
-        defaultRk2Days={settings.rk2Days}
+        defaultRk1Days={getAutoBaseDays()}
+        defaultRk2Days={getAutoBaseDays()}
       />
 
       <AdsSettingsModal
@@ -2024,6 +2028,7 @@ export function AdsDashboard() {
         onClose={() => setIsSettingsModalOpen(false)}
         settings={settings}
         onSaveSettings={handleSaveSettings}
+        totalCatalogCars={catalogCars.length}
       />
 
       <DailyTasksModal
