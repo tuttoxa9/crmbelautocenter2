@@ -138,14 +138,24 @@ export function AdsSettingsModal({
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   Умный алгоритм
                 </div>
-                <div className="text-[11px] text-amber-700 leading-relaxed">
-                  Система автоматически рассчитывает оптимальный срок для каждой машины.
-                  <br />
-                  <span className="font-semibold">
-                    Сейчас: {totalCatalogCars} авто на сайте ÷ {targetCarsPerDay} в день ÷ 2 кампании = ~{autoBaseDays} дней на одну кампанию.
-                  </span>
-                  <br />
-                  Алгоритм балансировки автоматически раздвигает даты, чтобы каждый день было ровно не более {targetCarsPerDay} авто.
+                <div className="text-[11px] text-amber-700 leading-relaxed space-y-1">
+                  <p>
+                    Система автоматически рассчитывает оптимальный срок для каждой машины.
+                  </p>
+                  <p className="font-semibold">
+                    {totalCatalogCars} авто ÷ {targetCarsPerDay} в день ÷ 2 кампании = ~{autoBaseDays} дней на одну кампанию.
+                  </p>
+                  <p>
+                    Полный цикл ротации: ~{autoBaseDays * 2} дней (РК 1 → РК 2 → снова РК 1).
+                  </p>
+                  <div className="pt-1.5 mt-1.5 border-t border-amber-200/60">
+                    <span className="font-semibold text-amber-900">💡 Рекомендация:</span>{" "}
+                    при {totalCatalogCars} авто на сайте оптимально снимать{" "}
+                    <span className="font-bold text-amber-900">
+                      {Math.max(2, Math.ceil(totalCatalogCars / 30))}–{Math.max(3, Math.ceil(totalCatalogCars / 20))}
+                    </span>{" "}
+                    авто/день (цикл 20–30 дней).
+                  </div>
                 </div>
               </div>
             </div>
