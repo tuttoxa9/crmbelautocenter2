@@ -1,15 +1,16 @@
 import React, { useMemo } from "react";
 import { AdCar, AdsSettings } from "@/lib/types";
 import { calculateDaysInAd } from "@/lib/services/adsService";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Wand2 } from "lucide-react";
 
 interface RotationTimelineProps {
   cars: AdCar[];
   settings: AdsSettings;
   onDayClick?: (offset: number, date: Date, dayCars: AdCar[]) => void;
+  onBalance?: () => void;
 }
 
-export function RotationTimeline({ cars, settings, onDayClick }: RotationTimelineProps) {
+export function RotationTimeline({ cars, settings, onDayClick, onBalance }: RotationTimelineProps) {
   const targetPerDay = settings.targetCarsPerDay || 3;
   const DAYS_TO_SHOW = 30; // 30 дней вперед
 
@@ -63,7 +64,19 @@ export function RotationTimeline({ cars, settings, onDayClick }: RotationTimelin
           <CalendarDays className="w-4 h-4 text-zinc-500" />
           <span className="text-xs font-semibold text-zinc-800">График ротации (план съёмок)</span>
         </div>
-        <span className="text-[10px] text-zinc-400 font-medium hidden sm:inline-block">Нажмите на любой день, чтобы увидеть список машин</span>
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] text-zinc-400 font-medium hidden sm:inline-block">Нажмите на любой день, чтобы увидеть список машин</span>
+          {onBalance && (
+            <button 
+              onClick={onBalance}
+              className="flex items-center gap-1 bg-white hover:bg-zinc-100 border border-zinc-200 text-zinc-700 px-2 py-1 rounded-md text-[10px] font-semibold transition-colors shadow-2xs"
+              title="Автоматически распределить нагрузку (макс 3 авто в день)"
+            >
+              <Wand2 className="w-3 h-3 text-amber-500" />
+              Сбалансировать
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Compact Table Timeline */}

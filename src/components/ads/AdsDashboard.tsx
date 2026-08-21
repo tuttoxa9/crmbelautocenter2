@@ -297,6 +297,80 @@ export function AdsDashboard() {
     showToast(`Переведен в ${targetLabel}: ${car.name}`);
   };
 
+  const handleBalanceTimeline = async () => {
+    const targetPerDay = settings.targetCarsPerDay || 3;
+    const activeCars = carsRef.current.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
+    
+    // Sort cars by current days left (closest to expiring first)
+    const sortedCars = [...activeCars].sort((a, b) => {
+      const aLeft = (a.maxDays || 14) - calculateDaysInAd(a.startedAt);
+      const bLeft = (b.maxDays || 14) - calculateDaysInAd(b.startedAt);
+      return aLeft - bLeft;
+    });
+
+    const assignedCounts: Record<number, number> = {};
+    const updates: { id: string; maxDays: number }[] = [];
+    const newCarsState = [...carsRef.current];
+
+    for (const car of sortedCars) {
+      const daysIn = calculateDaysInAd(car.startedAt);
+      const currentOffset = Math.max(0, (car.maxDays || 14) - daysIn);
+      
+      let bestOffset = currentOffset;
+      let found = false;
+      
+      // Spiral search around the current offset
+      for (let radius = 0; radius <= 60; radius++) {
+        for (const sign of [1, -1]) {
+          if (radius === 0 && sign === -1) continue;
+          const testOffset = currentOffset + (radius * sign);
+          if (testOffset < 0) continue; // Can't expire in the past more than offset 0 UI-wise, but mathematically we could. Let's keep it >= 0 for UI clarity.
+          
+          if ((assignedCounts[testOffset] || 0) < targetPerDay) {
+            bestOffset = testOffset;
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+      
+      if (!found) bestOffset = currentOffset; // Fallback
+      assignedCounts[bestOffset] = (assignedCounts[bestOffset] || 0) + 1;
+      
+      const newMaxDays = bestOffset + daysIn;
+      if (newMaxDays !== car.maxDays && car.id) {
+        updates.push({ id: car.id, maxDays: newMaxDays });
+        
+        // Update in new state array
+        const idx = newCarsState.findIndex(c => c.id === car.id);
+        if (idx !== -1) {
+          newCarsState[idx] = { ...newCarsState[idx], maxDays: newMaxDays };
+        }
+      }
+    }
+
+    if (updates.length === 0) {
+      showToast("График уже идеально сбалансирован!");
+      return;
+    }
+
+    try {
+      // Optimistic UI update
+      carsRef.current = newCarsState;
+      setCars(newCarsState);
+      
+      // Batch API updates
+      await Promise.all(updates.map(u => updateAdCar(u.id, { maxDays: u.maxDays })));
+      
+      showToast(`Сбалансировано ${updates.length} авто!`);
+    } catch (err: any) {
+      console.error("Error balancing timeline:", err);
+      showToast("Ошибка при балансировке", "error");
+      // Could revert state here if needed, but optimistic is usually fine
+    }
+  };
+
   const handleSaveCarDays = async (car: AdCar, newDays: number) => {
     if (!car.id || !newDays || newDays <= 0) return;
     try {
@@ -707,6 +781,7 @@ export function AdsDashboard() {
               cars={cars} 
               settings={settings} 
               onDayClick={(offset, date, dayCars) => setSelectedDayTasks({ isOpen: true, date, offset, cars: dayCars })}
+              onBalance={handleBalanceTimeline}
             />
 
             {/* 4 Columns Board */}
