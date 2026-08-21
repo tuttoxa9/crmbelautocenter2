@@ -596,7 +596,7 @@ export function AdsDashboard() {
   return (
     <div className="flex flex-col min-h-screen bg-[#F8F9FA] text-zinc-900 font-sans">
       {/* Top Header */}
-      <div className="bg-white border-b border-zinc-200/80 px-6 py-4 sticky top-0 z-20 shadow-2xs">
+      <div className="bg-white border-b border-zinc-200/80 px-3 sm:px-6 py-4 sticky top-0 z-20 shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-[1600px] mx-auto">
           <div>
             <div className="flex items-center gap-2.5">
@@ -615,7 +615,7 @@ export function AdsDashboard() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* View Mode Switcher */}
             <div className="flex bg-zinc-100 p-1 rounded-xl border border-zinc-200/60">
               <button
@@ -674,7 +674,7 @@ export function AdsDashboard() {
           <div className="space-y-5">
             {/* Board Campaign Navigation & Search Bar */}
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-white p-3 rounded-2xl border border-zinc-200/80 shadow-2xs">
-              <div className="flex items-center gap-1.5 bg-zinc-100/80 p-1 rounded-xl">
+              <div className="flex items-center gap-1.5 bg-zinc-100/80 p-1 rounded-xl overflow-x-auto flex-nowrap">
                 <button
                   type="button"
                   onClick={() => setBoardCampaign("rk1")}
@@ -1035,7 +1035,7 @@ export function AdsDashboard() {
                                           download
                                           target="_blank"
                                           rel="noreferrer"
-                                          className="p-1 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md transition-colors mr-1"
+                                          className="p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-md transition-colors mr-1"
                                           title="Скачать обложку"
                                         >
                                           <ImageIcon className="w-3.5 h-3.5" />
@@ -1047,7 +1047,7 @@ export function AdsDashboard() {
                                           download
                                           target="_blank"
                                           rel="noreferrer"
-                                          className="p-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors mr-1"
+                                          className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors mr-1"
                                           title="Скачать видео"
                                         >
                                           <Download className="w-3.5 h-3.5" />
@@ -1058,7 +1058,7 @@ export function AdsDashboard() {
                                         <button
                                           type="button"
                                           onClick={() => handleSwitchCampaign(car, "ready_for_ads")}
-                                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] h-6 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] h-7 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
                                         >
                                           <CheckCircle2 className="w-2.5 h-2.5" />
                                           Отснято
@@ -1070,7 +1070,7 @@ export function AdsDashboard() {
                                           <button
                                             type="button"
                                             onClick={() => handleSwitchCampaign(car, "rk1")}
-                                            className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-6 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                            className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-7 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
                                           >
                                             <Play className="w-2.5 h-2.5 fill-current" />
                                             В РК 1
@@ -1078,7 +1078,7 @@ export function AdsDashboard() {
                                           <button
                                             type="button"
                                             onClick={() => handleSwitchCampaign(car, "rk2")}
-                                            className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-6 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                            className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-7 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
                                           >
                                             <Play className="w-2.5 h-2.5 fill-current" />
                                             В РК 2
@@ -1090,7 +1090,7 @@ export function AdsDashboard() {
                                         <button
                                           type="button"
                                           onClick={() => handleSwitchCampaign(car, "rk2")}
-                                          className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-6 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                          className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-7 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
                                         >
                                           <ArrowRight className="w-2.5 h-2.5" />
                                           В РК 2
@@ -1101,7 +1101,7 @@ export function AdsDashboard() {
                                         <button
                                           type="button"
                                           onClick={() => handleSwitchCampaign(car, "rk1")}
-                                          className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-6 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+                                          className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-7 px-2 rounded-md font-semibold flex items-center gap-1 transition-colors shadow-2xs"
                                         >
                                           <ArrowLeft className="w-2.5 h-2.5" />
                                           В РК 1
@@ -1113,14 +1113,14 @@ export function AdsDashboard() {
                                           <button
                                             type="button"
                                             onClick={() => handleSwitchCampaign(car, "rk1")}
-                                            className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-6 px-1.5 rounded-md font-semibold"
+                                            className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] h-7 px-1.5 rounded-md font-semibold"
                                           >
                                             В РК 1
                                           </button>
                                           <button
                                             type="button"
                                             onClick={() => handleSwitchCampaign(car, "rk2")}
-                                            className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-6 px-1.5 rounded-md font-semibold"
+                                            className="bg-purple-600 hover:bg-purple-500 text-white text-[10px] h-7 px-1.5 rounded-md font-semibold"
                                           >
                                             В РК 2
                                           </button>
@@ -1137,7 +1137,7 @@ export function AdsDashboard() {
                                               setConfirmDeleteId(null);
                                               setConfirmResetId(confirmResetId === car.id ? null : car.id || null);
                                             }}
-                                            className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
+                                            className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md transition-colors"
                                             title="Сбросить таймер на 0"
                                           >
                                             <RotateCw className="w-3 h-3" />
@@ -1177,7 +1177,7 @@ export function AdsDashboard() {
                                             setConfirmResetId(null);
                                             setConfirmDeleteId(confirmDeleteId === car.id ? null : car.id || null);
                                           }}
-                                          className="p-1 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                                          className="p-1.5 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
                                           title="Удалить из рекламы"
                                         >
                                           <Trash2 className="w-3 h-3" />
@@ -1849,7 +1849,7 @@ export function AdsDashboard() {
                           )}
 
                           {car.campaign === "waiting_video" && (
-                            <div className="grid grid-cols-3 gap-1.5">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
                               <Button
                                 size="sm"
                                 onClick={() => handleSwitchCampaign(car, "ready_for_ads")}
@@ -1995,7 +1995,7 @@ export function AdsDashboard() {
 
       {/* Floating Internal Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-3 fade-in duration-200">
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 max-w-full sm:max-w-sm z-50 animate-in slide-in-from-bottom-3 fade-in duration-200">
           <div
             className={`px-4 py-3 rounded-2xl shadow-xl border text-xs font-medium flex items-center gap-2.5 ${
               toastMessage.type === "error"

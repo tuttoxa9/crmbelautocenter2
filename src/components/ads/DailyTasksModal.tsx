@@ -25,20 +25,20 @@ export function DailyTasksModal({ isOpen, onClose, date, offset, cars }: DailyTa
     : `План на ${date.getDate()} ${months[date.getMonth()]}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-900/40 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
           <div className="flex items-center gap-2 text-zinc-900">
             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
               <CalendarDays className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bold text-lg leading-tight">{title}</h2>
-              <p className="text-xs text-zinc-500 font-medium">Нужно отснять: {cars.length} авто</p>
+              <h2 className="font-bold text-base sm:text-lg leading-tight">{title}</h2>
+              <p className="text-[10px] sm:text-xs text-zinc-500 font-medium">Нужно отснять: {cars.length} авто</p>
             </div>
           </div>
           <button
@@ -50,7 +50,7 @@ export function DailyTasksModal({ isOpen, onClose, date, offset, cars }: DailyTa
         </div>
 
         {/* Content */}
-        <div className="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+        <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-6">
           {cars.length === 0 ? (
             <div className="text-center py-10 text-zinc-500">
               <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mx-auto mb-3">
