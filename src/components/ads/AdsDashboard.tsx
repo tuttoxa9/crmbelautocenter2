@@ -138,6 +138,12 @@ export function AdsDashboard() {
 
   const tierRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
+  const carsRef = useRef<AdCar[]>([]);
+
+  // Keep ref in sync for standard renders (but we also update it synchronously in handlers)
+  useEffect(() => {
+    carsRef.current = cars;
+  }, [cars]);
 
   const showToast = (text: string, type: "error" | "success" = "success") => {
     setToastMessage({ text, type });
@@ -187,12 +193,12 @@ export function AdsDashboard() {
   }, []);
 
   // Staggering Engine: Calculate optimal days to balance rotation load
-  const calculateOptimalMaxDays = (targetCampaign: AdCampaignType) => {
+  const calculateOptimalMaxDays = (targetCampaign: AdCampaignType, currentCarsList: AdCar[]) => {
     const defaultDays = targetCampaign === "rk1" ? settings.rk1Days : targetCampaign === "rk2" ? settings.rk2Days : 0;
     if (defaultDays === 0) return 0; // for waiting_video
     
     const targetPerDay = settings.targetCarsPerDay || 3;
-    const activeAdCars = cars.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
+    const activeAdCars = currentCarsList.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
     
     // Count expirations per day offset
     const expCounts: Record<number, number> = {};
@@ -204,7 +210,7 @@ export function AdsDashboard() {
     });
 
     // Spiral search: check base day, then +/- 1, +/- 2, up to max deviation
-    const MAX_DEVIATION = 5;
+    const MAX_DEVIATION = 14;
     for (let radius = 0; radius <= MAX_DEVIATION; radius++) {
       for (const sign of [1, -1]) {
         if (radius === 0 && sign === -1) continue;
@@ -233,10 +239,11 @@ export function AdsDashboard() {
     catalogCar: CatalogCar,
     targetCampaign: AdCampaignType
   ) => {
+    if (addingCarId) return;
     try {
       setAddingCarId(catalogCar.id);
       const tier = calculatePriceTier(catalogCar.priceUsd);
-      const maxDays = calculateOptimalMaxDays(targetCampaign);
+      const maxDays = calculateOptimalMaxDays(targetCampaign, carsRef.current);
 
       const newCar = await createAdCar({
         carId: catalogCar.id,
@@ -250,8 +257,11 @@ export function AdsDashboard() {
         photoUrl: catalogCar.photoUrl,
       });
 
-      setCars((prev) => [newCar, ...prev]);
-      const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : "Очередь съёмки";
+      // Synchronously update ref for next rapid action
+      carsRef.current = [newCar, ...carsRef.current];
+      setCars(carsRef.current);
+      
+      const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : "Ожидают съёмки";
       showToast(`"${catalogCar.name}" добавлен в ${targetLabel}`);
     } catch (err: any) {
       console.error("Error quick adding car:", err);
@@ -264,27 +274,27 @@ export function AdsDashboard() {
   const handleSwitchCampaign = async (car: AdCar, targetCampaign: AdCampaignType) => {
     if (!car.id) return;
     
-    // Auto-calculate optimal days if moving TO an active ad campaign
-    // If we're keeping custom days, we might want to respect them, but since we are switching campaigns, 
-    // it's better to reset to optimal for the new campaign.
-    const customDays = calculateOptimalMaxDays(targetCampaign);
+    // Auto-calculate optimal days using the REAL-TIME ref to prevent race conditions on rapid clicks
+    const customDays = calculateOptimalMaxDays(targetCampaign, carsRef.current);
+    
+    // Optimistically update the ref immediately
+    carsRef.current = carsRef.current.map((c) =>
+      c.id === car.id
+        ? {
+            ...c,
+            campaign: targetCampaign,
+            startedAt: Date.now(),
+            maxDays: customDays,
+            lastAlertSentAt: null as any,
+          }
+        : c
+    );
+    setCars([...carsRef.current]);
     
     await switchAdCarCampaign(car.id, targetCampaign, customDays);
-    setCars((prev) =>
-      prev.map((c) =>
-        c.id === car.id
-          ? {
-              ...c,
-              campaign: targetCampaign,
-              startedAt: Date.now(),
-              maxDays: customDays,
-              lastAlertSentAt: null as any,
-            }
-          : c
-      )
-    );
-    const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : "Очередь съёмки";
-    showToast(`Перенесено в ${targetLabel}: ${car.name}`);
+    
+    const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : "Ожидают съёмки";
+    showToast(`Переведен в ${targetLabel}: ${car.name}`);
   };
 
   const handleSaveCarDays = async (car: AdCar, newDays: number) => {
