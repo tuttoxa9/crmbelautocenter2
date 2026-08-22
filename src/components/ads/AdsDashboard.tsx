@@ -203,23 +203,20 @@ export function AdsDashboard() {
   // ── UNIFIED REALISTIC SLOT FINDER ──
   // Finds the best expiration day offset for a car based on:
   // 1. How long it has ALREADY been running (daysIn).
-  // 2. Minimum lifespan for an ad creative (cannot expire in 1-4 days if just added!).
-  // 3. Staggers around natural expiration (baseDays - daysIn) with max targetPerDay cars/day.
+  // 2. Minimum lifespan for an ad creative (cannot expire too early).
+  // 3. Staggers around natural expiration with max targetPerDay cars/day.
   const findBestSlot = (
     expCounts: Record<number, number>,
     baseDays: number,
     targetPerDay: number,
     daysIn: number
   ): number => {
-    // A video creative must run for at least minLifespan total days
     const minLifespan = Math.max(7, Math.floor(baseDays * 0.75));
-    // Natural remaining days from today until standard expiration
     const naturalOffset = Math.max(0, baseDays - daysIn);
 
     let bestOffset = naturalOffset;
     let found = false;
 
-    // 1. Search in spiral around naturalOffset: natural, +1, -1, +2, -2, ...
     for (let r = 0; r <= 35; r++) {
       for (const sign of [0, 1, -1]) {
         if (r === 0 && sign !== 0) continue;
@@ -227,7 +224,6 @@ export function AdsDashboard() {
 
         const testOffset = naturalOffset + (r * sign);
         if (testOffset < 0) continue;
-        // Total lifespan in campaign must be >= minLifespan (unless already overdue)
         if (daysIn < minLifespan && daysIn + testOffset < minLifespan) continue;
 
         if ((expCounts[testOffset] || 0) < targetPerDay) {
@@ -239,7 +235,6 @@ export function AdsDashboard() {
       if (found) break;
     }
 
-    // 2. Fallback: if all nearby slots are full, find the slot with lowest count >= minLifespan
     if (!found) {
       let minCount = Infinity;
       let fallbackOffset = naturalOffset;
@@ -256,86 +251,72 @@ export function AdsDashboard() {
     return bestOffset;
   };
 
-  // Build expiration-count map from a list of cars
-  const buildExpCounts = (carsList: AdCar[], baseDays: number): Record<number, number> => {
-    const expCounts: Record<number, number> = {};
-    const activeAdCars = carsList.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
-    activeAdCars.forEach(c => {
-      const limitDays = c.maxDays || baseDays;
-      const daysIn = calculateDaysInAd(c.startedAt);
-      const offset = Math.max(0, limitDays - daysIn);
-      expCounts[offset] = (expCounts[offset] || 0) + 1;
-    });
-    return expCounts;
-  };
-
-  const calculateOptimalMaxDays = (targetCampaign: AdCampaignType, currentCarsList: AdCar[], carStartedAt?: number) => {
-    if (targetCampaign === "waiting_video" || targetCampaign === "ready_for_ads") return 0;
-    
+  // ── CORE: recomputes ALL active cars' maxDays from scratch ──
+  // This is THE single source of truth for the timeline.
+  // Used by: balance button, auto-add, and auto-switch.
+  const autoRebalanceAll = (carsList: AdCar[]): { rebalanced: AdCar[]; updates: { id: string; maxDays: number }[] } => {
     const baseDays = getAutoBaseDays();
     const targetPerDay = settings.targetCarsPerDay || 3;
-    const expCounts = buildExpCounts(currentCarsList, baseDays);
-    const daysIn = carStartedAt ? calculateDaysInAd(carStartedAt) : 0;
-
-    const bestOffset = findBestSlot(expCounts, baseDays, targetPerDay, daysIn);
-    return daysIn + bestOffset;
-  };
-
-  // ── BALANCE BUTTON: re-runs the SAME findBestSlot for every active car ──
-  const handleBalanceTimeline = async () => {
-    const targetPerDay = settings.targetCarsPerDay || 3;
-    const baseDays = getAutoBaseDays();
-    const activeCars = carsRef.current.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
+    const activeCars = carsList.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
     
-    // Sort cars by startedAt ascending (cars that started earlier expire earlier)
-    const sortedCars = [...activeCars].sort((a, b) => {
-      return (Number(a.startedAt) || 0) - (Number(b.startedAt) || 0);
-    });
+    // Sort by startedAt ascending — earlier cars expire first
+    const sortedCars = [...activeCars].sort((a, b) =>
+      (Number(a.startedAt) || 0) - (Number(b.startedAt) || 0)
+    );
 
     const assignedCounts: Record<number, number> = {};
     const updates: { id: string; maxDays: number }[] = [];
-    const newCarsState = [...carsRef.current];
+    let result = [...carsList];
 
     for (const car of sortedCars) {
       const daysIn = calculateDaysInAd(car.startedAt);
-
-      // Use the SAME findBestSlot that auto-add uses
       const bestOffset = findBestSlot(assignedCounts, baseDays, targetPerDay, daysIn);
       assignedCounts[bestOffset] = (assignedCounts[bestOffset] || 0) + 1;
-      
+
       const newMaxDays = bestOffset + daysIn;
       if (newMaxDays !== car.maxDays && car.id) {
         updates.push({ id: car.id, maxDays: newMaxDays });
-        
-        const idx = newCarsState.findIndex(c => c.id === car.id);
+        const idx = result.findIndex(c => c.id === car.id);
         if (idx !== -1) {
-          newCarsState[idx] = { ...newCarsState[idx], maxDays: newMaxDays };
+          result[idx] = { ...result[idx], maxDays: newMaxDays };
         }
       }
     }
 
+    return { rebalanced: result, updates };
+  };
+
+  // ── Apply rebalance: update ref, state, and API ──
+  const applyRebalance = async (rebalanced: AdCar[], updates: { id: string; maxDays: number }[], silent = false) => {
     if (updates.length === 0) {
-      showToast("График уже идеально сбалансирован!");
+      if (!silent) showToast("График уже идеально сбалансирован!");
       return;
     }
 
+    carsRef.current = rebalanced;
+    setCars(rebalanced);
+
     try {
-      carsRef.current = newCarsState;
-      setCars(newCarsState);
-      
       await Promise.all(updates.map(u => updateAdCar(u.id, { maxDays: u.maxDays })));
-      
-      showToast(`Сбалансировано ${updates.length} авто!`);
+      if (!silent) showToast(`Сбалансировано ${updates.length} авто!`);
     } catch (err: any) {
       console.error("Error balancing timeline:", err);
-      showToast("Ошибка при балансировке", "error");
+      if (!silent) showToast("Ошибка при балансировке", "error");
     }
+  };
+
+  // ── BALANCE BUTTON (manual trigger) ──
+  const handleBalanceTimeline = async () => {
+    const { rebalanced, updates } = autoRebalanceAll(carsRef.current);
+    await applyRebalance(rebalanced, updates, false);
   };
 
   // Actions
   const handleAddCar = async (carData: Omit<AdCar, "id" | "createdAt" | "updatedAt">) => {
     const newCar = await createAdCar(carData);
-    setCars((prev) => [newCar, ...prev]);
+    const updatedList = [newCar, ...carsRef.current];
+    const { rebalanced, updates } = autoRebalanceAll(updatedList);
+    await applyRebalance(rebalanced, updates, true);
     showToast(`Автомобиль "${carData.name}" добавлен в рекламу`);
   };
 
@@ -348,7 +329,6 @@ export function AdsDashboard() {
     try {
       setAddingCarId(catalogCar.id);
       const tier = calculatePriceTier(catalogCar.priceUsd);
-      const maxDays = calculateOptimalMaxDays(targetCampaign, carsRef.current);
 
       const newCar = await createAdCar({
         carId: catalogCar.id,
@@ -358,13 +338,14 @@ export function AdsDashboard() {
         priceTier: tier,
         campaign: targetCampaign,
         startedAt: Date.now(),
-        maxDays,
+        maxDays: getAutoBaseDays(), // temporary, will be rebalanced
         photoUrl: catalogCar.photoUrl,
       });
 
-      // Synchronously update ref for next rapid action
-      carsRef.current = [newCar, ...carsRef.current];
-      setCars(carsRef.current);
+      // Add car, then auto-rebalance the ENTIRE timeline
+      const updatedList = [newCar, ...carsRef.current];
+      const { rebalanced, updates } = autoRebalanceAll(updatedList);
+      await applyRebalance(rebalanced, updates, true);
       
       const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : "Ожидают съёмки";
       showToast(`"${catalogCar.name}" добавлен в ${targetLabel}`);
@@ -379,24 +360,38 @@ export function AdsDashboard() {
   const handleSwitchCampaign = async (car: AdCar, targetCampaign: AdCampaignType) => {
     if (!car.id) return;
     
-    // Auto-calculate optimal days using the REAL-TIME ref to prevent race conditions on rapid clicks
-    const customDays = calculateOptimalMaxDays(targetCampaign, carsRef.current);
-    
-    // Optimistically update the ref immediately
-    carsRef.current = carsRef.current.map((c) =>
+    // 1. Update the car's campaign in the list
+    const updatedList = carsRef.current.map((c) =>
       c.id === car.id
         ? {
             ...c,
             campaign: targetCampaign,
             startedAt: Date.now(),
-            maxDays: customDays,
+            maxDays: getAutoBaseDays(), // temporary, will be rebalanced
             lastAlertSentAt: null as any,
           }
         : c
     );
-    setCars([...carsRef.current]);
-    
-    await switchAdCarCampaign(car.id, targetCampaign, customDays);
+
+    // 2. Auto-rebalance the ENTIRE timeline (same logic as the button)
+    const { rebalanced, updates } = autoRebalanceAll(updatedList);
+
+    // 3. Update ref and UI immediately
+    carsRef.current = rebalanced;
+    setCars([...rebalanced]);
+
+    // 4. Get the car's FINAL rebalanced maxDays
+    const finalCar = rebalanced.find(c => c.id === car.id);
+    const finalMaxDays = finalCar?.maxDays || getAutoBaseDays();
+
+    // 5. API: save the campaign switch
+    await switchAdCarCampaign(car.id, targetCampaign, finalMaxDays);
+
+    // 6. API: save rebalanced maxDays for ALL other changed cars
+    const otherUpdates = updates.filter(u => u.id !== car.id);
+    if (otherUpdates.length > 0) {
+      await Promise.all(otherUpdates.map(u => updateAdCar(u.id, { maxDays: u.maxDays })));
+    }
     
     const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : "Ожидают съёмки";
     showToast(`Переведен в ${targetLabel}: ${car.name}`);
