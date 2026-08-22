@@ -6,12 +6,13 @@ import { CalendarDays, Wand2 } from "lucide-react";
 interface RotationTimelineProps {
   cars: AdCar[];
   settings: AdsSettings;
+  baseDays: number;
   onDayClick?: (offset: number, date: Date, dayCars: AdCar[]) => void;
   onBalance?: () => void;
 }
 
-export function RotationTimeline({ cars, settings, onDayClick, onBalance }: RotationTimelineProps) {
-  const targetPerDay = settings.targetCarsPerDay || 3;
+export function RotationTimeline({ cars, settings, baseDays, onDayClick, onBalance }: RotationTimelineProps) {
+  const targetPerDay = Number(settings.targetCarsPerDay || 3);
   const DAYS_TO_SHOW = 30; // 30 дней вперед
 
   // Aggregate expiration dates for next 30 days
@@ -25,7 +26,7 @@ export function RotationTimeline({ cars, settings, onDayClick, onBalance }: Rota
     // Precalculate counts by days-from-today
     const carsByDayOffset: Record<number, AdCar[]> = {};
     activeAdCars.forEach(car => {
-      const limitDays = car.maxDays || (car.campaign === "rk1" ? settings.rk1Days : settings.rk2Days);
+      const limitDays = car.maxDays || baseDays;
       const daysIn = calculateDaysInAd(car.startedAt);
       const daysLeft = Math.max(0, limitDays - daysIn);
       if (!carsByDayOffset[daysLeft]) carsByDayOffset[daysLeft] = [];

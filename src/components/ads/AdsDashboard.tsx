@@ -195,7 +195,7 @@ export function AdsDashboard() {
   // Smart Staggering Engine: auto-calculates base days from catalog size
   const getAutoBaseDays = () => {
     const totalCatalog = catalogCars.length || 1;
-    const targetPerDay = settings.targetCarsPerDay || 3;
+    const targetPerDay = Number(settings.targetCarsPerDay || 3);
     // Full cycle = totalCatalog / targetPerDay, each stint = cycle / 2
     return Math.max(7, Math.ceil(totalCatalog / targetPerDay / 2));
   };
@@ -268,7 +268,7 @@ export function AdsDashboard() {
     if (targetCampaign === "waiting_video" || targetCampaign === "ready_for_ads") return 0;
     
     const baseDays = getAutoBaseDays();
-    const targetPerDay = settings.targetCarsPerDay || 3;
+    const targetPerDay = Number(settings.targetCarsPerDay || 3);
     // Build snapshot of current timeline occupancy
     const expCounts = buildExpCounts(currentCarsList, baseDays);
     // New car starts now → daysIn = 0
@@ -280,7 +280,7 @@ export function AdsDashboard() {
   // Recomputes ALL active cars from scratch for perfect distribution.
   const handleBalanceTimeline = async () => {
     const baseDays = getAutoBaseDays();
-    const targetPerDay = settings.targetCarsPerDay || 3;
+    const targetPerDay = Number(settings.targetCarsPerDay || 3);
     const activeCars = carsRef.current.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
     
     const sortedCars = [...activeCars].sort((a, b) =>
@@ -804,6 +804,7 @@ export function AdsDashboard() {
             <RotationTimeline 
               cars={cars} 
               settings={settings} 
+              baseDays={getAutoBaseDays()}
               onDayClick={(offset, date, dayCars) => setSelectedDayTasks({ isOpen: true, date, offset, cars: dayCars })}
               onBalance={handleBalanceTimeline}
             />
