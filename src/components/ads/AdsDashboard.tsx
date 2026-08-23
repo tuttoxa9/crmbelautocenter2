@@ -314,7 +314,7 @@ export function AdsDashboard() {
     try {
       carsRef.current = newCarsState;
       setCars(newCarsState);
-      await Promise.all(updates.map(u => updateAdCar(u.id, { maxDays: u.maxDays })));
+      for (const u of updates) { await updateAdCar(u.id, { maxDays: u.maxDays }); }
       showToast(`Сбалансировано ${updates.length} авто!`);
     } catch (err: any) {
       console.error("Error balancing timeline:", err);
