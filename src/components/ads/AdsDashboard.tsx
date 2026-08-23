@@ -893,11 +893,12 @@ export function AdsDashboard() {
                                   ? settings.rk2Days
                                   : 0);
 
+                              const exactDaysInAd = car.startedAt ? Math.max(0, (Date.now() - car.startedAt) / (1000 * 60 * 60 * 24)) : 0;
                               const isExpired = car.campaign !== "waiting_video" && car.campaign !== "ready_for_ads" && daysInAd >= limitDays;
                               const progressPercent =
                                 car.campaign === "waiting_video" || car.campaign === "ready_for_ads" || limitDays === 0
                                   ? 0
-                                  : Math.min(100, Math.round((daysInAd / limitDays) * 100));
+                                  : Math.min(100, Math.max(2, (exactDaysInAd / limitDays) * 100));
 
                               return (
                                 <div
@@ -1613,11 +1614,12 @@ export function AdsDashboard() {
                       ? settings.rk2Days
                       : 0);
 
+                  const exactDaysInAd = car.startedAt ? Math.max(0, (Date.now() - car.startedAt) / (1000 * 60 * 60 * 24)) : 0;
                   const isExpired = car.campaign !== "waiting_video" && car.campaign !== "ready_for_ads" && daysInAd >= limitDays;
                   const progressPercent =
                     car.campaign === "waiting_video" || car.campaign === "ready_for_ads" || limitDays === 0
                       ? 0
-                      : Math.min(100, Math.round((daysInAd / limitDays) * 100));
+                      : Math.min(100, Math.max(2, (exactDaysInAd / limitDays) * 100));
 
                   return (
                     <div
