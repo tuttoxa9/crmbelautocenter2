@@ -10,9 +10,11 @@ function getMidnight(timestamp: number = Date.now()): number {
 export async function POST(request: Request) {
   try {
     let customTargetPerDay: number | undefined;
+    let customStartDate: number | undefined;
     try {
       const body = await request.json();
       if (body?.targetCarsPerDay) customTargetPerDay = Number(body.targetCarsPerDay);
+      if (body?.startDate) customStartDate = getMidnight(Number(body.startDate));
     } catch {
       // Empty body is okay
     }
@@ -50,6 +52,21 @@ export async function POST(request: Request) {
 
     const activeCars = allCars.filter((c: any) => c.campaign === 'rk1' || c.campaign === 'rk2');
 
+    // Find starting date for rebalance:
+    // If explicitly provided, use customStartDate.
+    // Otherwise, check if active cars are already scheduled to start at a future date (e.g. 30 August).
+    let startMidnight = todayMidnight;
+    if (customStartDate) {
+      startMidnight = customStartDate;
+    } else {
+      const futureTargets = activeCars
+        .map((c: any) => Number(c.targetRotationDate))
+        .filter((t: number) => t && t >= todayMidnight);
+      if (futureTargets.length > 0) {
+        startMidnight = Math.min(...futureTargets);
+      }
+    }
+
     // 3. Sort active cars by age (most seasoned/oldest cars first -> expire sooner)
     const sortedActive = [...activeCars].sort((a: any, b: any) => {
       const startedA = Number(a.startedAt) || (todayMidnight - 7 * 86400000);
@@ -59,15 +76,16 @@ export async function POST(request: Request) {
 
     const updatedCarsMap = new Map<string, any>();
 
-    // 4. Distribute evenly: exactly targetCarsPerDay per day
+    // 4. Distribute evenly: exactly targetCarsPerDay per day starting from startMidnight
     for (let i = 0; i < sortedActive.length; i++) {
       const car = sortedActive[i];
       const dayOffset = Math.floor(i / targetCarsPerDay);
-      const targetRotationDate = todayMidnight + dayOffset * 86400000;
+      const targetRotationDate = startMidnight + dayOffset * 86400000;
 
       const startedAt = Number(car.startedAt) || Date.now();
       const daysIn = Math.max(0, Math.floor((Date.now() - startedAt) / 86400000));
-      const maxDays = dayOffset + daysIn;
+      const daysLeftFromToday = Math.max(0, Math.round((targetRotationDate - todayMidnight) / 86400000));
+      const maxDays = daysIn + daysLeftFromToday;
 
       const updatedCarData = {
         ...car,
