@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { calculatePriceTier } from '@/lib/services/adsService';
+import {
+  calculatePriceTier,
+  getMinskDateKey,
+  minskDateKeyToTimestamp,
+  addDaysToDateKey,
+  getDateKeyDiffDays,
+} from '@/lib/services/adsService';
 import crypto from 'crypto';
 
 export async function GET() {
@@ -74,6 +80,8 @@ export async function POST(request: Request) {
     const campaign = body.campaign || 'rk1';
     const startedAt = body.startedAt || Date.now();
 
+    const todayKey = getMinskDateKey(Date.now());
+
     // Smart Slot Allocation if campaign is active (rk1 / rk2)
     let targetRotationDate = body.targetRotationDate ? Number(body.targetRotationDate) : undefined;
     let maxDays = body.maxDays ? Number(body.maxDays) : undefined;
@@ -81,46 +89,47 @@ export async function POST(request: Request) {
     if ((campaign === 'rk1' || campaign === 'rk2') && !targetRotationDate) {
       // Find current ad cars to find earliest open slot
       const existingCarsRows = await sql`SELECT data FROM ad_cars`;
-      const existingCars = existingCarsRows.map((r: any) => {
+      const countsByDateKey: Record<string, number> = {};
+      const activeFutureDateKeys: string[] = [];
+
+      existingCarsRows.forEach((r: any) => {
         const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
-        return d;
-      });
-
-      const todayMidnight = new Date();
-      todayMidnight.setHours(0, 0, 0, 0);
-      const midnightMs = todayMidnight.getTime();
-
-      const countsByOffset: Record<number, number> = {};
-      existingCars.forEach((c: any) => {
-        if (c.campaign === 'rk1' || c.campaign === 'rk2') {
-          let t = Number(c.targetRotationDate);
-          if (!t && c.startedAt && c.maxDays) {
-            t = Number(c.startedAt) + Number(c.maxDays) * 86400000;
+        if (d.campaign === 'rk1' || d.campaign === 'rk2') {
+          let t = Number(d.targetRotationDate);
+          if (!t && d.startedAt && d.maxDays) {
+            t = Number(d.startedAt) + Number(d.maxDays) * 86400000;
           }
           if (t) {
-            const targetMidnight = new Date(t);
-            targetMidnight.setHours(0, 0, 0, 0);
-            const offset = Math.round((targetMidnight.getTime() - midnightMs) / 86400000);
-            if (offset >= 0) countsByOffset[offset] = (countsByOffset[offset] || 0) + 1;
+            const dateKey = getMinskDateKey(t);
+            countsByDateKey[dateKey] = (countsByDateKey[dateKey] || 0) + 1;
+            if (dateKey >= todayKey) {
+              activeFutureDateKeys.push(dateKey);
+            }
           }
         }
       });
 
-      // Target cars per day (default 3)
       const targetPerDay = 3;
-      const minDaysAhead = campaign === 'rk2' ? 10 : 12;
-      let chosenOffset = minDaysAhead;
+      // Start checking from earliest active schedule date (e.g. 2026-08-30) or todayKey + 10 days
+      const earliestScheduledKey = activeFutureDateKeys.length > 0 
+        ? activeFutureDateKeys.sort()[0] 
+        : addDaysToDateKey(todayKey, 10);
+      
+      const startScanKey = earliestScheduledKey > todayKey ? earliestScheduledKey : addDaysToDateKey(todayKey, 10);
+      let chosenDateKey = startScanKey;
 
-      for (let offset = minDaysAhead; offset <= minDaysAhead + 45; offset++) {
-        if ((countsByOffset[offset] || 0) < targetPerDay) {
-          chosenOffset = offset;
+      for (let offset = 0; offset <= 60; offset++) {
+        const testDateKey = addDaysToDateKey(startScanKey, offset);
+        if ((countsByDateKey[testDateKey] || 0) < targetPerDay) {
+          chosenDateKey = testDateKey;
           break;
         }
       }
 
-      targetRotationDate = midnightMs + chosenOffset * 86400000;
+      const daysLeftFromToday = Math.max(0, getDateKeyDiffDays(todayKey, chosenDateKey));
+      targetRotationDate = minskDateKeyToTimestamp(chosenDateKey);
       if (!maxDays) {
-        maxDays = chosenOffset;
+        maxDays = daysLeftFromToday;
       }
     }
 

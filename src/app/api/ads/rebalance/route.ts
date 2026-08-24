@@ -1,20 +1,22 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-
-function getMidnight(timestamp: number = Date.now()): number {
-  const d = new Date(timestamp);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
+import {
+  getMinskDateKey,
+  minskDateKeyToTimestamp,
+  addDaysToDateKey,
+  getDateKeyDiffDays,
+} from '@/lib/services/adsService';
 
 export async function POST(request: Request) {
   try {
     let customTargetPerDay: number | undefined;
-    let customStartDate: number | undefined;
+    let customStartDateKey: string | undefined;
+
     try {
       const body = await request.json();
       if (body?.targetCarsPerDay) customTargetPerDay = Number(body.targetCarsPerDay);
-      if (body?.startDate) customStartDate = getMidnight(Number(body.startDate));
+      if (body?.startDate) customStartDateKey = getMinskDateKey(Number(body.startDate));
+      if (body?.startDateKey) customStartDateKey = String(body.startDateKey);
     } catch {
       // Empty body is okay
     }
@@ -30,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     const targetCarsPerDay = Math.max(1, customTargetPerDay || Number(adsSettings?.targetCarsPerDay) || 3);
-    const todayMidnight = getMidnight(Date.now());
+    const todayKey = getMinskDateKey(Date.now());
     const nowIso = new Date().toISOString();
 
     // 2. Fetch all ad_cars
@@ -52,39 +54,44 @@ export async function POST(request: Request) {
 
     const activeCars = allCars.filter((c: any) => c.campaign === 'rk1' || c.campaign === 'rk2');
 
-    // Find starting date for rebalance:
-    // If explicitly provided, use customStartDate.
-    // Otherwise, check if active cars are already scheduled to start at a future date (e.g. 30 August).
-    let startMidnight = todayMidnight;
-    if (customStartDate) {
-      startMidnight = customStartDate;
+    // Find start date key:
+    // If explicitly provided, use customStartDateKey.
+    // Otherwise, check if active cars are already scheduled to start at a future date (e.g. 2026-08-30).
+    let startKey = todayKey;
+    if (customStartDateKey) {
+      startKey = customStartDateKey;
     } else {
-      const futureTargets = activeCars
-        .map((c: any) => Number(c.targetRotationDate))
-        .filter((t: number) => t && t >= todayMidnight);
-      if (futureTargets.length > 0) {
-        startMidnight = Math.min(...futureTargets);
+      const futureDateKeys = activeCars
+        .map((c: any) => {
+          const t = Number(c.targetRotationDate);
+          return t ? getMinskDateKey(t) : null;
+        })
+        .filter((k: string | null): k is string => k !== null && k >= todayKey);
+
+      if (futureDateKeys.length > 0) {
+        startKey = futureDateKeys.sort()[0];
       }
     }
 
     // 3. Sort active cars by age (most seasoned/oldest cars first -> expire sooner)
     const sortedActive = [...activeCars].sort((a: any, b: any) => {
-      const startedA = Number(a.startedAt) || (todayMidnight - 7 * 86400000);
-      const startedB = Number(b.startedAt) || (todayMidnight - 7 * 86400000);
+      const startedA = Number(a.startedAt) || (Date.now() - 7 * 86400000);
+      const startedB = Number(b.startedAt) || (Date.now() - 7 * 86400000);
       return startedA - startedB;
     });
 
     const updatedCarsMap = new Map<string, any>();
 
-    // 4. Distribute evenly: exactly targetCarsPerDay per day starting from startMidnight
+    // 4. Distribute evenly: exactly targetCarsPerDay per calendar day starting from startKey
     for (let i = 0; i < sortedActive.length; i++) {
       const car = sortedActive[i];
       const dayOffset = Math.floor(i / targetCarsPerDay);
-      const targetRotationDate = startMidnight + dayOffset * 86400000;
+      const targetDateKey = addDaysToDateKey(startKey, dayOffset);
+      const targetRotationDate = minskDateKeyToTimestamp(targetDateKey);
 
       const startedAt = Number(car.startedAt) || Date.now();
       const daysIn = Math.max(0, Math.floor((Date.now() - startedAt) / 86400000));
-      const daysLeftFromToday = Math.max(0, Math.round((targetRotationDate - todayMidnight) / 86400000));
+      const daysLeftFromToday = Math.max(0, getDateKeyDiffDays(todayKey, targetDateKey));
       const maxDays = daysIn + daysLeftFromToday;
 
       const updatedCarData = {
@@ -121,6 +128,7 @@ export async function POST(request: Request) {
       success: true,
       totalBalanced: sortedActive.length,
       targetCarsPerDay,
+      startKey,
       cars: finalCars,
     });
   } catch (error: any) {

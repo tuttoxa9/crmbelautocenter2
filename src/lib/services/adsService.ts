@@ -51,9 +51,6 @@ export function calculateDaysInAd(startedAt: number): number {
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-/**
- * Returns midnight timestamp (00:00:00.000) for a given date or timestamp
- */
 export function getMidnight(dateOrTimestamp: Date | number = Date.now()): number {
   const d = new Date(dateOrTimestamp);
   d.setHours(0, 0, 0, 0);
@@ -61,20 +58,64 @@ export function getMidnight(dateOrTimestamp: Date | number = Date.now()): number
 }
 
 /**
- * Calculates calendar day offset between today and target date
- * Returns: 0 = today, 1 = tomorrow, -1 = yesterday, etc.
+ * Formats timestamp or Date to 'YYYY-MM-DD' in Europe/Minsk (UTC+3) timezone
+ */
+export function getMinskDateKey(dateOrTimestamp: Date | number = Date.now()): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Minsk',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(dateOrTimestamp));
+  } catch {
+    const d = new Date(dateOrTimestamp);
+    return d.toISOString().split('T')[0];
+  }
+}
+
+/**
+ * Converts 'YYYY-MM-DD' dateKey to canonical UTC noon timestamp (12:00:00Z)
+ * Anchoring at 12:00:00 UTC ensures it NEVER shifts to another date in any timezone.
+ */
+export function minskDateKeyToTimestamp(dateKey: string): number {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  return Date.UTC(year, month - 1, day, 12, 0, 0, 0);
+}
+
+/**
+ * Adds N calendar days to a 'YYYY-MM-DD' dateKey
+ */
+export function addDaysToDateKey(dateKey: string, days: number): string {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const d = new Date(Date.UTC(year, month - 1, day + days, 12, 0, 0));
+  return d.toISOString().split('T')[0];
+}
+
+/**
+ * Calculates calendar difference in days between two 'YYYY-MM-DD' date keys (B - A)
+ */
+export function getDateKeyDiffDays(dateKeyA: string, dateKeyB: string): number {
+  const tsA = minskDateKeyToTimestamp(dateKeyA);
+  const tsB = minskDateKeyToTimestamp(dateKeyB);
+  return Math.round((tsB - tsA) / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Calculates calendar day offset between today (Minsk) and car's targetRotationDate
+ * Returns: 0 = today, 1 = tomorrow, -1 = overdue (yesterday), etc.
  */
 export function getCalendarDaysLeft(targetTimestamp?: number | null, fallbackStartedAt?: number, fallbackMaxDays?: number): number {
-  const todayMidnight = getMidnight(Date.now());
+  const todayKey = getMinskDateKey(Date.now());
   
   if (targetTimestamp) {
-    const targetMidnight = getMidnight(targetTimestamp);
-    return Math.round((targetMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
+    const targetKey = getMinskDateKey(targetTimestamp);
+    return getDateKeyDiffDays(todayKey, targetKey);
   }
   
   if (fallbackStartedAt && fallbackMaxDays) {
-    const targetMidnight = getMidnight(fallbackStartedAt + fallbackMaxDays * 24 * 60 * 60 * 1000);
-    return Math.round((targetMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
+    const targetKey = getMinskDateKey(fallbackStartedAt + fallbackMaxDays * 24 * 60 * 60 * 1000);
+    return getDateKeyDiffDays(todayKey, targetKey);
   }
   
   return 0;

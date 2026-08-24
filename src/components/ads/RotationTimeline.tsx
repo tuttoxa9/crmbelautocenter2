@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { AdCar, AdsSettings } from "@/lib/types";
-import { getCalendarDaysLeft, getMidnight } from "@/lib/services/adsService";
+import { getCalendarDaysLeft, getMinskDateKey } from "@/lib/services/adsService";
 import { CalendarDays, Wand2, AlertTriangle } from "lucide-react";
 
 interface RotationTimelineProps {
@@ -19,8 +19,9 @@ export function RotationTimeline({ cars, settings, onDayClick, onBalance, isBala
   // Aggregate expiration dates for next 30 days
   const { timeline, overdueCars } = useMemo(() => {
     const daysArr = [];
-    const todayMidnight = getMidnight(Date.now());
-    const today = new Date(todayMidnight);
+    const todayKey = getMinskDateKey(Date.now());
+    const [year, month, day] = todayKey.split('-').map(Number);
+    const today = new Date(year, month - 1, day);
 
     const activeAdCars = cars.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
 
