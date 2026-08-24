@@ -126,20 +126,17 @@ export function AddAdCarModal({
       const numericPrice = Number(priceUsd);
       const tier = calculatePriceTier(numericPrice);
 
-      const maxDays = customDays
-        ? Number(customDays)
-        : campaign === "rk1"
-        ? defaultRk1Days
-        : defaultRk2Days;
-
       const payload: any = {
         name: name.trim(),
         priceUsd: numericPrice,
         priceTier: tier,
         campaign,
         startedAt: Date.now(),
-        maxDays,
       };
+
+      if (customDays) {
+        payload.maxDays = Number(customDays);
+      }
 
       if (selectedCatalogCar?.id) payload.carId = selectedCatalogCar.id;
       if (year && String(year).trim()) payload.year = String(year).trim();

@@ -39,13 +39,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, message: 'Ads notifications are inactive in settings.' });
     }
 
-    // 3. Get total catalog cars count for smart base days calculation
+    // 3. Get total catalog cars count for reference
     const catalogCountRows = await sql`
-      SELECT COUNT(*) as count FROM catalog_cars WHERE is_active = true
+      SELECT COUNT(*) as count FROM cars
     `;
-    const totalCatalogCars = Number(catalogCountRows[0]?.count) || 75;
-    // Smart auto-calculated base days: totalCatalog / targetPerDay / 2 campaigns
-    const autoBaseDays = Math.max(7, Math.ceil(totalCatalogCars / targetPerDay / 2));
+    const totalCatalogCars = Number(catalogCountRows[0]?.count) || 300;
 
     // 4. Получаем все активные авто из таблицы ad_cars в Neon DB
     const carRows = await sql`
@@ -58,6 +56,10 @@ export async function GET(request: Request) {
     }).filter((c: any) => c.campaign === 'rk1' || c.campaign === 'rk2');
 
     const now = Date.now();
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const todayMidnightMs = todayMidnight.getTime();
+
     let alertsSent = 0;
     const expiredList = [];
 
@@ -67,11 +69,15 @@ export async function GET(request: Request) {
       const daysInAd = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 
       const campaign = car.campaign as 'rk1' | 'rk2';
-      // Use car's own maxDays first, then auto-calculated base days as fallback
-      const limitDays = Number(car.maxDays) || autoBaseDays;
+      const limitDays = Number(car.maxDays) || 14;
 
-      // Проверяем, наступил ли срок ротации
-      if (daysInAd >= limitDays) {
+      // Проверяем, наступил ли срок ротации по календарной дате или дням
+      const targetRotationDate = Number(car.targetRotationDate);
+      const isDue = targetRotationDate 
+        ? targetRotationDate <= todayMidnightMs 
+        : daysInAd >= limitDays;
+
+      if (isDue) {
         const targetCampaign = campaign === 'rk1' ? 'rk2' : 'rk1';
         const lastAlert = Number(car.lastAlertSentAt) || 0;
         const timeSinceLastAlert = now - lastAlert;

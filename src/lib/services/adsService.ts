@@ -51,6 +51,49 @@ export function calculateDaysInAd(startedAt: number): number {
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
+/**
+ * Returns midnight timestamp (00:00:00.000) for a given date or timestamp
+ */
+export function getMidnight(dateOrTimestamp: Date | number = Date.now()): number {
+  const d = new Date(dateOrTimestamp);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+/**
+ * Calculates calendar day offset between today and target date
+ * Returns: 0 = today, 1 = tomorrow, -1 = yesterday, etc.
+ */
+export function getCalendarDaysLeft(targetTimestamp?: number | null, fallbackStartedAt?: number, fallbackMaxDays?: number): number {
+  const todayMidnight = getMidnight(Date.now());
+  
+  if (targetTimestamp) {
+    const targetMidnight = getMidnight(targetTimestamp);
+    return Math.round((targetMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
+  }
+  
+  if (fallbackStartedAt && fallbackMaxDays) {
+    const targetMidnight = getMidnight(fallbackStartedAt + fallbackMaxDays * 24 * 60 * 60 * 1000);
+    return Math.round((targetMidnight - todayMidnight) / (1000 * 60 * 60 * 24));
+  }
+  
+  return 0;
+}
+
+export const rebalanceAdCars = async (targetCarsPerDay?: number): Promise<{ success: boolean; totalBalanced?: number; cars?: AdCar[]; error?: string }> => {
+  try {
+    const res = await fetch('/api/ads/rebalance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ targetCarsPerDay }),
+    });
+    return await res.json();
+  } catch (err: any) {
+    console.error('Error rebalancing ad cars on server:', err);
+    return { success: false, error: err?.message || 'Server rebalance failed' };
+  }
+};
+
 export const getAdCars = async (): Promise<AdCar[]> => {
   try {
     const res = await fetch('/api/ads/cars', { cache: 'no-store' });

@@ -18,11 +18,17 @@ export function DailyTasksModal({ isOpen, onClose, date, offset, cars }: DailyTa
   const rk2Cars = cars.filter(c => c.campaign === "rk2");
 
   const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-  const title = offset === 0 
+  const title = offset < 0
+    ? "Требуют ротации (Просрочено)"
+    : offset === 0 
     ? "План на сегодня" 
     : offset === 1
     ? "План на завтра"
     : `План на ${date.getDate()} ${months[date.getMonth()]}`;
+
+  const subtitle = offset < 0
+    ? `Просрочено: ${cars.length} авто`
+    : `Нужно отснять / ротировать: ${cars.length} авто`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-900/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -38,7 +44,7 @@ export function DailyTasksModal({ isOpen, onClose, date, offset, cars }: DailyTa
             </div>
             <div>
               <h2 className="font-bold text-base sm:text-lg leading-tight">{title}</h2>
-              <p className="text-[10px] sm:text-xs text-zinc-500 font-medium">Нужно отснять: {cars.length} авто</p>
+              <p className="text-[10px] sm:text-xs text-zinc-500 font-medium">{subtitle}</p>
             </div>
           </div>
           <button

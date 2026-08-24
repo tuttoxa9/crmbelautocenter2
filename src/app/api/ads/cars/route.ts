@@ -71,19 +71,74 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
     const numericPrice = Number(body.priceUsd);
     const priceTier = body.priceTier || calculatePriceTier(numericPrice);
+    const campaign = body.campaign || 'rk1';
+    const startedAt = body.startedAt || Date.now();
+
+    // Smart Slot Allocation if campaign is active (rk1 / rk2)
+    let targetRotationDate = body.targetRotationDate ? Number(body.targetRotationDate) : undefined;
+    let maxDays = body.maxDays ? Number(body.maxDays) : undefined;
+
+    if ((campaign === 'rk1' || campaign === 'rk2') && !targetRotationDate) {
+      // Find current ad cars to find earliest open slot
+      const existingCarsRows = await sql`SELECT data FROM ad_cars`;
+      const existingCars = existingCarsRows.map((r: any) => {
+        const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+        return d;
+      });
+
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
+      const midnightMs = todayMidnight.getTime();
+
+      const countsByOffset: Record<number, number> = {};
+      existingCars.forEach((c: any) => {
+        if (c.campaign === 'rk1' || c.campaign === 'rk2') {
+          let t = Number(c.targetRotationDate);
+          if (!t && c.startedAt && c.maxDays) {
+            t = Number(c.startedAt) + Number(c.maxDays) * 86400000;
+          }
+          if (t) {
+            const targetMidnight = new Date(t);
+            targetMidnight.setHours(0, 0, 0, 0);
+            const offset = Math.round((targetMidnight.getTime() - midnightMs) / 86400000);
+            if (offset >= 0) countsByOffset[offset] = (countsByOffset[offset] || 0) + 1;
+          }
+        }
+      });
+
+      // Target cars per day (default 3)
+      const targetPerDay = 3;
+      const minDaysAhead = campaign === 'rk2' ? 10 : 12;
+      let chosenOffset = minDaysAhead;
+
+      for (let offset = minDaysAhead; offset <= minDaysAhead + 45; offset++) {
+        if ((countsByOffset[offset] || 0) < targetPerDay) {
+          chosenOffset = offset;
+          break;
+        }
+      }
+
+      targetRotationDate = midnightMs + chosenOffset * 86400000;
+      if (!maxDays) {
+        maxDays = chosenOffset;
+      }
+    }
 
     const carData: any = {
       name: String(body.name).trim(),
       priceUsd: numericPrice,
       priceTier,
-      campaign: body.campaign || 'rk1',
-      startedAt: body.startedAt || Date.now(),
+      campaign,
+      startedAt,
     };
 
+    if (targetRotationDate) carData.targetRotationDate = targetRotationDate;
+    if (maxDays) carData.maxDays = maxDays;
     if (body.carId) carData.carId = String(body.carId);
     if (body.year) carData.year = String(body.year).trim();
-    if (body.maxDays) carData.maxDays = Number(body.maxDays);
     if (body.photoUrl) carData.photoUrl = String(body.photoUrl).trim();
+    if (body.videoUrl) carData.videoUrl = String(body.videoUrl).trim();
+    if (body.videoCoverUrl) carData.videoCoverUrl = String(body.videoCoverUrl).trim();
     if (body.notes) carData.notes = String(body.notes).trim();
 
     await sql`

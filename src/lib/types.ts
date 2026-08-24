@@ -80,6 +80,7 @@ export interface AdCar {
   priceTier: AdPriceTier;
   campaign: AdCampaignType;
   startedAt: number; // Timestamp старта открутки в текущей РК
+  targetRotationDate?: number; // Точная календарная дата запланированной ротации (timestamp 00:00:00)
   maxDays?: number; // Лимит дней
   photoUrl?: string;
   videoUrl?: string; // Ссылка на загруженное видео без сжатия в S3/R2

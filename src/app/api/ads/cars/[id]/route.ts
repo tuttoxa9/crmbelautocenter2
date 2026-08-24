@@ -35,6 +35,55 @@ export async function PUT(
       updatedData.priceTier = calculatePriceTier(Number(body.priceUsd));
     }
 
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const midnightMs = todayMidnight.getTime();
+
+    // If campaign switched to rk1 or rk2, calculate next available slot if not explicitly provided
+    const isCampaignSwitch = body.campaign && (body.campaign === 'rk1' || body.campaign === 'rk2') && body.campaign !== currentData.campaign;
+    if (isCampaignSwitch && !body.targetRotationDate) {
+      const existingCarsRows = await sql`SELECT id, data FROM ad_cars WHERE id != ${id}`;
+      const countsByOffset: Record<number, number> = {};
+      
+      existingCarsRows.forEach((r: any) => {
+        const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
+        if (d.campaign === 'rk1' || d.campaign === 'rk2') {
+          let t = Number(d.targetRotationDate);
+          if (!t && d.startedAt && d.maxDays) {
+            t = Number(d.startedAt) + Number(d.maxDays) * 86400000;
+          }
+          if (t) {
+            const targetMidnight = new Date(t);
+            targetMidnight.setHours(0, 0, 0, 0);
+            const offset = Math.round((targetMidnight.getTime() - midnightMs) / 86400000);
+            if (offset >= 0) countsByOffset[offset] = (countsByOffset[offset] || 0) + 1;
+          }
+        }
+      });
+
+      const targetPerDay = 3;
+      const minDaysAhead = body.campaign === 'rk2' ? 10 : 12;
+      let chosenOffset = minDaysAhead;
+
+      for (let offset = minDaysAhead; offset <= minDaysAhead + 45; offset++) {
+        if ((countsByOffset[offset] || 0) < targetPerDay) {
+          chosenOffset = offset;
+          break;
+        }
+      }
+
+      updatedData.targetRotationDate = midnightMs + chosenOffset * 86400000;
+      updatedData.maxDays = chosenOffset;
+      updatedData.startedAt = Date.now();
+      updatedData.lastAlertSentAt = null;
+    } else if (body.maxDays && !body.targetRotationDate) {
+      // If maxDays is explicitly updated by user (e.g. inline edit to 14 days)
+      const startedAt = Number(updatedData.startedAt) || Date.now();
+      const daysIn = Math.max(0, Math.floor((Date.now() - startedAt) / 86400000));
+      const daysLeft = Math.max(0, Number(body.maxDays) - daysIn);
+      updatedData.targetRotationDate = midnightMs + daysLeft * 86400000;
+    }
+
     const now = new Date().toISOString();
 
     await sql`

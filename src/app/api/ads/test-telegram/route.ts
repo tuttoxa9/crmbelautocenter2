@@ -46,12 +46,16 @@ export async function POST(request: Request) {
         realCar = typeof raw === 'string' ? JSON.parse(raw) : raw;
       }
       if (!realCar) {
-        const catalogRows = await sql`SELECT id, name, price, year FROM cars LIMIT 1`;
+        const catalogRows = await sql`SELECT id, data FROM cars LIMIT 1`;
         if (catalogRows.length > 0) {
+          const d = typeof catalogRows[0].data === 'string' ? JSON.parse(catalogRows[0].data) : catalogRows[0].data;
+          const make = d?.make || d?.brand || '';
+          const model = d?.model || '';
+          const name = `${make} ${model}`.trim() || d?.name || 'Автомобиль со склада';
           realCar = {
-            name: catalogRows[0].name,
-            year: catalogRows[0].year,
-            priceUsd: catalogRows[0].price,
+            name,
+            year: d?.year,
+            priceUsd: Number(d?.priceUsd || d?.priceUSD || d?.price || 0),
             campaign: 'rk1',
           };
         }

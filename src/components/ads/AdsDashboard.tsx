@@ -13,6 +13,8 @@ import {
   calculateDaysInAd,
   calculatePriceTier,
   getPriceTierLabel,
+  getCalendarDaysLeft,
+  rebalanceAdCars,
   DEFAULT_ADS_SETTINGS,
 } from "@/lib/services/adsService";
 import { AdCar, AdCampaignType, AdPriceTier, AdsSettings } from "@/lib/types";
@@ -100,6 +102,7 @@ export function AdsDashboard() {
   const [settings, setSettings] = useState<AdsSettings>(DEFAULT_ADS_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [addingCarId, setAddingCarId] = useState<string | null>(null);
+  const [isBalancing, setIsBalancing] = useState(false);
 
   // Inline Confirmation Popovers
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -276,49 +279,23 @@ export function AdsDashboard() {
     return bestOffset; // maxDays = offset (since daysIn = 0, startedAt = now)
   };
 
-  // ── FULL REBALANCE (only for the "Сбалансировать" button) ──
-  // Recomputes ALL active cars from scratch for perfect distribution.
+  // ── SERVER REBALANCE (for the "Сбалансировать" button) ──
   const handleBalanceTimeline = async () => {
-    const baseDays = getAutoBaseDays();
-    const targetPerDay = Number(settings.targetCarsPerDay || 3);
-    const activeCars = carsRef.current.filter(c => c.campaign === "rk1" || c.campaign === "rk2");
-    
-    const sortedCars = [...activeCars].sort((a, b) =>
-      (Number(a.startedAt) || 0) - (Number(b.startedAt) || 0)
-    );
-
-    const assignedCounts: Record<number, number> = {};
-    const updates: { id: string; maxDays: number }[] = [];
-    const newCarsState = [...carsRef.current];
-
-    for (const car of sortedCars) {
-      const daysIn = calculateDaysInAd(car.startedAt);
-      const bestOffset = findBestSlot(assignedCounts, baseDays, targetPerDay, daysIn);
-      assignedCounts[bestOffset] = (assignedCounts[bestOffset] || 0) + 1;
-
-      const newMaxDays = bestOffset + daysIn;
-      if (newMaxDays !== car.maxDays && car.id) {
-        updates.push({ id: car.id, maxDays: newMaxDays });
-        const idx = newCarsState.findIndex(c => c.id === car.id);
-        if (idx !== -1) {
-          newCarsState[idx] = { ...newCarsState[idx], maxDays: newMaxDays };
-        }
-      }
-    }
-
-    if (updates.length === 0) {
-      showToast("График уже идеально сбалансирован!");
-      return;
-    }
-
     try {
-      carsRef.current = newCarsState;
-      setCars(newCarsState);
-      for (const u of updates) { await updateAdCar(u.id, { maxDays: u.maxDays }); }
-      showToast(`Сбалансировано ${updates.length} авто!`);
+      setIsBalancing(true);
+      const res = await rebalanceAdCars(Number(settings.targetCarsPerDay || 3));
+      if (res.success && Array.isArray(res.cars)) {
+        carsRef.current = res.cars;
+        setCars(res.cars);
+        showToast(`Успешно сбалансировано ${res.totalBalanced || res.cars.length} авто!`);
+      } else {
+        showToast(res.error || "Ошибка при балансировке", "error");
+      }
     } catch (err: any) {
       console.error("Error balancing timeline:", err);
       showToast("Ошибка при балансировке", "error");
+    } finally {
+      setIsBalancing(false);
     }
   };
 
@@ -326,6 +303,7 @@ export function AdsDashboard() {
   const handleAddCar = async (carData: Omit<AdCar, "id" | "createdAt" | "updatedAt">) => {
     const newCar = await createAdCar(carData);
     setCars((prev) => [newCar, ...prev]);
+    carsRef.current = [newCar, ...carsRef.current];
     showToast(`Автомобиль "${carData.name}" добавлен в рекламу`);
   };
 
@@ -338,7 +316,6 @@ export function AdsDashboard() {
     try {
       setAddingCarId(catalogCar.id);
       const tier = calculatePriceTier(catalogCar.priceUsd);
-      const maxDays = calculateOptimalMaxDays(targetCampaign, carsRef.current);
 
       const newCar = await createAdCar({
         carId: catalogCar.id,
@@ -348,11 +325,10 @@ export function AdsDashboard() {
         priceTier: tier,
         campaign: targetCampaign,
         startedAt: Date.now(),
-        maxDays,
         photoUrl: catalogCar.photoUrl,
       });
 
-      // Update ref synchronously for next rapid action
+      // Update ref and state
       carsRef.current = [newCar, ...carsRef.current];
       setCars([...carsRef.current]);
       
@@ -368,28 +344,22 @@ export function AdsDashboard() {
 
   const handleSwitchCampaign = async (car: AdCar, targetCampaign: AdCampaignType) => {
     if (!car.id) return;
-    
-    // Calculate optimal slot for this ONE car based on current timeline
-    const customDays = calculateOptimalMaxDays(targetCampaign, carsRef.current);
-    
-    // Update ref immediately (synchronous for rapid clicks)
-    carsRef.current = carsRef.current.map((c) =>
-      c.id === car.id
-        ? {
-            ...c,
-            campaign: targetCampaign,
-            startedAt: Date.now(),
-            maxDays: customDays,
-            lastAlertSentAt: null as any,
-          }
-        : c
-    );
-    setCars([...carsRef.current]);
-    
-    await switchAdCarCampaign(car.id, targetCampaign, customDays);
-    
-    const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : "Ожидают съёмки";
-    showToast(`Переведен в ${targetLabel}: ${car.name}`);
+    try {
+      await updateAdCar(car.id, {
+        campaign: targetCampaign,
+      });
+
+      // Reload fresh list from server to get accurate server-assigned targetRotationDate
+      const updatedCars = await getAdCars();
+      carsRef.current = updatedCars;
+      setCars(updatedCars);
+
+      const targetLabel = targetCampaign === "rk1" ? "РК 1" : targetCampaign === "rk2" ? "РК 2" : targetCampaign === "ready_for_ads" ? "Отснято" : "Ожидают съёмки";
+      showToast(`Переведен в ${targetLabel}: ${car.name}`);
+    } catch (err: any) {
+      console.error("Error switching campaign:", err);
+      showToast("Не удалось переключить кампанию", "error");
+    }
   };
 
 
@@ -455,9 +425,8 @@ export function AdsDashboard() {
 
     const expiredCars = cars.filter((c) => {
       if (c.campaign === "waiting_video" || c.campaign === "ready_for_ads") return false;
-      const days = calculateDaysInAd(c.startedAt);
-      const limit = c.maxDays || (c.campaign === "rk1" ? settings.rk1Days : settings.rk2Days);
-      return days >= limit;
+      const daysLeft = getCalendarDaysLeft(c.targetRotationDate, c.startedAt, c.maxDays);
+      return daysLeft < 0;
     });
 
     return {
@@ -570,10 +539,9 @@ export function AdsDashboard() {
         if (gridTab === "rk2" && car.campaign !== "rk2") return false;
         if (gridTab === "waiting" && car.campaign !== "waiting_video") return false;
         if (gridTab === "expired") {
-          if (car.campaign === "waiting_video") return false;
-          const days = calculateDaysInAd(car.startedAt);
-          const limit = car.maxDays || (car.campaign === "rk1" ? settings.rk1Days : settings.rk2Days);
-          if (days < limit) return false;
+          if (car.campaign === "waiting_video" || car.campaign === "ready_for_ads") return false;
+          const daysLeft = getCalendarDaysLeft(car.targetRotationDate, car.startedAt, car.maxDays);
+          if (daysLeft >= 0) return false;
         }
 
         if (selectedTier !== "all" && car.priceTier !== selectedTier) return false;
@@ -804,9 +772,9 @@ export function AdsDashboard() {
             <RotationTimeline 
               cars={cars} 
               settings={settings} 
-              baseDays={getAutoBaseDays()}
               onDayClick={(offset, date, dayCars) => setSelectedDayTasks({ isOpen: true, date, offset, cars: dayCars })}
               onBalance={handleBalanceTimeline}
+              isBalancing={isBalancing}
             />
 
             {/* 4 Columns Board */}
@@ -885,6 +853,7 @@ export function AdsDashboard() {
                           <div className="space-y-1.5">
                             {tierAdCars.map((car) => {
                               const daysInAd = calculateDaysInAd(car.startedAt);
+                              const daysLeft = getCalendarDaysLeft(car.targetRotationDate, car.startedAt, car.maxDays);
                               const limitDays =
                                 car.maxDays ||
                                 (car.campaign === "rk1"
@@ -893,12 +862,11 @@ export function AdsDashboard() {
                                   ? settings.rk2Days
                                   : 0);
 
-                              const exactDaysInAd = car.startedAt ? Math.max(0, (Date.now() - car.startedAt) / (1000 * 60 * 60 * 24)) : 0;
-                              const isExpired = car.campaign !== "waiting_video" && car.campaign !== "ready_for_ads" && daysInAd >= limitDays;
+                              const isExpired = car.campaign !== "waiting_video" && car.campaign !== "ready_for_ads" && daysLeft < 0;
                               const progressPercent =
                                 car.campaign === "waiting_video" || car.campaign === "ready_for_ads" || limitDays === 0
                                   ? 0
-                                  : Math.min(100, Math.max(2, (exactDaysInAd / limitDays) * 100));
+                                  : Math.min(100, Math.max(2, (daysInAd / limitDays) * 100));
 
                               return (
                                 <div
