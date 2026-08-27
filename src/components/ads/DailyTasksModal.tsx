@@ -1,136 +1,121 @@
-import React from "react";
-import { AdCar } from "@/lib/types";
-import { X, CalendarDays, ArrowRight, Play, Video } from "lucide-react";
-import { getPriceTierLabel } from "@/lib/services/adsService";
+"use client";
 
-interface DailyTasksModalProps {
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { type AdCampaignType, type AdCar } from "@/lib/types";
+import { MONTHS_LONG } from "@/lib/services/adsService";
+import { CloseBtn, Overlay, Spinner } from "./chrome";
+
+export function DailyTasksModal({
+  isOpen,
+  onClose,
+  date,
+  offset,
+  cars,
+  busyIds,
+  onRotate,
+}: {
   isOpen: boolean;
   onClose: () => void;
   date: Date;
   offset: number;
   cars: AdCar[];
-}
-
-export function DailyTasksModal({ isOpen, onClose, date, offset, cars }: DailyTasksModalProps) {
-  if (!isOpen) return null;
-
-  const rk1Cars = cars.filter(c => c.campaign === "rk1");
-  const rk2Cars = cars.filter(c => c.campaign === "rk2");
-
-  const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
-  const title = offset < 0
-    ? "Требуют ротации (Просрочено)"
-    : offset === 0 
-    ? "План на сегодня" 
-    : offset === 1
-    ? "План на завтра"
-    : `План на ${date.getDate()} ${months[date.getMonth()]}`;
-
-  const subtitle = offset < 0
-    ? `Просрочено: ${cars.length} авто`
-    : `Нужно отснять / ротировать: ${cars.length} авто`;
+  busyIds?: Set<string>;
+  onRotate?: (car: AdCar, campaign: AdCampaignType) => void;
+}) {
+  const rk1Cars = cars.filter((c) => c.campaign === "rk1");
+  const rk2Cars = cars.filter((c) => c.campaign === "rk2");
+  const title =
+    offset < 0
+      ? "Просрочено"
+      : offset === 0
+        ? "Сегодня"
+        : offset === 1
+          ? "Завтра"
+          : `${date.getDate()} ${MONTHS_LONG[date.getMonth()]}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-zinc-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
-        className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
-        onClick={(e) => e.stopPropagation()}
+    <Overlay open={isOpen} onClose={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="ads-enter relative flex max-h-[88dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-ads-bg shadow-ads-float sm:rounded-3xl"
       >
-        {/* Header */}
-        <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
-          <div className="flex items-center gap-2 text-zinc-900">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-              <CalendarDays className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="font-bold text-base sm:text-lg leading-tight">{title}</h2>
-              <p className="text-[10px] sm:text-xs text-zinc-500 font-medium">{subtitle}</p>
-            </div>
+        <header className="flex items-center justify-between px-5 pt-5 pb-3">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-ads-ink">{title}</h2>
+            <p className="text-xs text-ads-muted">{cars.length} авто</p>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-zinc-200 transition-colors text-zinc-500"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+          <CloseBtn onClick={onClose} />
+        </header>
+        <div className="space-y-4 overflow-y-auto px-5 pb-6">
           {cars.length === 0 ? (
-            <div className="text-center py-10 text-zinc-500">
-              <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mx-auto mb-3">
-                <CalendarDays className="w-6 h-6 text-zinc-400" />
-              </div>
-              <p className="font-semibold text-zinc-900">На этот день задач нет</p>
-              <p className="text-sm mt-1">Ни одна машина не выгорает в эту дату.</p>
-            </div>
+            <p className="py-10 text-center text-sm text-ads-subtle">На этот день задач нет</p>
           ) : (
             <>
               {rk1Cars.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 border-b border-zinc-100 pb-2">
-                    <span className="bg-blue-600 text-white font-semibold text-[10px] px-2 py-0.5 rounded shadow-sm">РК 1</span>
-                    <h3 className="font-semibold text-sm text-zinc-800">Выгорают из первой кампании ({rk1Cars.length})</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {rk1Cars.map(car => (
-                      <CarTaskRow key={car.id} car={car} />
-                    ))}
-                  </div>
-                </div>
+                <Group title={`Из РК 1 · ${rk1Cars.length}`} cars={rk1Cars} next="rk2" busyIds={busyIds} onRotate={onRotate} />
               )}
-
               {rk2Cars.length > 0 && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 border-b border-zinc-100 pb-2">
-                    <span className="bg-purple-600 text-white font-semibold text-[10px] px-2 py-0.5 rounded shadow-sm">РК 2</span>
-                    <h3 className="font-semibold text-sm text-zinc-800">Выгорают из второй кампании ({rk2Cars.length})</h3>
-                  </div>
-                  <div className="space-y-2">
-                    {rk2Cars.map(car => (
-                      <CarTaskRow key={car.id} car={car} />
-                    ))}
-                  </div>
-                </div>
+                <Group title={`Из РК 2 · ${rk2Cars.length}`} cars={rk2Cars} next="rk1" busyIds={busyIds} onRotate={onRotate} />
               )}
             </>
           )}
         </div>
-
-        {/* Footer */}
-        <div className="p-4 border-t border-zinc-100 bg-zinc-50 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-sm font-semibold transition-colors"
-          >
-            Закрыть
-          </button>
-        </div>
       </div>
-    </div>
+    </Overlay>
   );
 }
 
-function CarTaskRow({ car }: { car: AdCar }) {
+function Group({
+  title,
+  cars,
+  next,
+  busyIds,
+  onRotate,
+}: {
+  title: string;
+  cars: AdCar[];
+  next: AdCampaignType;
+  busyIds?: Set<string>;
+  onRotate?: (car: AdCar, campaign: AdCampaignType) => void;
+}) {
   return (
-    <div className="flex items-center justify-between p-3 rounded-xl border border-zinc-200/60 bg-white shadow-2xs hover:border-zinc-300 transition-colors">
-      <div className="flex flex-col min-w-0">
-        <div className="font-semibold text-sm text-zinc-900 truncate pr-2">{car.name}</div>
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-[10px] text-zinc-500 font-medium">
-            {getPriceTierLabel(car.priceTier)}
-          </span>
-          <span className="w-1 h-1 rounded-full bg-zinc-300"></span>
-          <span className="text-[10px] text-zinc-500 font-medium">
-            ${Number(car.priceUsd).toLocaleString("ru-RU")}
-          </span>
-        </div>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-50 text-amber-600 border border-amber-100" title="Нужно снять новое видео">
-          <Video className="w-4 h-4" />
-        </div>
+    <div className="space-y-2">
+      <h3 className="text-xs font-medium text-ads-subtle">{title}</h3>
+      <div className="overflow-hidden rounded-2xl bg-ads-card">
+        {cars.map((car, i) => {
+          const busy = !!car.id && busyIds?.has(car.id);
+          return (
+            <div
+              key={car.id}
+              className={`flex items-center justify-between gap-3 px-3.5 py-3 ${i > 0 ? "border-t border-ads-line" : ""}`}
+            >
+              <div className="min-w-0">
+                <div className="truncate text-sm font-medium text-ads-ink">{car.name}</div>
+                <div className="mt-0.5 text-xs text-ads-muted">
+                  ${Number(car.priceUsd).toLocaleString("ru-RU")}
+                </div>
+              </div>
+              {onRotate && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onRotate(car, next)}
+                  className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper disabled:opacity-40"
+                >
+                  {busy ? (
+                    <Spinner />
+                  ) : next === "rk2" ? (
+                    <ArrowRight className="size-3.5" />
+                  ) : (
+                    <ArrowLeft className="size-3.5" />
+                  )}
+                  {next === "rk2" ? "В РК 2" : "В РК 1"}
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

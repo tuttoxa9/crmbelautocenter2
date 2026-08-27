@@ -1,69 +1,57 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import { AdsSettings } from "@/lib/types";
-import { Settings, Bell, Send, MessageSquare, Sparkles } from "lucide-react";
-
-interface AdsSettingsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  settings: AdsSettings;
-  onSaveSettings: (settings: Partial<AdsSettings>) => Promise<void>;
-  totalCatalogCars?: number;
-}
+import { useEffect, useState } from "react";
+import { type AdsSettings } from "@/lib/types";
+import { CloseBtn, GhostBtn, Overlay, PrimaryBtn, Spinner, Stepper } from "./chrome";
 
 export function AdsSettingsModal({
   isOpen,
   onClose,
   settings,
   onSaveSettings,
-  totalCatalogCars = 0,
-}: AdsSettingsModalProps) {
-  const [targetCarsPerDay, setTargetCarsPerDay] = useState<number>(settings.targetCarsPerDay || 3);
-  const [botToken, setBotToken] = useState<string>(settings.botToken || "");
-  const [chatId, setChatId] = useState<string>(settings.chatId || "");
-  const [isActive, setIsActive] = useState<boolean>(
-    settings.isActive !== undefined ? settings.isActive : true
-  );
+  airCount = 0,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  settings: AdsSettings;
+  onSaveSettings: (settings: Partial<AdsSettings>) => Promise<void>;
+  airCount?: number;
+  totalCatalogCars?: number;
+}) {
+  const [rk1, setRk1] = useState(settings.rk1Days || 17);
+  const [rk2, setRk2] = useState(settings.rk2Days || 14);
+  const [perDay, setPerDay] = useState(settings.targetCarsPerDay || 3);
+  const [active, setActive] = useState(settings.isActive !== false);
+  const [botToken, setBotToken] = useState(settings.botToken || "");
+  const [chatId, setChatId] = useState(settings.chatId || "");
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      setTargetCarsPerDay(settings.targetCarsPerDay || 3);
-      setBotToken(settings.botToken || "");
-      setChatId(settings.chatId || "");
-      setIsActive(settings.isActive !== undefined ? settings.isActive : true);
-      setTestResult(null);
-    }
+    if (!isOpen) return;
+    setRk1(settings.rk1Days || 17);
+    setRk2(settings.rk2Days || 14);
+    setPerDay(settings.targetCarsPerDay || 3);
+    setActive(settings.isActive !== false);
+    setBotToken(settings.botToken || "");
+    setChatId(settings.chatId || "");
+    setTestResult(null);
   }, [isOpen, settings]);
 
-  // Auto-calculated optimal days per stint
-  const autoBaseDays = totalCatalogCars > 0 && targetCarsPerDay > 0
-    ? Math.max(7, Math.ceil(totalCatalogCars / targetCarsPerDay / 2))
-    : 14;
+  const cycle = rk1 + rk2;
+  const daysFilled = Math.max(1, Math.ceil(airCount / Math.max(1, perDay)));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async () => {
     try {
       setIsSaving(true);
       await onSaveSettings({
-        targetCarsPerDay: Number(targetCarsPerDay) || 3,
+        rk1Days: rk1,
+        rk2Days: rk2,
+        targetCarsPerDay: perDay,
+        isActive: active,
         botToken: botToken.trim() || undefined,
         chatId: chatId.trim() || undefined,
-        isActive,
       });
       onClose();
     } catch (err) {
@@ -73,7 +61,7 @@ export function AdsSettingsModal({
     }
   };
 
-  const handleSendTestTelegramAlert = async () => {
+  const handleTest = async () => {
     try {
       setIsTesting(true);
       setTestResult(null);
@@ -86,11 +74,11 @@ export function AdsSettingsModal({
         }),
       });
       const data = await res.json();
-      if (data.success) {
-        setTestResult("Тестовое уведомление успешно отправлено в Telegram");
-      } else {
-        setTestResult(`Ошибка: ${data.error || "Не удалось отправить"}`);
-      }
+      setTestResult(
+        data.success
+          ? "Тестовое уведомление отправлено"
+          : `Ошибка: ${data.error || "Не удалось отправить"}`,
+      );
     } catch (err: any) {
       setTestResult(`Ошибка: ${err.message}`);
     } finally {
@@ -99,189 +87,124 @@ export function AdsSettingsModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-white text-zinc-900 border border-zinc-200 shadow-2xl rounded-2xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
-        <DialogHeader className="px-6 py-5 border-b border-zinc-100 flex-shrink-0">
-          <DialogTitle className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-zinc-500" />
-            Настройки ротации и Telegram
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1">
-          <div className="space-y-4">
-            {/* Smart Balance Settings */}
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-zinc-700">
-                  Баланс: Автомобилей в день (Цель)
-                </Label>
-                <div className="flex items-center gap-1.5">
-                  <Input
-                    type="number"
-                    min="1"
-                    max="10"
-                    required
-                    value={targetCarsPerDay}
-                    onChange={(e) => setTargetCarsPerDay(Number(e.target.value))}
-                    className="bg-zinc-50 border-zinc-200 text-zinc-900 font-semibold focus:bg-white rounded-lg h-9 w-24"
-                  />
-                  <span className="text-[10px] text-zinc-500 leading-tight">
-                    Максимум авто, которые могут выгорать в один день.
-                  </span>
-                </div>
-              </div>
-
-              {/* Auto-calculated info box */}
-              <div className="p-3 bg-amber-50 border border-amber-200/80 rounded-xl space-y-1.5">
-                <div className="text-xs font-semibold text-amber-800 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  Умный алгоритм
-                </div>
-                <div className="text-[11px] text-amber-700 leading-relaxed space-y-1">
-                  <p>
-                    Система автоматически рассчитывает оптимальный срок для каждой машины.
-                  </p>
-                  <p className="font-semibold">
-                    {totalCatalogCars} авто ÷ {targetCarsPerDay} в день ÷ 2 кампании = ~{autoBaseDays} дней на одну кампанию.
-                  </p>
-                  <p>
-                    Полный цикл ротации: ~{autoBaseDays * 2} дней (РК 1 → РК 2 → снова РК 1).
-                  </p>
-                  <div className="pt-1.5 mt-1.5 border-t border-amber-200/60">
-                    <span className="font-semibold text-amber-900">💡 Рекомендация:</span>{" "}
-                    при {totalCatalogCars} авто на сайте оптимально снимать{" "}
-                    <span className="font-bold text-amber-900">
-                      {Math.max(2, Math.ceil(totalCatalogCars / 30))}–{Math.max(3, Math.ceil(totalCatalogCars / 20))}
-                    </span>{" "}
-                    авто/день (цикл 20–30 дней).
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Telegram Configuration */}
-            <div className="pt-2 border-t border-zinc-100 space-y-3">
-              <div className="text-xs font-semibold text-zinc-800 flex items-center gap-1.5">
-                <MessageSquare className="w-3.5 h-3.5 text-zinc-500" />
-                Настройки Telegram бота
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-zinc-700">
-                  Токен бота
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="7969988440:AAEqIdBJZVZJ..."
-                  value={botToken}
-                  onChange={(e) => setBotToken(e.target.value)}
-                  className="bg-zinc-50 border-zinc-200 text-zinc-900 font-mono text-xs focus:bg-white rounded-lg h-9"
-                />
-                <p className="text-[10px] text-zinc-500">
-                  Токен из @BotFather. Если пусто, используется общий бот CRM.
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-zinc-700">
-                  ID чата или группы
-                </Label>
-                <Input
-                  type="text"
-                  placeholder="-1002721193947"
-                  value={chatId}
-                  onChange={(e) => setChatId(e.target.value)}
-                  className="bg-zinc-50 border-zinc-200 text-zinc-900 font-mono text-xs focus:bg-white rounded-lg h-9"
-                />
-                <p className="text-[10px] text-zinc-500">
-                  ID группы Telegram, обычно начинается с -100. Если пусто, используется основной чат.
-                </p>
-              </div>
-            </div>
-
-            {/* Switch Active */}
-            <div className="pt-2 border-t border-zinc-100">
-              <label className="flex items-center gap-3 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-0 cursor-pointer"
-                />
-                <div>
-                  <div className="text-xs font-medium text-zinc-800">
-                    Включить авто-уведомления
-                  </div>
-                  <div className="text-[11px] text-zinc-500">
-                    Ежедневно проверять сроки и присылать отчёт о ротации
-                  </div>
-                </div>
-              </label>
-            </div>
-
-            {/* Test Block with Single Button */}
-            <div className="p-3.5 bg-zinc-50 border border-zinc-200/80 rounded-xl space-y-2.5">
-              <div className="text-xs font-semibold text-zinc-800 flex items-center gap-1.5">
-                <Bell className="w-3.5 h-3.5 text-zinc-500" />
-                Проверка бота
-              </div>
-              
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleSendTestTelegramAlert}
-                disabled={isTesting}
-                className="w-full bg-white hover:bg-zinc-100 border-zinc-200 text-zinc-700 text-xs h-8 font-medium rounded-lg flex items-center justify-center gap-1.5 shadow-2xs"
-              >
-                {isTesting ? (
-                  <>
-                    <Spinner className="w-3.5 h-3.5" />
-                    Отправка...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-3.5 h-3.5 text-zinc-500" />
-                    Проверить связь с Telegram
-                  </>
-                )}
-              </Button>
-
-              {testResult && (
-                <div className="text-[11px] font-medium p-2.5 rounded-lg border bg-white shadow-2xs border-zinc-200 text-zinc-800">
-                  {testResult}
-                </div>
-              )}
-            </div>
+    <Overlay open={isOpen} onClose={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ads-rules-title"
+        className="ads-enter relative flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-ads-bg shadow-ads-float sm:rounded-3xl"
+      >
+        <header className="flex items-center justify-between px-6 pt-6 pb-2">
+          <div>
+            <h2 id="ads-rules-title" className="text-xl font-semibold tracking-tight text-ads-ink">
+              Правила
+            </h2>
+            <p className="mt-0.5 text-sm text-ads-muted">Темп съёмки, цикл и Telegram</p>
           </div>
+          <CloseBtn onClick={onClose} />
+        </header>
 
-          <DialogFooter className="pt-4 border-t border-zinc-100 flex justify-end gap-2 flex-shrink-0">
-            <Button
+        <div className="space-y-3 overflow-y-auto px-5 py-3">
+          <section className="rounded-2xl bg-ads-card px-4 py-4">
+            <p className="text-sm font-medium text-ads-ink">Съёмочная смена</p>
+            <p className="mt-0.5 text-xs text-ads-muted">Сколько роликов команда закрывает за день</p>
+            <div className="mt-3">
+              <Stepper value={perDay} onChange={setPerDay} min={1} max={12} />
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-ads-muted">
+              Сейчас в эфире {airCount} авто. При {perDay} в день график занимает примерно {daysFilled}{" "}
+              {daysFilled === 1 ? "день" : daysFilled < 5 ? "дня" : "дней"}.
+            </p>
+          </section>
+
+          <section className="rounded-2xl bg-ads-card px-4 py-4">
+            <p className="text-sm font-medium text-ads-ink">Цикл</p>
+            <p className="mt-0.5 text-xs text-ads-muted">Сколько живёт креатив в каждой кампании</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div>
+                <p className="mb-2 text-xs text-ads-muted">РК 1</p>
+                <Stepper value={rk1} onChange={setRk1} min={5} max={40} />
+              </div>
+              <div>
+                <p className="mb-2 text-xs text-ads-muted">РК 2</p>
+                <Stepper value={rk2} onChange={setRk2} min={5} max={40} />
+              </div>
+            </div>
+            <div className="mt-4 flex h-1.5 overflow-hidden rounded-full bg-ads-surface">
+              <div className="bg-ads-ink" style={{ width: `${(rk1 / Math.max(1, cycle)) * 100}%` }} />
+              <div className="bg-ads-ink/30" style={{ width: `${(rk2 / Math.max(1, cycle)) * 100}%` }} />
+            </div>
+            <p className="mt-3 text-sm text-ads-muted">
+              Полный круг {cycle} дней, потом снова РК 1 с новым роликом.
+            </p>
+          </section>
+
+          <label className="flex items-center justify-between gap-4 rounded-2xl bg-ads-card px-4 py-4">
+            <span>
+              <span className="block text-sm font-medium text-ads-ink">Напоминания</span>
+              <span className="mt-0.5 block text-xs text-ads-muted">Утром, если есть авто на ротацию</span>
+            </span>
+            <button
               type="button"
-              variant="outline"
-              onClick={onClose}
-              className="border-zinc-200 text-zinc-700 hover:bg-zinc-100 text-xs rounded-lg h-9"
+              role="switch"
+              aria-checked={active}
+              onClick={() => setActive((v) => !v)}
+              className={`relative h-7 w-11 rounded-full transition-colors ${active ? "bg-ads-ink" : "bg-ads-surface"}`}
             >
-              Отмена
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSaving}
-              className="bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs rounded-lg h-9 px-4"
+              <span
+                className={`absolute top-0.5 size-6 rounded-full bg-ads-card shadow-ads-pill transition-transform ${
+                  active ? "translate-x-4" : "translate-x-0.5"
+                }`}
+              />
+            </button>
+          </label>
+
+          <section className="rounded-2xl bg-ads-card px-4 py-4">
+            <p className="text-sm font-medium text-ads-ink">Telegram</p>
+            <p className="mt-0.5 text-xs text-ads-muted">Если пусто — используется общий бот CRM</p>
+            <label className="mt-3 block">
+              <span className="mb-1.5 block text-xs text-ads-muted">Токен бота</span>
+              <input
+                type="password"
+                autoComplete="off"
+                value={botToken}
+                onChange={(e) => setBotToken(e.target.value)}
+                placeholder="от @BotFather"
+                className="h-10 w-full rounded-xl bg-ads-bg px-3 font-mono text-xs text-ads-ink outline-none placeholder:text-ads-subtle focus:bg-ads-surface focus:ring-2 focus:ring-ads-accent/25"
+              />
+            </label>
+            <label className="mt-3 block">
+              <span className="mb-1.5 block text-xs text-ads-muted">ID чата или группы</span>
+              <input
+                type="text"
+                autoComplete="off"
+                value={chatId}
+                onChange={(e) => setChatId(e.target.value)}
+                placeholder="-100…"
+                className="h-10 w-full rounded-xl bg-ads-bg px-3 font-mono text-xs text-ads-ink outline-none placeholder:text-ads-subtle focus:bg-ads-surface focus:ring-2 focus:ring-ads-accent/25"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={handleTest}
+              disabled={isTesting}
+              className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-xl bg-ads-bg px-3 text-xs font-medium text-ads-ink hover:bg-ads-surface disabled:opacity-40"
             >
-              {isSaving ? (
-                <>
-                  <Spinner className="w-3.5 h-3.5 mr-1.5" />
-                  Сохранение...
-                </>
-              ) : (
-                "Сохранить настройки"
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+              {isTesting ? <Spinner /> : null}
+              {isTesting ? "Отправка…" : "Проверить связь"}
+            </button>
+            {testResult && <p className="mt-2 text-xs text-ads-muted">{testResult}</p>}
+          </section>
+        </div>
+
+        <footer className="flex justify-end gap-2 px-5 py-4">
+          <GhostBtn onClick={onClose}>Отмена</GhostBtn>
+          <PrimaryBtn onClick={() => void handleSave()} disabled={isSaving}>
+            {isSaving ? <Spinner /> : null}
+            {isSaving ? "Сохраняю" : "Сохранить"}
+          </PrimaryBtn>
+        </footer>
+      </div>
+    </Overlay>
   );
 }

@@ -6,7 +6,24 @@ import {
   minskDateKeyToTimestamp,
   addDaysToDateKey,
   getDateKeyDiffDays,
+  collectSlotOccupancy,
+  pickOpenSlotDateKey,
 } from '@/lib/services/adsService';
+
+async function getTargetPerDay(): Promise<number> {
+  try {
+    const settingsRows = await sql`SELECT data FROM settings WHERE id = 'ads' LIMIT 1`;
+    if (settingsRows.length > 0) {
+      const raw = settingsRows[0].data;
+      const d = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const n = Number(d?.targetCarsPerDay);
+      if (n > 0) return n;
+    }
+  } catch {
+    // fall through
+  }
+  return 3;
+}
 
 export async function PUT(
   request: Request,
@@ -43,54 +60,26 @@ export async function PUT(
 
     const todayKey = getMinskDateKey(Date.now());
 
-    // If campaign switched to rk1 or rk2, calculate next available slot if not explicitly provided
-    const isCampaignSwitch = body.campaign && (body.campaign === 'rk1' || body.campaign === 'rk2') && body.campaign !== currentData.campaign;
+    const isCampaignSwitch =
+      body.campaign &&
+      (body.campaign === 'rk1' || body.campaign === 'rk2') &&
+      body.campaign !== currentData.campaign;
+
     if (isCampaignSwitch && !body.targetRotationDate) {
       const existingCarsRows = await sql`SELECT id, data FROM ad_cars WHERE id != ${id}`;
-      const countsByDateKey: Record<string, number> = {};
-      const activeFutureDateKeys: string[] = [];
-      
-      existingCarsRows.forEach((r: any) => {
+      const others = existingCarsRows.map((r: any) => {
         const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
-        if (d.campaign === 'rk1' || d.campaign === 'rk2') {
-          let t = Number(d.targetRotationDate);
-          if (!t && d.startedAt && d.maxDays) {
-            t = Number(d.startedAt) + Number(d.maxDays) * 86400000;
-          }
-          if (t) {
-            const dateKey = getMinskDateKey(t);
-            countsByDateKey[dateKey] = (countsByDateKey[dateKey] || 0) + 1;
-            if (dateKey >= todayKey) {
-              activeFutureDateKeys.push(dateKey);
-            }
-          }
-        }
+        return d;
       });
-
-      const targetPerDay = 3;
-      // Start checking from earliest active schedule date (e.g. 2026-08-30) or todayKey + 10 days
-      const earliestScheduledKey = activeFutureDateKeys.length > 0 
-        ? activeFutureDateKeys.sort()[0] 
-        : addDaysToDateKey(todayKey, 10);
-      
-      const startScanKey = earliestScheduledKey > todayKey ? earliestScheduledKey : addDaysToDateKey(todayKey, 10);
-      let chosenDateKey = startScanKey;
-
-      for (let offset = 0; offset <= 60; offset++) {
-        const testDateKey = addDaysToDateKey(startScanKey, offset);
-        if ((countsByDateKey[testDateKey] || 0) < targetPerDay) {
-          chosenDateKey = testDateKey;
-          break;
-        }
-      }
-
+      const { counts, earliestFutureKey } = collectSlotOccupancy(others, todayKey);
+      const targetPerDay = await getTargetPerDay();
+      const chosenDateKey = pickOpenSlotDateKey(counts, todayKey, targetPerDay, earliestFutureKey);
       const daysLeftFromToday = Math.max(0, getDateKeyDiffDays(todayKey, chosenDateKey));
       updatedData.targetRotationDate = minskDateKeyToTimestamp(chosenDateKey);
       updatedData.maxDays = daysLeftFromToday;
       updatedData.startedAt = Date.now();
       updatedData.lastAlertSentAt = null;
     } else if (body.maxDays && !body.targetRotationDate) {
-      // If maxDays is explicitly updated by user (e.g. inline edit to 14 days)
       const startedAt = Number(updatedData.startedAt) || Date.now();
       const daysIn = Math.max(0, Math.floor((Date.now() - startedAt) / 86400000));
       const daysLeft = Math.max(0, Number(body.maxDays) - daysIn);

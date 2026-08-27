@@ -6,6 +6,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+const COMMISSION_ALLOWED = ["/commission", "/ads", "/login"];
+
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, userRole, loading } = useAuth();
   const pathname = usePathname();
@@ -13,9 +15,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!loading && user) {
-      // If user is a commission agent and trying to access non-commission routes
-      if (userRole === "commission" && !pathname.startsWith("/commission") && !pathname.startsWith("/login")) {
-         router.push("/commission");
+      if (userRole === "commission") {
+        const allowed = COMMISSION_ALLOWED.some((p) => pathname.startsWith(p));
+        if (!allowed) router.push("/commission");
       }
     }
   }, [loading, user, userRole, pathname, router]);
@@ -28,13 +30,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // For development without Firebase keys, we will render children anyway
-  // to allow testing the UI. In a real app we'd only return children if `user` is truthy.
   if (!auth) {
       return <>{children}</>;
   }
 
-  // We only render children if we have a user (Dashboard routes)
-  // For login route, we'll handle it separately in the page itself or layout
   return <>{user ? children : null}</>;
 }

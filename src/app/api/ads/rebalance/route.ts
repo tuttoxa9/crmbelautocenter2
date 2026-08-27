@@ -21,7 +21,6 @@ export async function POST(request: Request) {
       // Empty body is okay
     }
 
-    // 1. Load settings from Neon DB
     const settingsRows = await sql`
       SELECT data FROM settings WHERE id = 'ads' LIMIT 1
     `;
@@ -35,7 +34,6 @@ export async function POST(request: Request) {
     const todayKey = getMinskDateKey(Date.now());
     const nowIso = new Date().toISOString();
 
-    // 2. Fetch all ad_cars
     const rows = await sql`
       SELECT id, data, created_at, updated_at 
       FROM ad_cars 
@@ -54,9 +52,6 @@ export async function POST(request: Request) {
 
     const activeCars = allCars.filter((c: any) => c.campaign === 'rk1' || c.campaign === 'rk2');
 
-    // Find start date key:
-    // If explicitly provided, use customStartDateKey.
-    // Otherwise, check if active cars are already scheduled to start at a future date (e.g. 2026-08-30).
     let startKey = todayKey;
     if (customStartDateKey) {
       startKey = customStartDateKey;
@@ -73,7 +68,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Sort active cars by age (most seasoned/oldest cars first -> expire sooner)
     const sortedActive = [...activeCars].sort((a: any, b: any) => {
       const startedA = Number(a.startedAt) || (Date.now() - 7 * 86400000);
       const startedB = Number(b.startedAt) || (Date.now() - 7 * 86400000);
@@ -82,7 +76,6 @@ export async function POST(request: Request) {
 
     const updatedCarsMap = new Map<string, any>();
 
-    // 4. Distribute evenly: exactly targetCarsPerDay per calendar day starting from startKey
     for (let i = 0; i < sortedActive.length; i++) {
       const car = sortedActive[i];
       const dayOffset = Math.floor(i / targetCarsPerDay);
@@ -105,18 +98,15 @@ export async function POST(request: Request) {
       updatedCarsMap.set(car.id, updatedCarData);
     }
 
-    // 5. Update Neon DB
-    const updatePromises = Array.from(updatedCarsMap.entries()).map(([id, data]) => {
-      return sql`
+    // Sequential writes — Neon pooler chokes on Promise.all bursts
+    for (const [id, data] of updatedCarsMap.entries()) {
+      await sql`
         UPDATE ad_cars 
         SET data = ${JSON.stringify(data)}, updated_at = ${nowIso}
         WHERE id = ${id}
       `;
-    });
+    }
 
-    await Promise.all(updatePromises);
-
-    // 6. Return all cars with fresh data
     const finalCars = allCars.map((c: any) => {
       if (updatedCarsMap.has(c.id)) {
         return { id: c.id, ...updatedCarsMap.get(c.id) };

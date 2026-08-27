@@ -2,13 +2,13 @@ import { Metadata } from "next";
 import { AdsDashboard } from "@/components/ads/AdsDashboard";
 
 export const metadata: Metadata = {
-  title: "Реклама TikTok Ads | Белавтоцентр CRM",
-  description: "Управление рекламными кампаниями TikTok Ads и циклической ротацией креативов",
+  title: "Ротация | Белавтоцентр CRM",
+  description: "Консоль ротации рекламы TikTok",
 };
 
 export default function AdsPage() {
   return (
-    <div className="h-full bg-[#F8F9FA] overflow-y-auto">
+    <div className="h-full overflow-y-auto bg-ads-bg">
       <AdsDashboard />
     </div>
   );
