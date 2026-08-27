@@ -4,10 +4,26 @@ import {
   calculatePriceTier,
   getMinskDateKey,
   minskDateKeyToTimestamp,
-  addDaysToDateKey,
   getDateKeyDiffDays,
+  collectSlotOccupancy,
+  pickOpenSlotDateKey,
 } from '@/lib/services/adsService';
 import crypto from 'crypto';
+
+async function getTargetPerDay(): Promise<number> {
+  try {
+    const settingsRows = await sql`SELECT data FROM settings WHERE id = 'ads' LIMIT 1`;
+    if (settingsRows.length > 0) {
+      const raw = settingsRows[0].data;
+      const d = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const n = Number(d?.targetCarsPerDay);
+      if (n > 0) return n;
+    }
+  } catch {
+    // fall through
+  }
+  return 3;
+}
 
 export async function GET() {
   try {
@@ -17,9 +33,8 @@ export async function GET() {
       ORDER BY created_at DESC
     `;
 
-    // Fetch catalog cars to check for sold status
     const catalogRows = await sql`SELECT id, data FROM cars`;
-    const soldCarIds = new Set();
+    const soldCarIds = new Set<string>();
     for (const row of catalogRows) {
       let d = row.data;
       if (typeof d === 'string') {
@@ -31,13 +46,14 @@ export async function GET() {
     }
 
     const cars: any[] = [];
-    
+    const hiddenSold: string[] = [];
+
     for (const row of rows) {
       let d = row.data;
       if (typeof d === 'string') {
         try { d = JSON.parse(d); } catch { d = {}; }
       }
-      
+
       const carData = {
         id: row.id,
         ...d,
@@ -46,14 +62,13 @@ export async function GET() {
       };
 
       if (carData.carId && soldCarIds.has(carData.carId)) {
-        // Automatically clean up sold cars from the ads tracking board
-        sql`DELETE FROM ad_cars WHERE id = ${row.id}`.catch(e => console.error("Auto-cleanup error:", e));
-      } else {
-        cars.push(carData);
+        hiddenSold.push(row.id);
+        continue;
       }
+      cars.push(carData);
     }
 
-    return NextResponse.json({ success: true, cars });
+    return NextResponse.json({ success: true, cars, hiddenSoldCount: hiddenSold.length });
   } catch (error: any) {
     console.error('Error fetching ad cars from Neon DB:', error);
     return NextResponse.json(
@@ -82,55 +97,21 @@ export async function POST(request: Request) {
 
     const todayKey = getMinskDateKey(Date.now());
 
-    // Smart Slot Allocation if campaign is active (rk1 / rk2)
     let targetRotationDate = body.targetRotationDate ? Number(body.targetRotationDate) : undefined;
     let maxDays = body.maxDays ? Number(body.maxDays) : undefined;
 
     if ((campaign === 'rk1' || campaign === 'rk2') && !targetRotationDate) {
-      // Find current ad cars to find earliest open slot
       const existingCarsRows = await sql`SELECT data FROM ad_cars`;
-      const countsByDateKey: Record<string, number> = {};
-      const activeFutureDateKeys: string[] = [];
-
-      existingCarsRows.forEach((r: any) => {
+      const existing = existingCarsRows.map((r: any) => {
         const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
-        if (d.campaign === 'rk1' || d.campaign === 'rk2') {
-          let t = Number(d.targetRotationDate);
-          if (!t && d.startedAt && d.maxDays) {
-            t = Number(d.startedAt) + Number(d.maxDays) * 86400000;
-          }
-          if (t) {
-            const dateKey = getMinskDateKey(t);
-            countsByDateKey[dateKey] = (countsByDateKey[dateKey] || 0) + 1;
-            if (dateKey >= todayKey) {
-              activeFutureDateKeys.push(dateKey);
-            }
-          }
-        }
+        return d;
       });
-
-      const targetPerDay = 3;
-      // Start checking from earliest active schedule date (e.g. 2026-08-30) or todayKey + 10 days
-      const earliestScheduledKey = activeFutureDateKeys.length > 0 
-        ? activeFutureDateKeys.sort()[0] 
-        : addDaysToDateKey(todayKey, 10);
-      
-      const startScanKey = earliestScheduledKey > todayKey ? earliestScheduledKey : addDaysToDateKey(todayKey, 10);
-      let chosenDateKey = startScanKey;
-
-      for (let offset = 0; offset <= 60; offset++) {
-        const testDateKey = addDaysToDateKey(startScanKey, offset);
-        if ((countsByDateKey[testDateKey] || 0) < targetPerDay) {
-          chosenDateKey = testDateKey;
-          break;
-        }
-      }
-
+      const { counts, earliestFutureKey } = collectSlotOccupancy(existing, todayKey);
+      const targetPerDay = await getTargetPerDay();
+      const chosenDateKey = pickOpenSlotDateKey(counts, todayKey, targetPerDay, earliestFutureKey);
       const daysLeftFromToday = Math.max(0, getDateKeyDiffDays(todayKey, chosenDateKey));
       targetRotationDate = minskDateKeyToTimestamp(chosenDateKey);
-      if (!maxDays) {
-        maxDays = daysLeftFromToday;
-      }
+      if (!maxDays) maxDays = daysLeftFromToday;
     }
 
     const carData: any = {

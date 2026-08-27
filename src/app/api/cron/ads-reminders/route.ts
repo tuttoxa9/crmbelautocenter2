@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { sendTelegramAdRotationAlert } from '@/lib/telegram';
-import { getPriceTierLabel } from '@/lib/services/adsService';
+import { getPriceTierLabel, getMinskDateKey, getCalendarDaysLeft } from '@/lib/services/adsService';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const isForce = searchParams.get('force') === 'true';
 
-    // 1. Проверяем авторизацию Cron-задачи (если в продакшене и не force)
     const authHeader = request.headers.get('authorization');
-    const isCronSecretMatch = process.env.CRON_SECRET 
+    const isCronSecretMatch = process.env.CRON_SECRET
       ? authHeader === `Bearer ${process.env.CRON_SECRET}`
       : true;
 
@@ -20,7 +19,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // 2. Получаем настройки Ads из Neon DB
     const settingsRows = await sql`
       SELECT data FROM settings WHERE id = 'ads' LIMIT 1
     `;
@@ -30,22 +28,12 @@ export async function GET(request: Request) {
       adsSettings = typeof raw === 'string' ? JSON.parse(raw) : raw;
     }
 
-    const rk1DaysLimit = Number(adsSettings?.rk1Days) || 17;
-    const rk2DaysLimit = Number(adsSettings?.rk2Days) || 14;
-    const targetPerDay = Number(adsSettings?.targetCarsPerDay) || 3;
     const isActive = adsSettings?.isActive !== undefined ? adsSettings.isActive : true;
 
     if (!isActive && !isForce) {
       return NextResponse.json({ success: true, message: 'Ads notifications are inactive in settings.' });
     }
 
-    // 3. Get total catalog cars count for reference
-    const catalogCountRows = await sql`
-      SELECT COUNT(*) as count FROM cars
-    `;
-    const totalCatalogCars = Number(catalogCountRows[0]?.count) || 300;
-
-    // 4. Получаем все активные авто из таблицы ad_cars в Neon DB
     const carRows = await sql`
       SELECT id, data FROM ad_cars
     `;
@@ -56,41 +44,30 @@ export async function GET(request: Request) {
     }).filter((c: any) => c.campaign === 'rk1' || c.campaign === 'rk2');
 
     const now = Date.now();
-    const todayMidnight = new Date();
-    todayMidnight.setHours(0, 0, 0, 0);
-    const todayMidnightMs = todayMidnight.getTime();
+    const todayKey = getMinskDateKey(now);
 
     let alertsSent = 0;
     const expiredList = [];
 
     for (const car of cars) {
-      const startedAt = Number(car.startedAt) || now;
-      const diffMs = now - startedAt;
-      const daysInAd = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
-
-      const campaign = car.campaign as 'rk1' | 'rk2';
-      const limitDays = Number(car.maxDays) || 14;
-
-      // Проверяем, наступил ли срок ротации по календарной дате или дням
-      const targetRotationDate = Number(car.targetRotationDate);
-      const isDue = targetRotationDate 
-        ? targetRotationDate <= todayMidnightMs 
-        : daysInAd >= limitDays;
+      const daysLeft = getCalendarDaysLeft(car.targetRotationDate, car.startedAt, car.maxDays);
+      const isDue = daysLeft <= 0;
 
       if (isDue) {
+        const campaign = car.campaign as 'rk1' | 'rk2';
         const targetCampaign = campaign === 'rk1' ? 'rk2' : 'rk1';
         const lastAlert = Number(car.lastAlertSentAt) || 0;
         const timeSinceLastAlert = now - lastAlert;
-
-        // Защита от дублей: отправляем не чаще раза в 20 часов (если не force)
         const canSendAlert = isForce || timeSinceLastAlert > 20 * 60 * 60 * 1000;
+        const daysInAd = Math.max(0, Math.floor((now - (Number(car.startedAt) || now)) / 86400000));
 
         expiredList.push({
           id: car.id,
           name: car.name,
           campaign,
           daysInAd,
-          limitDays,
+          daysLeft,
+          todayKey,
           alertSent: canSendAlert,
         });
 
@@ -108,7 +85,6 @@ export async function GET(request: Request) {
             photoUrl: car.photoUrl,
           });
 
-          // Обновляем метку времени последнего алерта в Neon DB
           const updatedData = {
             ...car,
             lastAlertSentAt: now,
@@ -129,6 +105,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
+      todayKey,
       totalActiveCars: cars.length,
       expiredCarsCount: expiredList.length,
       alertsSent,
