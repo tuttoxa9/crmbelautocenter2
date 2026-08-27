@@ -127,3 +127,26 @@
     text-rendering: optimizeLegibility;
   }
 }
+
+@keyframes ads-burn-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+.ads-burn-pulse {
+  animation: ads-burn-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ads-burn-pulse {
+    animation: none;
+  }
+}
+
+.ads-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.ads-scroll::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 99px;
+}
