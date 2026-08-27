@@ -2,8 +2,7 @@
 
 import React from "react";
 import { AdCar, AdCampaignType, AdsSettings } from "@/lib/types";
-import { getAdBurn } from "@/lib/services/adsProgress";
-import { ArrowLeft, ArrowRight, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { AdsCarCard } from "./AdsCarCard";
 
 interface AdsTodayQueueProps {
@@ -29,9 +28,6 @@ export function AdsTodayQueue({
 }: AdsTodayQueueProps) {
   if (dueToday.length === 0 && overdue.length === 0) return null;
 
-  const rotateTarget = (car: AdCar): AdCampaignType =>
-    car.campaign === "rk1" ? "rk2" : "rk1";
-
   return (
     <section className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
       <header className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between gap-3">
@@ -50,12 +46,9 @@ export function AdsTodayQueue({
       </header>
 
       <div className="p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2.5">
-        {[...overdue, ...dueToday].map((car) => {
-          const burn = getAdBurn(car, settings);
-          const next = rotateTarget(car);
-          return (
-            <div key={car.id} className="relative">
+        {[...overdue, ...dueToday].map((car) => (
               <AdsCarCard
+                key={car.id}
                 car={car}
                 settings={settings}
                 busy={!!car.id && busyIds.has(car.id)}
@@ -64,23 +57,7 @@ export function AdsTodayQueue({
                 onReset={onReset}
                 onDelete={onDelete}
               />
-              <div className="absolute top-3 right-3">
-                <button
-                  type="button"
-                  onClick={() => onSwitch(car, next)}
-                  className="inline-flex items-center gap-1 h-7 px-2 rounded-lg bg-zinc-900 text-white text-[10px] font-semibold shadow-sm"
-                >
-                  {next === "rk2" ? (
-                    <ArrowRight className="w-3 h-3" />
-                  ) : (
-                    <ArrowLeft className="w-3 h-3" />
-                  )}
-                  {burn.tone === "overdue" ? "Ротировать" : "Сегодня"}
-                </button>
-              </div>
-            </div>
-          );
-        })}
+        ))}
       </div>
     </section>
   );
