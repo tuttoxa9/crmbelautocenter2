@@ -82,8 +82,8 @@ export function useFileManager() {
   const cacheRef = useRef<Map<string, S3Object[]>>(new Map());
 
   useEffect(() => {
-    setViewMode(readPref(VIEW_KEY, "grid", ["grid", "list"]));
-    setSortMode(readPref(SORT_KEY, "date", ["date", "name", "size"]));
+    setViewMode(readPref<ViewMode>(VIEW_KEY, "grid", ["grid", "list"]));
+    setSortMode(readPref<SortMode>(SORT_KEY, "date", ["date", "name", "size"]));
   }, []);
 
   const persistView = (v: ViewMode) => {
