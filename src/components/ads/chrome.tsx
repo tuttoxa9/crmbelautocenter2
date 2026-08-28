@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { X } from "lucide-react";
 import type { BurnTone } from "@/lib/services/adsProgress";
 import { cn } from "@/lib/utils";
@@ -222,6 +222,159 @@ export function Overlay({
       <div className={cn("relative z-10", align === "end" ? "h-full w-full max-w-md" : "w-full max-w-lg")}>
         {children}
       </div>
+    </div>
+  );
+}
+
+type ScrollMetrics = {
+  needed: boolean;
+  thumbTop: number;
+  thumbH: number;
+  trackH: number;
+};
+
+export function AdsScroller({
+  children,
+  className,
+  viewportClassName,
+  contentClassName,
+  side = "left",
+}: {
+  children: ReactNode;
+  className?: string;
+  viewportClassName?: string;
+  contentClassName?: string;
+  side?: "left" | "right";
+}) {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const metricsRef = useRef<ScrollMetrics>({ needed: false, thumbTop: 0, thumbH: 48, trackH: 0 });
+  const [metrics, setMetrics] = useState<ScrollMetrics>(metricsRef.current);
+  const [hot, setHot] = useState(false);
+
+  const measure = useCallback(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const overflow = scrollHeight - clientHeight > 4;
+    const trackH = Math.max(0, clientHeight - 12);
+    if (!overflow || trackH < 24) {
+      const next = { needed: false, thumbTop: 0, thumbH: 48, trackH };
+      metricsRef.current = next;
+      setMetrics((prev) => (prev.needed ? next : prev));
+      return;
+    }
+    const ratio = clientHeight / scrollHeight;
+    const thumbH = Math.max(40, Math.round(trackH * ratio));
+    const maxTop = Math.max(0, trackH - thumbH);
+    const thumbTop =
+      maxTop === 0 ? 0 : Math.round((scrollTop / (scrollHeight - clientHeight)) * maxTop);
+    const next = { needed: true, thumbTop, thumbH, trackH };
+    metricsRef.current = next;
+    setMetrics((prev) =>
+      prev.needed === next.needed &&
+      prev.thumbTop === next.thumbTop &&
+      prev.thumbH === next.thumbH &&
+      prev.trackH === next.trackH
+        ? prev
+        : next,
+    );
+  }, []);
+
+  useLayoutEffect(() => {
+    measure();
+  }, [measure, children]);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    const content = contentRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => measure());
+    ro.observe(el);
+    if (content) ro.observe(content);
+    el.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      el.removeEventListener("scroll", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, [measure]);
+
+  const onThumbDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const el = viewportRef.current;
+    if (!el) return;
+    const pointerId = e.pointerId;
+    const startY = e.clientY;
+    const startTop = el.scrollTop;
+    const { thumbH, trackH } = metricsRef.current;
+    const prevSelect = document.body.style.userSelect;
+    document.body.style.userSelect = "none";
+    setHot(true);
+
+    const onMove = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      const travel = Math.max(1, trackH - thumbH);
+      el.scrollTop = startTop + ((ev.clientY - startY) / travel) * maxScroll;
+    };
+    const onUp = (ev: PointerEvent) => {
+      if (ev.pointerId !== pointerId) return;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      document.body.style.userSelect = prevSelect;
+      setHot(false);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  };
+
+  const onTrackDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).dataset.thumb === "1") return;
+    const el = viewportRef.current;
+    if (!el) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const { thumbH, trackH } = metricsRef.current;
+    const y = e.clientY - rect.top - thumbH / 2;
+    const travel = Math.max(1, trackH - thumbH);
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    el.scrollTop = (y / travel) * maxScroll;
+  };
+
+  return (
+    <div className={cn("relative min-h-0", className)}>
+      <div
+        ref={viewportRef}
+        className={cn(
+          "ads-hide-bar h-full min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain",
+          viewportClassName,
+        )}
+      >
+        <div ref={contentRef} className={contentClassName}>
+          {children}
+        </div>
+      </div>
+      {metrics.needed ? (
+        <div
+          className={cn("ads-sb-track", side === "right" ? "is-right" : "is-left")}
+          onPointerDown={onTrackDown}
+          aria-hidden
+        >
+          <div
+            data-thumb="1"
+            className={cn("ads-sb-thumb", hot && "is-hot")}
+            style={{
+              transform: `translateY(${metrics.thumbTop}px)`,
+              height: metrics.thumbH,
+            }}
+            onPointerDown={onThumbDown}
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

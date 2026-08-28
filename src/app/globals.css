@@ -176,6 +176,18 @@
   background: #f5f5f7;
   color: #1d1d1f;
   -webkit-font-smoothing: antialiased;
+  --ads-sb: var(--color-ads-ink, #1d1d1f);
+}
+
+.ads-os,
+.ads-os * {
+  scrollbar-width: none !important;
+}
+.ads-os::-webkit-scrollbar,
+.ads-os *::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
 }
 
 .ads-os button:not(:disabled),
@@ -190,14 +202,12 @@
 }
 
 .ads-shift {
-  position: relative;
+  min-height: 0;
 }
 @media (min-width: 1024px) {
   .ads-shift {
-    position: sticky;
-    top: 3.5rem;
-    max-height: calc(100dvh - 4.25rem);
-    overflow-y: auto;
+    height: 100%;
+    overflow: hidden;
   }
 }
 
@@ -258,22 +268,66 @@
 .ads-veil {
 }
 
-.ads-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: rgb(161 161 170 / 0.7) transparent;
+.ads-hide-bar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.ads-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
-.ads-scroll::-webkit-scrollbar-thumb {
-  background: rgb(161 161 170 / 0.55);
+.ads-hide-bar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.ads-sb-track {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  width: 14px;
+  z-index: 8;
+}
+.ads-sb-track.is-left {
+  left: 0;
+}
+.ads-sb-track.is-right {
+  right: 0;
+}
+.ads-sb-thumb {
+  position: absolute;
+  top: 0;
+  left: 5px;
+  width: 4px;
   border-radius: 99px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+  background: color-mix(in oklab, var(--ads-sb, #1d1d1f) 38%, transparent);
+  will-change: transform, height;
+  cursor: grab;
+  touch-action: none;
+  transition: background-color 160ms ease;
+}
+.ads-sb-track.is-right .ads-sb-thumb {
+  left: auto;
+  right: 5px;
+}
+.ads-sb-thumb:hover,
+.ads-sb-thumb.is-hot {
+  background: color-mix(in oklab, var(--ads-sb, #1d1d1f) 58%, transparent);
+  cursor: grabbing;
+}
+
+.ads-scroll {
+  scrollbar-width: none;
+}
+.ads-scroll::-webkit-scrollbar {
+  height: 0;
+  width: 0;
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ads-burn-pulse,
   .ads-spin,
-  .ads-spin-lg {
+  .ads-spin-lg,
+  .ads-sb-thumb {
     animation: none;
+    transition: none;
   }
 }

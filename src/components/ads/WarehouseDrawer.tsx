@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { type AdCampaignType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { CarThumb } from "./CarThumb";
-import { CloseBtn, Overlay, Spinner } from "./chrome";
+import { AdsScroller, CloseBtn, Overlay, Spinner } from "./chrome";
 
 export interface WarehouseCar {
   id: string;
@@ -98,7 +98,7 @@ export function WarehouseDrawer({
           </div>
         </div>
 
-        <div className="ads-scroll min-h-0 flex-1 overflow-y-auto px-3 pb-8">
+        <AdsScroller className="min-h-0 flex-1" viewportClassName="px-3 pb-8">
           {list.length === 0 ? (
             <p className="px-2 py-10 text-center text-sm text-ads-subtle">Ничего не найдено</p>
           ) : (
@@ -139,7 +139,7 @@ export function WarehouseDrawer({
               Добавить вручную
             </button>
           )}
-        </div>
+        </AdsScroller>
       </aside>
     </Overlay>
   );

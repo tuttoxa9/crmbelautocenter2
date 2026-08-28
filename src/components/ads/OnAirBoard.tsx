@@ -7,6 +7,7 @@ import { type AdCampaignType, type AdCar, type AdPriceTier, type AdsSettings } f
 import { TIERS, calculatePriceTier, getCalendarDaysLeft } from "@/lib/services/adsService";
 import { cn } from "@/lib/utils";
 import { AdsCarCard } from "./AdsCarCard";
+import { AdsScroller } from "./chrome";
 
 export function OnAirBoard({
   cars,
@@ -58,7 +59,7 @@ export function OnAirBoard({
   const handlers = { onSwitch, onSaveDays, onReset, onDelete };
 
   return (
-    <div className="ads-pane overflow-hidden">
+    <div className="ads-pane flex min-h-0 flex-col overflow-hidden lg:h-full">
       <div className="flex items-end justify-between gap-3 px-5 pt-5 pb-3">
         <div>
           <p className="text-xs font-medium text-ads-subtle">Эфир</p>
@@ -115,6 +116,7 @@ export function OnAirBoard({
         </div>
       </div>
 
+      <AdsScroller className="min-h-0 flex-1">
       <div className="grid grid-cols-1 divide-y divide-ads-line xl:grid-cols-2 xl:divide-x xl:divide-y-0">
         <Column title="РК 1" hint="Первый цикл" count={rk1.length}>
           {rk1.length === 0 ? (
@@ -147,6 +149,7 @@ export function OnAirBoard({
           )}
         </Column>
       </div>
+      </AdsScroller>
     </div>
   );
 }

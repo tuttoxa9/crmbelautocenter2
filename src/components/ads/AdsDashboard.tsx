@@ -21,7 +21,7 @@ import { DailyTasksModal } from "./DailyTasksModal";
 import { OnAirBoard } from "./OnAirBoard";
 import { TodayShift } from "./TodayShift";
 import { WarehouseDrawer, type WarehouseCar } from "./WarehouseDrawer";
-import { GhostBtn, PrimaryBtn } from "./chrome";
+import { GhostBtn, PrimaryBtn, AdsScroller } from "./chrome";
 import { Plus, Settings } from "lucide-react";
 
 interface CatalogCar {
@@ -282,8 +282,8 @@ export function AdsDashboard() {
   };
 
   return (
-    <div className="ads-os min-h-full text-ads-ink">
-      <header className="sticky top-0 z-20 border-b border-ads-line/70 bg-ads-bg/72 backdrop-blur-2xl">
+    <div className="ads-os flex h-full min-h-0 flex-col text-ads-ink">
+      <header className="shrink-0 border-b border-ads-line/70 bg-ads-bg/72 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-[92rem] items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
           <div className="min-w-0">
             <h1 className="truncate text-lg leading-none font-semibold tracking-tight text-ads-ink">Ротация</h1>
@@ -311,7 +311,8 @@ export function AdsDashboard() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-[92rem] px-4 py-5 sm:px-6 sm:py-6">
+      <AdsScroller className="min-h-0 flex-1" contentClassName="min-h-full lg:h-full">
+      <div className="mx-auto flex min-h-0 w-full max-w-[92rem] flex-col px-4 py-5 sm:px-6 sm:py-6 lg:h-full">
         {loadError && (
           <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl bg-ads-danger-soft px-4 py-3">
             <p className="text-sm text-ads-danger">{loadError}</p>
@@ -328,12 +329,12 @@ export function AdsDashboard() {
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[380px_1fr]">
+          <div className="grid h-full grid-cols-1 gap-5 lg:grid-cols-[380px_1fr]">
             <div className="ads-skeleton h-[32rem] rounded-[22px]" />
             <div className="ads-skeleton h-[32rem] rounded-[22px]" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(300px,380px)_1fr]">
+          <div className="grid grid-cols-1 items-start gap-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(300px,380px)_1fr] lg:items-stretch">
             <TodayShift
               cars={cars}
               settings={settings}
@@ -351,6 +352,7 @@ export function AdsDashboard() {
           </div>
         )}
       </div>
+      </AdsScroller>
 
       {toast && (
         <div

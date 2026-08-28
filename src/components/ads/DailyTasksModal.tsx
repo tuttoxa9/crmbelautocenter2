@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { type AdCampaignType, type AdCar } from "@/lib/types";
 import { MONTHS_LONG } from "@/lib/services/adsService";
-import { CloseBtn, Overlay, Spinner } from "./chrome";
+import { AdsScroller, CloseBtn, Overlay, Spinner } from "./chrome";
 
 export function DailyTasksModal({
   isOpen,
@@ -47,7 +47,7 @@ export function DailyTasksModal({
           </div>
           <CloseBtn onClick={onClose} />
         </header>
-        <div className="space-y-4 overflow-y-auto px-5 pb-6">
+        <AdsScroller className="min-h-0 flex-1" viewportClassName="space-y-4 px-5 pb-6">
           {cars.length === 0 ? (
             <p className="py-10 text-center text-sm text-ads-subtle">На этот день задач нет</p>
           ) : (
@@ -60,7 +60,7 @@ export function DailyTasksModal({
               )}
             </>
           )}
-        </div>
+        </AdsScroller>
       </div>
     </Overlay>
   );

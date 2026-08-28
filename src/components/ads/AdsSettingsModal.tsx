@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { type AdsSettings } from "@/lib/types";
-import { CloseBtn, GhostBtn, Overlay, PrimaryBtn, Spinner, Stepper } from "./chrome";
+import { AdsScroller, CloseBtn, GhostBtn, Overlay, PrimaryBtn, Spinner, Stepper } from "./chrome";
 
 export function AdsSettingsModal({
   isOpen,
@@ -104,7 +104,7 @@ export function AdsSettingsModal({
           <CloseBtn onClick={onClose} />
         </header>
 
-        <div className="space-y-3 overflow-y-auto px-5 py-3">
+        <AdsScroller className="min-h-0 flex-1" viewportClassName="space-y-3 px-5 py-3">
           <section className="rounded-2xl bg-ads-card px-4 py-4">
             <p className="text-sm font-medium text-ads-ink">Съёмочная смена</p>
             <p className="mt-0.5 text-xs text-ads-muted">Сколько роликов команда закрывает за день</p>
@@ -195,7 +195,7 @@ export function AdsSettingsModal({
             </button>
             {testResult && <p className="mt-2 text-xs text-ads-muted">{testResult}</p>}
           </section>
-        </div>
+        </AdsScroller>
 
         <footer className="flex justify-end gap-2 px-5 py-4">
           <GhostBtn onClick={onClose}>Отмена</GhostBtn>

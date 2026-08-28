@@ -8,6 +8,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { AdCar, AdCampaignType, AdPriceTier } from "@/lib/types";
 import { calculatePriceTier, getPriceTierLabel } from "@/lib/services/adsService";
 import { Search, Car, X, Calendar } from "lucide-react";
+import { AdsScroller } from "./chrome";
 
 interface CatalogCar {
   id: string;
@@ -218,7 +219,8 @@ export function AddAdCarModal({
         </div>
 
         {/* Content Area */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 py-4 space-y-5 flex flex-col">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+          <AdsScroller className="min-h-0 flex-1" viewportClassName="space-y-5 px-6 py-4">
           {activeMode === "catalog" && (
             <div className="space-y-3">
               <div className="relative">
@@ -244,7 +246,7 @@ export function AddAdCarModal({
                     Автомобили не найдены
                   </div>
                 ) : (
-                  <div className="h-full overflow-y-auto space-y-2 pr-1">
+                  <AdsScroller className="h-full" viewportClassName="space-y-2">
                     {filteredCatalog.map((car) => {
                       const isSelected = selectedCatalogCar?.id === car.id;
                       const isAlreadyInAds = existingCarIds.includes(car.id);
@@ -313,7 +315,7 @@ export function AddAdCarModal({
                         </div>
                       );
                     })}
-                  </div>
+                  </AdsScroller>
                 )}
               </div>
             </div>
@@ -449,6 +451,7 @@ export function AddAdCarModal({
               </div>
             )}
           </div>
+          </AdsScroller>
 
           {/* Sticky Bottom Action Bar */}
           <div className="pt-4 mt-auto border-t border-zinc-200 flex items-center justify-end gap-2.5 shrink-0 bg-white">

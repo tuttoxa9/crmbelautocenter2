@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { WorkTask } from "./WorkTask";
 import { RotationTimeline } from "./RotationTimeline";
 import { CarThumb } from "./CarThumb";
-import { GhostBtn, PrimaryBtn, Spinner } from "./chrome";
+import { AdsScroller, GhostBtn, PrimaryBtn, Spinner } from "./chrome";
 
 type ActionItem = {
   label: string;
@@ -51,7 +51,8 @@ export function TodayShift({
   const shootList = shootTab === "waiting" ? waiting : ready;
 
   return (
-    <div className="ads-pane ads-shift overflow-hidden">
+    <div className="ads-pane ads-shift flex min-h-0 flex-col">
+      <AdsScroller className="min-h-0 flex-1">
       <div className="px-5 pt-5 pb-4">
         <p className="text-xs font-medium text-ads-subtle">Смена</p>
         <h2 className="mt-0.5 text-xl leading-tight font-semibold tracking-tight text-ads-ink">{dateLabel}</h2>
@@ -186,6 +187,7 @@ export function TodayShift({
         </div>
         <RotationTimeline cars={cars} settings={settings} days={14} onDayClick={onDayClick} />
       </div>
+      </AdsScroller>
     </div>
   );
 }
