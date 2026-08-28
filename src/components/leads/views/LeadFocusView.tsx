@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
+import { format, isToday, isYesterday } from "date-fns";
 import { ru } from "date-fns/locale";
 import { CheckCircle2, Copy, Phone, Plus, Trash2, X } from "lucide-react";
 import type { CatalogCar, Lead, LeadSource, LeadStatus } from "@/lib/types";
@@ -310,21 +310,35 @@ export function LeadFocusView({ lead, cars, allLeads, onClose, onOpenCar, onDele
   );
 }
 
+function formatLeadWhen(ts: number, full?: boolean) {
+  const d = new Date(ts);
+  const time = format(d, "HH:mm");
+  if (!full) return time;
+  if (isYesterday(d)) return `Вчера, ${time}`;
+  if (isToday(d)) return `Сегодня, ${time}`;
+  return `${format(d, "d MMM", { locale: ru })}, ${time}`;
+}
+
 export function LeadRow({
   lead,
   cars,
   selected,
   onOpen,
   onOpenCar,
+  showFullDate,
 }: {
   lead: Lead;
   cars: CatalogCar[];
   selected?: boolean;
   onOpen: () => void;
   onOpenCar?: (car: CatalogCar) => void;
+  showFullDate?: boolean;
 }) {
   const car = resolveLeadCar(lead, cars);
   const extra = Math.max(0, leadCarIds(lead).length - (car ? 1 : 0));
+  const when = lead.nextActionDate && lead.status !== "new"
+    ? formatLeadWhen(lead.nextActionDate, showFullDate)
+    : null;
   return (
     <button
       type="button"
@@ -368,9 +382,9 @@ export function LeadRow({
           <p className="truncate text-[12px] text-leads-muted">{lead.car}</p>
         ) : null}
       </div>
-      {lead.nextActionDate && lead.status !== "new" ? (
-        <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-1 font-mono text-[11px] text-leads-ink">
-          {format(lead.nextActionDate, "HH:mm")}
+      {when ? (
+        <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-1 text-[11px] font-medium text-leads-ink">
+          {when}
         </span>
       ) : null}
     </button>
