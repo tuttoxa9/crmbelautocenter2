@@ -333,7 +333,7 @@ export function AdsDashboard() {
             <div className="ads-skeleton h-[32rem] rounded-[22px]" />
           </div>
         ) : (
-          <div className="ads-enter grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(300px,380px)_1fr]">
+          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(300px,380px)_1fr]">
             <TodayShift
               cars={cars}
               settings={settings}

@@ -1,9 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Check, Film } from "lucide-react";
+import { useState } from "react";
+import { Check } from "lucide-react";
 import { type AdCampaignType, type AdCar, type AdsSettings } from "@/lib/types";
 import { MONTHS_LONG, getCalendarDaysLeft, getMinskDateKey } from "@/lib/services/adsService";
+import { cn } from "@/lib/utils";
 import { WorkTask } from "./WorkTask";
 import { RotationTimeline } from "./RotationTimeline";
 import { CarThumb } from "./CarThumb";
@@ -36,9 +38,11 @@ export function TodayShift({
   const todayKey = getMinskDateKey();
   const [, m, d] = todayKey.split("-").map(Number);
   const dateLabel = `${d} ${MONTHS_LONG[(m || 1) - 1]}`;
+  const [shootTab, setShootTab] = useState<"waiting" | "ready">("waiting");
+  const shootList = shootTab === "waiting" ? waiting : ready;
 
   return (
-    <div className="ads-pane ads-shift ads-scroll overflow-hidden">
+    <div className="ads-pane ads-shift overflow-hidden">
       <div className="px-5 pt-5 pb-4">
         <p className="text-xs font-medium text-ads-subtle">Смена</p>
         <h2 className="mt-0.5 text-xl leading-tight font-semibold tracking-tight text-ads-ink">{dateLabel}</h2>
@@ -94,34 +98,50 @@ export function TodayShift({
       <div className="mx-4 my-1 h-px bg-ads-line" />
 
       <div className="px-4 py-3">
-        <div className="mb-1.5 flex items-center gap-1.5 px-1">
-          <Film className="size-3.5 text-ads-subtle" />
-          <h3 className="text-xs font-medium text-ads-subtle">Съёмка</h3>
+        <h3 className="mb-2 px-1 text-xs font-medium text-ads-subtle">Съёмка</h3>
+        <div className="mb-2 grid grid-cols-2 gap-0.5 rounded-xl bg-ads-surface p-0.5">
+          <ShootTab
+            active={shootTab === "waiting"}
+            count={waiting.length}
+            onClick={() => setShootTab("waiting")}
+          >
+            Ожидает
+          </ShootTab>
+          <ShootTab
+            active={shootTab === "ready"}
+            count={ready.length}
+            onClick={() => setShootTab("ready")}
+          >
+            Отснято
+          </ShootTab>
         </div>
-        {waiting.length === 0 && ready.length === 0 ? (
-          <p className="px-1 py-2 text-sm text-ads-subtle">Очередь пуста</p>
+        {shootList.length === 0 ? (
+          <p className="px-1 py-3 text-sm text-ads-subtle">
+            {shootTab === "waiting" ? "Некого снимать" : "Нет отснятых"}
+          </p>
         ) : (
           <div>
-            {waiting.map((car) => (
-              <ShootRow
-                key={car.id}
-                car={car}
-                label="Ждёт ролик"
-                action="Отснято"
-                busy={!!car.id && busyIds.has(car.id)}
-                onClick={() => onSwitch(car, "ready_for_ads")}
-              />
-            ))}
-            {ready.map((car) => (
-              <ShootRow
-                key={car.id}
-                car={car}
-                label="Готово к эфиру"
-                action="В РК 1"
-                busy={!!car.id && busyIds.has(car.id)}
-                onClick={() => onSwitch(car, "rk1")}
-              />
-            ))}
+            {shootList.map((car) =>
+              shootTab === "waiting" ? (
+                <ShootRow
+                  key={car.id}
+                  car={car}
+                  label="Ждёт ролик"
+                  action="Отснято"
+                  busy={!!car.id && busyIds.has(car.id)}
+                  onClick={() => onSwitch(car, "ready_for_ads")}
+                />
+              ) : (
+                <ShootRow
+                  key={car.id}
+                  car={car}
+                  label="Готово к эфиру"
+                  action="В РК 1"
+                  busy={!!car.id && busyIds.has(car.id)}
+                  onClick={() => onSwitch(car, "rk1")}
+                />
+              ),
+            )}
           </div>
         )}
       </div>
@@ -142,6 +162,32 @@ export function TodayShift({
         <RotationTimeline cars={cars} settings={settings} days={14} onDayClick={onDayClick} />
       </div>
     </div>
+  );
+}
+
+function ShootTab({
+  active,
+  count,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  count: number;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-8 items-center justify-center gap-1.5 rounded-lg text-xs font-medium transition-colors",
+        active ? "bg-ads-card text-ads-ink shadow-ads-pill" : "text-ads-muted hover:text-ads-ink",
+      )}
+    >
+      {children}
+      <span className="font-mono tabular-nums opacity-70">{count}</span>
+    </button>
   );
 }
 
