@@ -41,17 +41,14 @@ function dateLabel(iso?: string) {
 }
 
 export function FileGrid(props: FileGridProps) {
-  const { items, viewMode, sortMode, groupByDate } = props;
-  const useGroups = viewMode === "grid" && sortMode === "date" && groupByDate;
+  const { items, viewMode, groupByDate } = props;
+  const useGroups = viewMode === "grid" && groupByDate;
 
   const sections: { key: string; items: S3Object[] }[] = [];
   if (useGroups) {
-    const folders = items.filter((i) => i.type === "folder");
-    const files = items.filter((i) => i.type !== "folder");
-    if (folders.length) sections.push({ key: "Папки", items: folders });
     const byDate: Record<string, S3Object[]> = {};
     const order: string[] = [];
-    for (const item of files) {
+    for (const item of items) {
       const key = dateLabel(item.lastModified);
       if (!byDate[key]) {
         byDate[key] = [];
@@ -59,9 +56,24 @@ export function FileGrid(props: FileGridProps) {
       }
       byDate[key].push(item);
     }
-    const dated = order.filter((k) => k !== "Без даты");
-    if (byDate["Без даты"]) dated.push("Без даты");
-    for (const k of dated) sections.push({ key: k, items: byDate[k] });
+    const rank: Record<string, number> = { Сегодня: 0, Вчера: 1 };
+    const dated = [...order].sort((a, b) => {
+      if (a === "Без даты") return 1;
+      if (b === "Без даты") return -1;
+      const ra = rank[a] ?? 2;
+      const rb = rank[b] ?? 2;
+      if (ra !== rb) return ra - rb;
+      const max = (k: string) =>
+        Math.max(...byDate[k].map((i) => (i.lastModified ? new Date(i.lastModified).getTime() : 0)));
+      return max(b) - max(a);
+    });
+    for (const k of dated) {
+      const group = byDate[k];
+      sections.push({
+        key: k,
+        items: [...group.filter((i) => i.type === "folder"), ...group.filter((i) => i.type !== "folder")],
+      });
+    }
   } else {
     sections.push({ key: "", items });
   }

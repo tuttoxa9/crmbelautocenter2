@@ -237,15 +237,11 @@ export function FolderCard({
           isHidden && "opacity-50",
         )}
         onClick={(e) => {
-          if (selectMode) {
+          if (selectMode || e.shiftKey) {
             onSelect({ shift: e.shiftKey, meta: e.metaKey || e.ctrlKey });
             return;
           }
-          if (window.matchMedia("(min-width: 768px)").matches) {
-            onSelect({ shift: e.shiftKey, meta: e.metaKey || e.ctrlKey });
-          } else {
-            onOpen();
-          }
+          onOpen();
         }}
         onDoubleClick={(e) => {
           e.preventDefault();
@@ -440,7 +436,9 @@ export function FileRow({
         isHidden && "opacity-50",
       )}
       onClick={() => {
-        if (selectMode || window.matchMedia("(min-width: 768px)").matches) onSelect();
+        if (selectMode) onSelect();
+        else if (item.type === "folder") onOpen();
+        else if (window.matchMedia("(min-width: 768px)").matches) onSelect();
         else onOpen();
       }}
       onDoubleClick={onOpen}

@@ -152,6 +152,7 @@ export function useFileManager() {
 
   const navigateTo = useCallback(
     (prefix: string) => {
+      setSearchQuery("");
       const url = prefix ? `/files?path=${encodeURIComponent(prefix)}` : "/files";
       router.push(url, { scroll: false });
     },

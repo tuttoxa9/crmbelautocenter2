@@ -75,6 +75,26 @@ export async function GET(request: Request) {
       token = response.IsTruncated ? response.NextContinuationToken : undefined;
     } while (token && pages < 20);
 
+    const missing = folders.filter((f) => !f.lastModified && f.path);
+    if (missing.length > 0) {
+      await Promise.all(
+        missing.map(async (f) => {
+          try {
+            const folderResponse = await s3Client.send(
+              new ListObjectsV2Command({
+                Bucket: BUCKET_NAME,
+                Prefix: f.path,
+                MaxKeys: 1,
+              }),
+            );
+            f.lastModified = folderResponse.Contents?.[0]?.LastModified;
+          } catch (e) {
+            console.error(`Failed to fetch last modified for prefix ${f.path}:`, e);
+          }
+        }),
+      );
+    }
+
     return NextResponse.json({
       items: [...folders, ...files],
       truncated: Boolean(token),
