@@ -168,7 +168,7 @@ export function AgendaView({
         {/* Top Header & Actions */}
         <div className="h-16 px-4 md:px-6 bg-white/70 backdrop-blur-xl border-b border-black/5 flex items-center justify-between sticky top-0 shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
           <div className="flex items-center gap-4">
-            <QuickAddLead />
+            <QuickAddLead cars={[]} allLeads={[]} />
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-zinc-100/80 rounded-lg">
               <CalendarIcon className="w-4 h-4 text-zinc-400" />
               <h2 className="text-sm font-bold text-zinc-700 tracking-tight">Повестка дня</h2>

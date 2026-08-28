@@ -45,6 +45,8 @@ export interface Lead {
   name: string;
   phone: string;
   car: string;
+  carIds?: string[];
+  primaryCarId?: string | null;
   source: LeadSource;
   status: LeadStatus;
   nextActionDate?: number | null; // Timestamp для приезда или перезвона
@@ -53,6 +55,20 @@ export interface Lead {
   updatedAt: number;
   history: StatusHistoryEntry[];
   payload?: Record<string, unknown>; // Гибкая структура для сырых данных (например из Zapier, Telegram и т.д.)
+}
+
+export interface CatalogCar {
+  id: string;
+  name: string;
+  make: string;
+  model: string;
+  year?: string | number;
+  priceUsd: number;
+  isSold: boolean;
+  photoUrl: string;
+  createdAt?: string | number | null;
+  monthlyPayment?: number | null;
+  mileage?: number | null;
 }
 
 export interface Integration {

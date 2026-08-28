@@ -11,7 +11,6 @@ import { deleteLeadsByStatusAndDateRange } from "@/lib/leadService";
 import { LEAD_STATUSES } from "@/constants/leadStatuses";
 import { LeadStatus } from "@/lib/types";
 import IntegrationsPage from "./integrations/page";
-import { useSettings } from "@/contexts/SettingsContext";
 import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange, ChevronDown, Check, Trash2, ShieldAlert, LayoutGrid } from "lucide-react";
 
 interface CustomSelectProps {
@@ -72,31 +71,12 @@ function CustomSelect({ value, onChange, options, openUpward }: CustomSelectProp
 }
 
 function InterfaceSettings() {
-  const { crmVersion, setCrmVersion } = useSettings();
-  
   return (
-    <div className="flex flex-col gap-3 mt-2">
-      <div 
-        onClick={() => setCrmVersion("v1")}
-        className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${crmVersion === "v1" ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:border-zinc-300"}`}
-      >
-        <div>
-          <p className="font-bold text-zinc-900">Классический вид</p>
-          <p className="text-sm text-zinc-500 mt-1">Отображение лидов с группировкой по вкладкам-статусам слева.</p>
-        </div>
-        {crmVersion === "v1" && <CheckCircle2 className="w-5 h-5 text-zinc-900" />}
-      </div>
-      
-      <div 
-        onClick={() => setCrmVersion("v2")}
-        className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between ${crmVersion === "v2" ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:border-zinc-300"}`}
-      >
-        <div>
-          <p className="font-bold text-zinc-900">Повестка дня</p>
-          <p className="text-sm text-zinc-500 mt-1">Отображение всех задач на выбранный день единым списком, без меню статусов.</p>
-        </div>
-        {crmVersion === "v2" && <CheckCircle2 className="w-5 h-5 text-zinc-900" />}
-      </div>
+    <div className="mt-2 rounded-2xl border border-zinc-200 bg-white p-5">
+      <p className="font-semibold text-zinc-900">Лиды</p>
+      <p className="mt-1 text-sm leading-relaxed text-zinc-500">
+        В разделе теперь три режима: <b>День</b> (приезды и перезвоны по дате), <b>Авто</b> (склад и клиенты на машину) и <b>База</b> (вся история). Переключатель — сверху в самих Лидах.
+      </p>
     </div>
   );
 }

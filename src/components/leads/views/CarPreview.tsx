@@ -1,151 +1,91 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { ExternalLink, Image as ImageIcon, Gauge, Calendar, Fuel } from "lucide-react";
+import { ExternalLink, Image as ImageIcon, Gauge, Calendar } from "lucide-react";
+import { fetchCatalogCar } from "@/lib/catalog";
+import type { CatalogCar } from "@/lib/types";
 
 interface CarPreviewProps {
   carId?: string;
   url?: string;
 }
 
-interface Car {
-  make: string;
-  model: string;
-  year?: string | number;
-  mileage?: number;
-  engineVolume?: string | number;
-  price?: number;
-  imageUrls?: string[];
-}
-
 export function CarPreview({ carId, url }: CarPreviewProps) {
-  const [car, setCar] = useState<Car | null>(null);
+  const [car, setCar] = useState<CatalogCar | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  // Extract carId from URL if passsed but no carId
   const extractedId = carId || (url && url.includes("/catalog/") ? url.split("/catalog/")[1]?.split("?")[0] : null);
 
   useEffect(() => {
-    async function fetchCar() {
+    let alive = true;
+    async function load() {
       if (!extractedId) {
         setLoading(false);
         return;
       }
-      try {
-        if (!db) {
-          console.error("Firestore database is null");
-          setError(true);
-          return;
-        }
-        const docRef = doc(db, "cars", extractedId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setCar(docSnap.data() as Car);
-        } else {
-          setError(true);
-        }
-      } catch (err) {
-        console.error(err);
-        setError(true);
-      } finally {
+      const row = await fetchCatalogCar(extractedId);
+      if (alive) {
+        setCar(row);
         setLoading(false);
       }
     }
-    fetchCar();
+    void load();
+    return () => {
+      alive = false;
+    };
   }, [extractedId]);
 
   if (!extractedId) return null;
 
   if (loading) {
     return (
-      <div className="mt-8 pt-6 border-t border-zinc-200/60 animate-pulse">
-        <div className="h-4 w-32 bg-zinc-200 rounded mb-4"></div>
-        <div className="h-24 w-full bg-zinc-100 rounded-xl"></div>
+      <div className="mt-8 animate-pulse border-t border-zinc-200/60 pt-6">
+        <div className="mb-4 h-4 w-32 rounded bg-zinc-200" />
+        <div className="h-24 w-full rounded-xl bg-zinc-100" />
       </div>
     );
   }
 
-  if (error || !car) {
+  const href = url || `https://belautocenter.by/catalog/${extractedId}`;
+
+  if (!car) {
     return (
-      <div className="mt-8 pt-6 border-t border-zinc-200/60">
-        <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2 mb-3">
-          <ExternalLink className="w-3.5 h-3.5" /> Заинтересовавший авто
-        </h3>
-        <a 
-          href={url || `https://belautocenter.by/catalog/${extractedId}`} 
-          target="_blank" 
-          rel="noreferrer"
-          className="text-xs text-blue-500 hover:underline flex items-center gap-1"
-        >
-          {url || `belautocenter.by/catalog/${extractedId}`}
+      <div className="mt-8 border-t border-zinc-200/60 pt-6">
+        <a href={href} target="_blank" rel="noreferrer" className="text-xs text-blue-500 hover:underline">
+          {href}
         </a>
       </div>
     );
   }
 
-  // Handle new and old image formats
-  let imageUrl = null;
-  if (car.imageUrls && car.imageUrls.length > 0) {
-    const rawUrl = car.imageUrls[0];
-    if (rawUrl.includes("imagekit.io")) {
-      imageUrl = rawUrl;
-    } else {
-      imageUrl = `https://ik.imagekit.io/belautocenter/tr:w-400,h-300,cm-extract/${rawUrl.split('/').pop()}`;
-    }
-  }
-
   return (
-    <div className="mt-8 pt-6 border-t border-zinc-200/60">
-      <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2 mb-3">
-        Заинтересовавший авто
-      </h3>
-      
-      <a 
-        href={url || `https://belautocenter.by/catalog/${extractedId}`} 
-        target="_blank"
-        rel="noreferrer"
-        className="group block bg-white rounded-xl border border-zinc-200 overflow-hidden hover:border-zinc-300 hover:shadow-md transition-all duration-200"
-      >
+    <div className="mt-8 border-t border-zinc-200/60 pt-6">
+      <h3 className="mb-3 text-xs font-bold tracking-wider text-zinc-500 uppercase">Заинтересовавший авто</h3>
+      <a href={href} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border border-zinc-200 bg-white">
         <div className="flex h-24">
-          <div className="w-1/3 bg-zinc-100 relative flex items-center justify-center overflow-hidden shrink-0">
-            {imageUrl ? (
-              <img 
-                src={imageUrl} 
-                alt={car.make} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-              />
+          <div className="flex w-1/3 shrink-0 items-center justify-center overflow-hidden bg-zinc-100">
+            {car.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={car.photoUrl} alt={car.name} className="h-full w-full object-cover" />
             ) : (
-              <ImageIcon className="w-6 h-6 text-zinc-300" />
+              <ImageIcon className="h-6 w-6 text-zinc-300" />
             )}
           </div>
-          <div className="w-2/3 p-3 flex flex-col justify-between min-w-0">
+          <div className="flex w-2/3 min-w-0 flex-col justify-between p-3">
             <div>
-              <div className="flex justify-between items-start gap-1">
-                <h4 className="font-bold text-sm text-zinc-900 truncate">
-                  {car.make} {car.model}
-                </h4>
-                <ExternalLink className="w-3 h-3 text-zinc-400 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-              <div className="text-xs font-bold text-orange-500 mt-0.5">
-                {car.price ? `${car.price.toLocaleString()} $` : "Цена не указана"}
+              <h4 className="truncate text-sm font-bold text-zinc-900">{car.name}</h4>
+              <div className="mt-0.5 text-xs font-semibold text-zinc-700">
+                {car.priceUsd ? `${car.priceUsd.toLocaleString("ru-RU")} $` : "Цена не указана"}
+                {car.isSold ? " · продана" : ""}
               </div>
             </div>
-            
-            <div className="flex gap-3 text-[10px] text-zinc-500 font-medium">
+            <div className="flex gap-3 text-[10px] font-medium text-zinc-500">
               <div className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
+                <Calendar className="h-3 w-3" />
                 <span>{car.year || "—"}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Gauge className="w-3 h-3" />
-                <span>{car.mileage ? `${car.mileage.toLocaleString()} км` : "—"}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Fuel className="w-3 h-3" />
-                <span>{car.engineVolume ? `${car.engineVolume} л` : "—"}</span>
+                <Gauge className="h-3 w-3" />
+                <span>{car.mileage ? `${car.mileage.toLocaleString("ru-RU")} км` : "—"}</span>
               </div>
             </div>
           </div>

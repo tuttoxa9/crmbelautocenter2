@@ -1,173 +1,250 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Plus, X } from "lucide-react";
+import type { CatalogCar, LeadSource, LeadStatus } from "@/lib/types";
 import { formatPhone } from "@/lib/formatPhone";
-import { LeadSource, LeadStatus } from "@/lib/types";
 import { StatusDropdown } from "./StatusDropdown";
 import { SourceDropdown } from "./SourceDropdown";
 import { createLead } from "@/lib/leadService";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, X, Clock } from "lucide-react";
-import { format, isValid } from "date-fns";
+import { needsNextAction, phoneKey } from "@/lib/leads/match";
+import { DatePresets } from "../DateControls";
+import { CarChip, CarPicker } from "../CarPicker";
+import type { Lead } from "@/lib/types";
 
 interface QuickAddLeadProps {
+  cars: CatalogCar[];
+  allLeads: Lead[];
+  presetCar?: CatalogCar | null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
   onSuccess?: () => void;
 }
 
-export function QuickAddLead({ onSuccess }: QuickAddLeadProps) {
+export function QuickAddLead({ cars, allLeads, presetCar, open: openProp, onOpenChange, hideTrigger, onSuccess }: QuickAddLeadProps) {
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [formData, setFormData] = useState({
-    name: "", phone: "", source: "call" as LeadSource, car: "", status: "new" as LeadStatus, notes: "", nextActionDate: null as number | null
+  const [innerOpen, setInnerOpen] = useState(false);
+  const open = openProp ?? innerOpen;
+  const setOpen = (v: boolean) => {
+    onOpenChange?.(v);
+    if (openProp === undefined) setInnerOpen(v);
+  };
+  const [submitting, setSubmitting] = useState(false);
+  const [picker, setPicker] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    source: "call" as LeadSource,
+    car: presetCar?.name || "",
+    status: "new" as LeadStatus,
+    notes: "",
+    nextActionDate: null as number | null,
+    carIds: presetCar ? [presetCar.id] : [] as string[],
+    primaryCarId: presetCar?.id || null as string | null,
   });
 
-  const terminalStatuses = ["success", "refusal", "bank_refusal", "spam"];
-  const requiresNextAction = !terminalStatuses.includes(formData.status);
-  const isNextActionMissing = requiresNextAction && !formData.nextActionDate;
+  const missingDate = needsNextAction(form.status) && !form.nextActionDate;
+  const dup = form.phone
+    ? allLeads.find((l) => phoneKey(l.phone) === phoneKey(form.phone) && phoneKey(form.phone).length >= 7)
+    : null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const reset = () => {
+    setForm({
+      name: "",
+      phone: "",
+      source: "call",
+      car: presetCar?.name || "",
+      status: "new",
+      notes: "",
+      nextActionDate: null,
+      carIds: presetCar ? [presetCar.id] : [],
+      primaryCarId: presetCar?.id || null,
+    });
+  };
+
+  useEffect(() => {
+    if (open && presetCar) {
+      setForm((p) => ({
+        ...p,
+        car: p.car || presetCar.name,
+        carIds: p.carIds.includes(presetCar.id) ? p.carIds : [...p.carIds, presetCar.id],
+        primaryCarId: p.primaryCarId || presetCar.id,
+      }));
+    }
+  }, [open, presetCar]);
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || isNextActionMissing) return;
-    setIsSubmitting(true);
+    if (!user || missingDate) return;
+    setSubmitting(true);
     try {
-      const leadPayload = {
-        name: formData.name,
-        phone: formData.phone,
-        source: formData.source,
-        status: formData.status,
-        car: formData.car,
-        notes: formData.notes,
-        nextActionDate: formData.nextActionDate
-      };
-
-      await createLead(leadPayload, user.email || 'unknown');
-
-      setFormData({ name: "", phone: "", source: "call", car: "", status: "new", notes: "", nextActionDate: null });
-      setIsOpen(false);
-      if(onSuccess) onSuccess();
-    } catch (error) {
-      console.error(error);
+      await createLead(
+        {
+          name: form.name,
+          phone: form.phone,
+          source: form.source,
+          status: form.status,
+          car: form.car,
+          notes: form.notes,
+          nextActionDate: form.nextActionDate,
+          carIds: form.carIds,
+          primaryCarId: form.primaryCarId,
+        },
+        user.email || "unknown",
+      );
+      reset();
+      setOpen(false);
+      onSuccess?.();
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const actionDateObj = formData.nextActionDate ? new Date(formData.nextActionDate) : null;
-  const isDateValid = actionDateObj && isValid(actionDateObj);
+  const linked = form.carIds.map((id) => cars.find((c) => c.id === id)).filter(Boolean) as CatalogCar[];
 
-  if (!isOpen) {
+  if (!open) {
+    if (hideTrigger) return null;
     return (
       <button
-        onClick={() => setIsOpen(true)}
-        className="flex items-center justify-center gap-2 w-full h-11 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full text-sm font-semibold transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]"
+        type="button"
+        onClick={() => {
+          if (presetCar) {
+            setForm((p) => ({
+              ...p,
+              car: presetCar.name,
+              carIds: [presetCar.id],
+              primaryCarId: presetCar.id,
+            }));
+          }
+          setOpen(true);
+        }}
+        className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-zinc-900 text-[13px] font-semibold text-white"
       >
-        <Plus className="w-4 h-4" /> Добавить лида
+        <Plus className="size-4" /> Клиент
       </button>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-zinc-900/40 backdrop-blur-md animate-in fade-in duration-300" 
-        onClick={() => setIsOpen(false)} 
-      />
-
-      {/* Modal Card */}
-      <div className="bg-white/95 backdrop-blur-xl border border-zinc-200/50 rounded-[2rem] w-full max-w-xl shadow-[0_0_60px_-15px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in-95 duration-300 relative z-10 flex flex-col">
-        <div className="flex justify-between items-center px-6 py-5 border-b border-zinc-100/50 bg-white/40 rounded-t-[2rem]">
-          <h3 className="font-extrabold text-xl text-zinc-900 tracking-tight">Добавить заявку</h3>
-          <button onClick={() => setIsOpen(false)} className="text-zinc-400 hover:text-zinc-900 bg-zinc-100/50 hover:bg-zinc-200/50 p-2 rounded-full transition-colors">
-            <X className="w-5 h-5"/>
+    <div className="fixed inset-0 z-[140] flex items-end justify-center p-0 md:items-center md:p-4">
+      <div className="absolute inset-0 bg-zinc-900/35" onClick={() => setOpen(false)} />
+      <div className="relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white md:rounded-3xl">
+        {picker ? (
+          <div className="absolute inset-0 z-10">
+            <CarPicker
+              cars={cars}
+              selectedIds={form.carIds}
+              onClose={() => setPicker(false)}
+              onPick={(car) => {
+                setForm((p) => ({
+                  ...p,
+                  carIds: p.carIds.includes(car.id) ? p.carIds : [...p.carIds, car.id],
+                  primaryCarId: p.primaryCarId || car.id,
+                  car: p.car || car.name,
+                }));
+                setPicker(false);
+              }}
+            />
+          </div>
+        ) : null}
+        <div className="flex items-center justify-between border-b border-leads-line px-5 py-4">
+          <h3 className="text-[17px] font-semibold">Новый клиент</h3>
+          <button type="button" onClick={() => setOpen(false)} className="flex size-8 items-center justify-center rounded-full text-leads-muted hover:bg-zinc-100">
+            <X className="size-4" />
           </button>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-x-5 gap-y-4">
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Имя <span className="text-red-500">*</span></label>
-              <input
-                autoFocus required
-                value={formData.name} onChange={e => setFormData(prev => ({...prev, name: e.target.value}))}
-                className="w-full h-11 px-4 text-sm border border-zinc-200/80 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-zinc-50/50 focus:bg-white transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-              />
-            </div>
-            
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Телефон <span className="text-red-500">*</span></label>
+        <form onSubmit={(e) => void submit(e)} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+          <div className="grid grid-cols-2 gap-3">
+            <label className="col-span-2 sm:col-span-1">
+              <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">Имя</span>
               <input
                 required
-                value={formData.phone} onChange={e => setFormData(prev => ({...prev, phone: formatPhone(e.target.value)}))}
-                className="w-full h-11 px-4 text-sm font-mono border border-zinc-200/80 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-zinc-50/50 focus:bg-white transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                autoFocus
+                value={form.name}
+                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                className="h-11 w-full rounded-xl bg-zinc-50 px-3 text-[14px] outline-none ring-1 ring-leads-line focus:bg-white"
               />
-            </div>
-            
-            <div className="space-y-1.5 col-span-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Интересующий Автомобиль</label>
+            </label>
+            <label className="col-span-2 sm:col-span-1">
+              <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">Телефон</span>
               <input
-                value={formData.car} onChange={e => setFormData(prev => ({...prev, car: e.target.value}))}
-                className="w-full h-11 px-4 text-sm border border-zinc-200/80 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-zinc-50/50 focus:bg-white transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                required
+                value={form.phone}
+                onChange={(e) => setForm((p) => ({ ...p, phone: formatPhone(e.target.value) }))}
+                className="h-11 w-full rounded-xl bg-zinc-50 px-3 font-mono text-[14px] outline-none ring-1 ring-leads-line focus:bg-white"
               />
-            </div>
+            </label>
+          </div>
+          {dup ? <p className="text-[12px] text-amber-800">Номер уже есть: {dup.name || "без имени"}</p> : null}
 
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">Начальный Статус</label>
-              <StatusDropdown
-                value={formData.status}
-                onChange={status => setFormData(prev => ({...prev, status}))}
-              />
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-[11px] font-medium text-leads-subtle uppercase">Авто</span>
+              <button type="button" onClick={() => setPicker(true)} className="text-[12px] font-medium">
+                Со склада
+              </button>
             </div>
-            
-            <div className="space-y-1.5 col-span-2 sm:col-span-1">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" /> След. шаг
-                {requiresNextAction && <span className="text-red-500">*</span>}
-              </label>
+            <div className="space-y-2">
+              {linked.map((car) => (
+                <CarChip
+                  key={car.id}
+                  car={car}
+                  primary={form.primaryCarId === car.id}
+                  onRemove={() =>
+                    setForm((p) => {
+                      const carIds = p.carIds.filter((id) => id !== car.id);
+                      return { ...p, carIds, primaryCarId: p.primaryCarId === car.id ? carIds[0] || null : p.primaryCarId };
+                    })
+                  }
+                />
+              ))}
               <input
-                type="datetime-local"
-                className="w-full h-11 px-4 text-sm border border-zinc-200/80 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-zinc-50/50 focus:bg-white transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
-                value={isDateValid ? format(actionDateObj, "yyyy-MM-dd'T'HH:mm") : ""}
-                onChange={e => {
-                  const val = e.target.value;
-                  if (!val) { setFormData(prev => ({ ...prev, nextActionDate: null })); return; }
-                  const newDate = new Date(val);
-                  if (isValid(newDate)) setFormData(prev => ({ ...prev, nextActionDate: newDate.getTime() }));
-                }}
-              />
-            </div>
-
-            <div className="space-y-1.5 col-span-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Источник</label>
-              <SourceDropdown
-                value={formData.source} 
-                onChange={source => setFormData(prev => ({...prev, source}))}
-              />
-            </div>
-
-            <div className="space-y-1.5 col-span-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Заметка менеджера</label>
-              <textarea
-                value={formData.notes} onChange={e => setFormData(prev => ({...prev, notes: e.target.value}))}
-                className="w-full min-h-[90px] p-4 text-sm border border-orange-200/50 rounded-3xl outline-none focus:border-orange-300 focus:ring-1 focus:ring-orange-300 bg-orange-50/30 focus:bg-orange-50/60 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] resize-y custom-scrollbar"
+                value={form.car}
+                onChange={(e) => setForm((p) => ({ ...p, car: e.target.value }))}
+                placeholder="Или текстом"
+                className="h-11 w-full rounded-xl bg-zinc-50 px-3 text-[14px] outline-none ring-1 ring-leads-line focus:bg-white"
               />
             </div>
           </div>
 
-          <div className="pt-2 mt-2 border-t border-zinc-100/50 flex flex-col gap-2">
-            {isNextActionMissing && (
-              <p className="text-[10px] text-red-500 text-center font-medium animate-in slide-in-from-bottom-1">Обязательно выберите дату (След. шаг)</p>
-            )}
-            <button 
-              type="submit" 
-              disabled={isSubmitting || isNextActionMissing} 
-              className="w-full h-12 bg-zinc-900 hover:bg-zinc-800 text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] text-sm font-semibold rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
-            >
-              {isSubmitting ? "Создание..." : "Добавить заявку"}
-            </button>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">Статус</span>
+              <StatusDropdown value={form.status} onChange={(status) => setForm((p) => ({ ...p, status }))} />
+            </div>
+            <div>
+              <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">Источник</span>
+              <SourceDropdown value={form.source} onChange={(source) => setForm((p) => ({ ...p, source }))} />
+            </div>
           </div>
+
+          <div>
+            <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">
+              Следующий шаг {needsNextAction(form.status) ? "*" : ""}
+            </span>
+            <DatePresets value={form.nextActionDate} onChange={(nextActionDate) => setForm((p) => ({ ...p, nextActionDate }))} />
+          </div>
+
+          <label className="block">
+            <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">Заметка</span>
+            <textarea
+              value={form.notes}
+              onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
+              rows={3}
+              className="w-full rounded-2xl bg-zinc-50 p-3 text-[13px] outline-none ring-1 ring-leads-line focus:bg-white"
+            />
+          </label>
+
+          {missingDate ? <p className="text-center text-[11px] text-red-600">Нужна дата следующего шага</p> : null}
+          <button
+            type="submit"
+            disabled={submitting || missingDate}
+            className="h-12 w-full rounded-full bg-zinc-900 text-[14px] font-semibold text-white disabled:opacity-40"
+          >
+            {submitting ? "Создаём…" : "Добавить"}
+          </button>
         </form>
       </div>
     </div>

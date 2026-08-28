@@ -5,6 +5,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { Lead, LeadStatus, StatusHistoryEntry } from "./types";
+import { ACTIVE_STATUSES } from "./leads/match";
 
 const LEADS_COLLECTION = "leads";
 
@@ -18,19 +19,15 @@ export const subscribeToLeads = (callback: (leads: Lead[]) => void, statuses?: L
   const leadsRef = collection(db, LEADS_COLLECTION);
   let q = query(leadsRef, orderBy("createdAt", "desc"));
   if (statuses && statuses.length > 0) {
-    // Firestore "in" query allows up to 10 items.
-    // We remove orderBy here to prevent requiring a composite index,
-    // we can sort the results client-side in the callback instead.
     q = query(leadsRef, where("status", "in", statuses));
   }
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    let leads = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
+    let leads = snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
     })) as Lead[];
 
-    // Sort client-side if we removed orderBy to avoid index requirement
     if (statuses && statuses.length > 0) {
       leads = leads.sort((a, b) => b.createdAt - a.createdAt);
     }
@@ -43,15 +40,18 @@ export const subscribeToLeads = (callback: (leads: Lead[]) => void, statuses?: L
   return unsubscribe;
 };
 
+export const subscribeToActiveLeads = (callback: (leads: Lead[]) => void) =>
+  subscribeToLeads(callback, ACTIVE_STATUSES);
+
 export const getLeads = async (): Promise<Lead[]> => {
   if (!db) return [];
   const leadsRef = collection(db, LEADS_COLLECTION);
   const q = query(leadsRef, orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
+  return snapshot.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data()
   })) as Lead[];
 };
 
@@ -71,6 +71,8 @@ export const createLead = async (
 
   const newLead = {
     ...leadData,
+    carIds: leadData.carIds || [],
+    primaryCarId: leadData.primaryCarId || null,
     createdAt: now,
     updatedAt: now,
     history: [initialHistory],
@@ -90,16 +92,6 @@ export const updateLeadStatus = async (
   if (!db) throw new Error("Firestore is not initialized");
 
   const leadRef = doc(db, LEADS_COLLECTION, leadId);
-
-  // We need to fetch the current history to append to it
-  // But a better way in a real app is arrayUnion if we just append,
-  // however arrayUnion doesn't work well with complex objects without exact match.
-  // Instead we can use a subcollection for history, but for simplicity we keep it in document.
-
-  // Actually, since we don't want to do a read-then-write if we can avoid it,
-  // and we don't have atomic array operations for complex appending easily without full object,
-  // let's fetch it:
-
   const leadSnap = await getDoc(leadRef);
 
   if (!leadSnap.exists()) throw new Error("Lead not found");
@@ -126,7 +118,6 @@ export const updateLeadStatus = async (
 
   await updateDoc(leadRef, updateData);
 
-  // CAPI Webhook trigger
   if (newStatus === "success" && currentData.status !== "success") {
     try {
       fetch('/api/webhook/zapier-capi', {
@@ -161,6 +152,14 @@ export const deleteLead = async (leadId: string) => {
   if (!db) throw new Error("Firestore is not initialized");
   const leadRef = doc(db, LEADS_COLLECTION, leadId);
   await deleteDoc(leadRef);
+};
+
+export const getLeadsByCarId = async (carId: string): Promise<Lead[]> => {
+  if (!db || !carId) return [];
+  const leadsRef = collection(db, LEADS_COLLECTION);
+  const q = query(leadsRef, where("carIds", "array-contains", carId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Lead));
 };
 
 export const getPaginatedLeads = async (
@@ -210,8 +209,6 @@ export const deleteLeadsByStatusAndDateRange = async (
   if (!db) throw new Error("Firestore is not initialized");
 
   const leadsRef = collection(db, LEADS_COLLECTION);
-  // Query only by status to avoid requiring a composite Firestore index.
-  // Date filtering is done client-side.
   const q = query(leadsRef, where("status", "==", status));
 
   const snapshot = await getDocs(q);
@@ -222,7 +219,6 @@ export const deleteLeadsByStatusAndDateRange = async (
 
   const total = matchingDocs.length;
 
-  // Delete in parallel with concurrency limit
   const batchSize = 10;
   for (let i = 0; i < matchingDocs.length; i += batchSize) {
     const batch = matchingDocs.slice(i, i + batchSize);

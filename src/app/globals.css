@@ -55,8 +55,13 @@
   --color-ads-warn: #ff9f0a;
   --color-ads-warn-soft: #fff4e0;
   --color-ads-mid: #3a3a3c;
-  --color-ads-ok: #1d1d1f;
-  --color-ads-rail: #2c2c2e;
+  --color-leads-bg: #f5f5f7;
+  --color-leads-card: #ffffff;
+  --color-leads-ink: #1d1d1f;
+  --color-leads-muted: #6e6e73;
+  --color-leads-subtle: #86868b;
+  --color-leads-line: #e5e5ea;
+  --color-leads-line-strong: #d2d2d7;
   --color-files-bg: #111113;
   --color-files-elev: #18181b;
   --color-files-card: #1c1c1f;
@@ -200,6 +205,27 @@
 
 .ads-os button:not(:disabled),
 .ads-os [role="button"]:not(:disabled) {
+  cursor: pointer;
+}
+
+.leads-os {
+  background: #f5f5f7;
+  color: #1d1d1f;
+  -webkit-font-smoothing: antialiased;
+  --ads-sb: #1d1d1f;
+}
+.leads-os,
+.leads-os * {
+  scrollbar-width: none !important;
+}
+.leads-os::-webkit-scrollbar,
+.leads-os *::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+.leads-os button:not(:disabled),
+.leads-os [role="button"]:not(:disabled) {
   cursor: pointer;
 }
 

@@ -170,6 +170,18 @@ export async function POST(request: Request) {
       }
     }
 
+    const extractCarId = (raw: Record<string, unknown>, notesText: string, carText: string) => {
+      const direct = raw.carId || raw.car_id || (raw.payload as Record<string, unknown> | undefined)?.carId;
+      if (direct) return String(direct);
+      const blob = [notesText, carText, raw.url, raw.link, raw.page_url, raw.carUrl, raw.car_url]
+        .filter(Boolean)
+        .join(" ");
+      const match = blob.match(/\/catalog\/([A-Za-z0-9_-]+)/);
+      return match?.[1] || "";
+    };
+
+    const linkedCarId = extractCarId(data as Record<string, unknown>, notes, car);
+
     const status: LeadStatus = "new";
     const now = Date.now();
 
@@ -177,6 +189,8 @@ export async function POST(request: Request) {
       name,
       phone,
       car,
+      carIds: linkedCarId ? [linkedCarId] : [],
+      primaryCarId: linkedCarId || null,
       source: detectedSource,
       status,
       nextActionDate: null,

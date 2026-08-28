@@ -1,299 +1,378 @@
 "use client";
 
-import { Lead, LeadSource } from "@/lib/types";
-import { format, isValid } from "date-fns";
+import { useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { Copy, CheckCircle2, Phone, Trash2, Clock, MapPin, Smartphone, FileText, ChevronLeft } from "lucide-react";
-import { useState, useEffect } from "react";
+import { CheckCircle2, Copy, Phone, Plus, Trash2, X } from "lucide-react";
+import type { CatalogCar, Lead, LeadSource, LeadStatus } from "@/lib/types";
 import { formatPhone } from "@/lib/formatPhone";
-import { getSourceLabel, getStatusLabel } from "@/lib/displayUtils";
-import { StatusBadge } from "../ui/LeadBadges";
+import { getStatusLabel } from "@/lib/displayUtils";
+import { StatusBadge, SourceIcon } from "../ui/LeadBadges";
 import { StatusDropdown } from "../ui/StatusDropdown";
 import { SourceDropdown } from "../ui/SourceDropdown";
 import { updateLeadStatus, updateLeadDetails, deleteLead } from "@/lib/leadService";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { LEAD_STATUSES } from "@/lib/types";
-import { CarPreview } from "./CarPreview";
+import { leadCarIds, needsNextAction, phoneKey, resolveLeadCar } from "@/lib/leads/match";
+import { DatePresets } from "../DateControls";
+import { CarChip, CarPicker } from "../CarPicker";
+import { AdsScroller } from "@/components/ads/chrome";
+import { cn } from "@/lib/utils";
 
 interface LeadFocusViewProps {
-  lead: Lead | null;
+  lead: Lead;
+  cars: CatalogCar[];
+  allLeads: Lead[];
   onClose: () => void;
+  onOpenCar?: (car: CatalogCar) => void;
+  onDeleted?: () => void;
 }
 
-export function LeadFocusView({ lead, onClose }: LeadFocusViewProps) {
+export function LeadFocusView({ lead, cars, allLeads, onClose, onOpenCar, onDeleted }: LeadFocusViewProps) {
   const { user } = useAuth();
-
-  const [formData, setFormData] = useState({
-    name: "", phone: "", car: "", notes: "", status: "new" as import("@/lib/types").LeadStatus, nextActionDate: null as number | null,
-    source: "call" as LeadSource
+  const [form, setForm] = useState({
+    name: lead.name || "",
+    phone: lead.phone || "",
+    car: lead.car || "",
+    notes: lead.notes || "",
+    status: lead.status,
+    nextActionDate: lead.nextActionDate || null as number | null,
+    source: lead.source,
+    carIds: leadCarIds(lead),
+    primaryCarId: lead.primaryCarId || leadCarIds(lead)[0] || null as string | null,
   });
   const [copied, setCopied] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [picker, setPicker] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
-    if (lead) {
-      setFormData({
-        name: lead.name || "", phone: lead.phone || "", car: lead.car || "",
-        notes: lead.notes || "", status: lead.status, nextActionDate: lead.nextActionDate || null,
-        source: lead.source
-      });
-    }
+    setForm({
+      name: lead.name || "",
+      phone: lead.phone || "",
+      car: lead.car || "",
+      notes: lead.notes || "",
+      status: lead.status,
+      nextActionDate: lead.nextActionDate || null,
+      source: lead.source,
+      carIds: leadCarIds(lead),
+      primaryCarId: lead.primaryCarId || leadCarIds(lead)[0] || null,
+    });
   }, [lead]);
 
-  if (!lead) return null;
+  const linkedCars = form.carIds
+    .map((id) => cars.find((c) => c.id === id))
+    .filter(Boolean) as CatalogCar[];
 
-  const hasChanges =
-    formData.name !== lead.name || formData.phone !== lead.phone ||
-    formData.car !== lead.car || formData.notes !== lead.notes ||
-    formData.status !== lead.status || formData.nextActionDate !== lead.nextActionDate ||
-    formData.source !== lead.source;
+  const duplicate = useMemo(() => {
+    const key = phoneKey(form.phone);
+    if (key.length < 7) return null;
+    return allLeads.find((l) => l.id !== lead.id && phoneKey(l.phone) === key) || null;
+  }, [allLeads, form.phone, lead.id]);
 
-  // Per user request, setting the next action date is mandatory
-  const terminalStatuses = ["success", "refusal", "bank_refusal", "spam", "new"];
-  const requiresNextAction = !terminalStatuses.includes(formData.status);
-  const isNextActionMissing = requiresNextAction && !formData.nextActionDate;
-  const isSaveDisabled = isSaving || isNextActionMissing;
+  const dirty =
+    form.name !== (lead.name || "") ||
+    form.phone !== (lead.phone || "") ||
+    form.car !== (lead.car || "") ||
+    form.notes !== (lead.notes || "") ||
+    form.status !== lead.status ||
+    form.nextActionDate !== (lead.nextActionDate || null) ||
+    form.source !== lead.source ||
+    JSON.stringify(form.carIds) !== JSON.stringify(leadCarIds(lead)) ||
+    form.primaryCarId !== (lead.primaryCarId || leadCarIds(lead)[0] || null);
 
-  const handleSave = async () => {
-    if (!lead.id || !user) return;
-    setIsSaving(true);
+  const missingDate = needsNextAction(form.status) && !form.nextActionDate;
+
+  const save = async () => {
+    if (!lead.id || !user || missingDate) return;
+    setSaving(true);
     try {
-      if (formData.status !== lead.status) {
+      if (form.status !== lead.status) {
         await updateLeadStatus(
-          lead.id, formData.status, user.email || 'unknown',
-          `Статус: ${getStatusLabel(lead.status)} ➔ ${getStatusLabel(formData.status)}`,
-          formData.nextActionDate
+          lead.id,
+          form.status,
+          user.email || "unknown",
+          `Статус: ${getStatusLabel(lead.status)} → ${getStatusLabel(form.status)}`,
+          form.nextActionDate,
         );
       }
       await updateLeadDetails(lead.id, {
-        name: formData.name, phone: formData.phone, car: formData.car, notes: formData.notes,
-        source: formData.source,
-        ...(formData.status === lead.status ? { nextActionDate: formData.nextActionDate } : {})
+        name: form.name,
+        phone: form.phone,
+        car: form.car,
+        notes: form.notes,
+        source: form.source as LeadSource,
+        carIds: form.carIds,
+        primaryCarId: form.primaryCarId,
+        ...(form.status === lead.status ? { nextActionDate: form.nextActionDate } : {}),
       });
-    } catch (error) {
-      console.error(error);
     } finally {
-      setIsSaving(false);
+      setSaving(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!lead?.id) return;
-    if (window.confirm("Вы уверены, что хотите удалить этого лида? Это действие нельзя отменить.")) {
-      try {
-        await deleteLead(lead.id);
-        onClose();
-      } catch (e) {
-        console.error(e);
-      }
-    }
+  const remove = async () => {
+    if (!lead.id) return;
+    await deleteLead(lead.id);
+    onDeleted?.();
+    onClose();
   };
 
-  const actionDateObj = formData.nextActionDate ? new Date(formData.nextActionDate) : null;
-  const isDateValid = actionDateObj && isValid(actionDateObj);
+  const tel = form.phone.replace(/\D/g, "");
 
   return (
-    <div className="absolute inset-0 z-[100] flex justify-end overflow-hidden">
-      {/* Desktop Backdrop */}
-      <div 
-        className="absolute inset-0 bg-zinc-900/30 backdrop-blur-md animate-in fade-in duration-500 hidden md:block" 
-        onClick={onClose} 
-      />
+    <div className="fixed inset-0 z-[120] flex justify-end">
+      <div className="absolute inset-0 bg-zinc-900/25" onClick={onClose} />
+      <div className="relative flex h-full w-full max-w-[720px] flex-col bg-white shadow-2xl md:rounded-l-[1.75rem]">
+        {picker ? (
+          <CarPicker
+            cars={cars}
+            selectedIds={form.carIds}
+            onClose={() => setPicker(false)}
+            onPick={(car) => {
+              const ids = form.carIds.includes(car.id) ? form.carIds : [...form.carIds, car.id];
+              setForm((p) => ({
+                ...p,
+                carIds: ids,
+                primaryCarId: p.primaryCarId || car.id,
+                car: p.car || car.name,
+              }));
+              setPicker(false);
+            }}
+          />
+        ) : null}
 
-      {/* Main Sheet Container */}
-      <div className="relative w-full md:w-[900px] h-full bg-white/95 backdrop-blur-xl md:shadow-[0_0_80px_-20px_rgba(0,0,0,0.5)] md:border-l border-zinc-200/50 z-50 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden animate-in fade-in-0 slide-in-from-right-16 duration-500 pb-20 md:pb-0 md:rounded-l-[2.5rem] overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-
-      {/* Left Pane - Main Edit */}
-      <div className="flex-1 flex flex-col md:h-full bg-transparent md:border-r border-zinc-100/50 md:overflow-y-auto custom-scrollbar shrink-0">
-
-        {/* Header Bar */}
-        <div className="flex-none h-14 border-b border-zinc-200/50 flex items-center justify-between px-3 md:px-6 bg-white/60 backdrop-blur-lg sticky top-0 z-30">
-          <div className="flex items-center gap-2 md:gap-3">
-            <Button variant="ghost" onClick={onClose} className="text-zinc-500 hover:text-zinc-900 -ml-2 px-2 md:px-3 flex items-center gap-1 h-auto py-2">
-              <ChevronLeft className="w-6 h-6 -ml-1" />
-              <span className="text-[15px] font-medium md:text-sm">Назад</span>
-            </Button>
-            <div className="w-px h-4 bg-zinc-200 hidden md:block" />
-            <SourceDropdown
-              value={formData.source}
-              onChange={(source) => setFormData(prev => ({...prev, source}))}
-              className="w-auto min-w-[120px] md:min-w-[140px]"
-            />
-            <span className="text-[10px] md:text-xs text-zinc-400 font-mono hidden sm:inline">ID: {lead.id?.slice(-6)}</span>
+        <div className="flex items-center justify-between border-b border-leads-line px-3 py-2.5">
+          <button type="button" onClick={onClose} className="flex items-center gap-1 rounded-full px-2 py-1.5 text-[13px] font-medium text-leads-muted hover:bg-zinc-100 hover:text-leads-ink">
+            <X className="size-4" /> Закрыть
+          </button>
+          <div className="flex items-center gap-2">
+            <SourceDropdown value={form.source} onChange={(source) => setForm((p) => ({ ...p, source }))} className="w-auto min-w-[140px]" />
+            <button type="button" onClick={() => setConfirmDelete(true)} className="flex size-9 items-center justify-center rounded-full text-leads-subtle hover:bg-red-50 hover:text-red-600">
+              <Trash2 className="size-4" />
+            </button>
           </div>
-
-          <Button onClick={handleDelete} variant="ghost" size="icon-sm" className="text-zinc-400 hover:text-red-600" title="Удалить лида">
-            <Trash2 className="w-4 h-4" />
-          </Button>
         </div>
 
-        {/* Content */}
-        <div className="p-4 md:p-8 max-w-3xl mx-auto w-full space-y-6 md:space-y-8">
+        <AdsScroller className="min-h-0 flex-1" contentClassName="px-5 py-5 md:px-8 md:py-7">
+          <input
+            value={form.name}
+            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+            placeholder="Имя"
+            className="w-full bg-transparent text-[28px] font-semibold tracking-tight text-leads-ink outline-none placeholder:text-leads-subtle"
+          />
 
-          {/* Header Info */}
-          <div>
-            <input
-              value={formData.name}
-              onChange={e => setFormData(prev => ({...prev, name: e.target.value}))}
-              className="text-[26px] sm:text-3xl md:text-4xl font-extrabold text-zinc-900 w-full bg-transparent border-none outline-none transition-colors"
-            />
-
-            <div className="mt-4 flex items-center gap-4">
-              <div
-                className="flex items-center gap-2 bg-zinc-100/50 hover:bg-zinc-100 border border-zinc-200/50 px-4 py-2 rounded-full cursor-pointer transition-colors group shadow-sm"
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 rounded-full bg-zinc-100 px-3 py-1.5">
+              <Phone className="size-3.5 text-leads-muted" />
+              <input
+                value={form.phone}
+                onChange={(e) => setForm((p) => ({ ...p, phone: formatPhone(e.target.value) }))}
+                className="w-[16ch] bg-transparent font-mono text-[14px] font-medium outline-none"
+              />
+              <button
+                type="button"
                 onClick={() => {
-                  if(formData.phone) {
-                    navigator.clipboard.writeText(formData.phone);
-                    setCopied(true); setTimeout(() => setCopied(false), 2000);
-                  }
+                  if (!form.phone) return;
+                  void navigator.clipboard.writeText(form.phone);
+                  setCopied(true);
+                  window.setTimeout(() => setCopied(false), 1400);
                 }}
+                className="text-leads-subtle hover:text-leads-ink"
               >
-                <Phone className="w-4 h-4 text-zinc-400 group-hover:text-blue-500" />
-                <input
-                  value={formData.phone}
-                  onChange={e => setFormData(prev => ({...prev, phone: formatPhone(e.target.value)}))}
-                  className="font-mono text-base md:text-lg font-bold bg-transparent outline-none text-zinc-800 min-w-0"
-                  style={{ width: `${Math.max((formData.phone?.length || 1) + 1, 10)}ch` }}
-                />
-                {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-zinc-300 opacity-0 group-hover:opacity-100" />}
-              </div>
+                {copied ? <CheckCircle2 className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
+              </button>
+            </div>
+            {tel.length >= 9 ? (
+              <a href={`tel:+${tel}`} className="rounded-full bg-zinc-900 px-3 py-1.5 text-[12px] font-semibold text-white">
+                Позвонить
+              </a>
+            ) : null}
+          </div>
+
+          {duplicate ? (
+            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+              Этот номер уже есть: {duplicate.name || "без имени"} · {getStatusLabel(duplicate.status)}
+            </p>
+          ) : null}
+
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            <div>
+              <p className="mb-2 text-[11px] font-medium tracking-wide text-leads-subtle uppercase">Статус</p>
+              <StatusDropdown value={form.status} onChange={(status: LeadStatus) => setForm((p) => ({ ...p, status }))} />
+            </div>
+            <div className="md:col-span-2">
+              <p className="mb-2 text-[11px] font-medium tracking-wide text-leads-subtle uppercase">
+                Следующий шаг {needsNextAction(form.status) ? "*" : ""}
+              </p>
+              <DatePresets value={form.nextActionDate} onChange={(nextActionDate) => setForm((p) => ({ ...p, nextActionDate }))} />
             </div>
           </div>
 
-          <div className="h-px bg-zinc-100 w-full" />
-
-          {/* Core Fields Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 md:gap-y-6">
-
+          <div className="mt-8">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[11px] font-medium tracking-wide text-leads-subtle uppercase">Автомобили</p>
+              <button type="button" onClick={() => setPicker(true)} className="flex items-center gap-1 text-[12px] font-medium text-leads-ink">
+                <Plus className="size-3.5" /> Со склада
+              </button>
+            </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5" /> Статус
-              </label>
-              <StatusDropdown
-                value={formData.status}
-                onChange={(status) => setFormData(prev => ({...prev, status}))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 mb-1.5">
-                <Clock className="w-3.5 h-3.5" /> Запланировано на
-                {requiresNextAction && <span className="text-red-500">*</span>}
-              </label>
+              {linkedCars.map((car) => (
+                <div key={car.id} className="cursor-pointer" onClick={() => onOpenCar?.(car)}>
+                  <CarChip
+                    car={car}
+                    primary={form.primaryCarId === car.id}
+                    onPrimary={() => setForm((p) => ({ ...p, primaryCarId: car.id, car: p.car || car.name }))}
+                    onRemove={() =>
+                      setForm((p) => {
+                        const carIds = p.carIds.filter((id) => id !== car.id);
+                        const primaryCarId = p.primaryCarId === car.id ? carIds[0] || null : p.primaryCarId;
+                        return { ...p, carIds, primaryCarId };
+                      })
+                    }
+                  />
+                </div>
+              ))}
               <input
-                type="datetime-local"
-                className="flex h-11 w-full rounded-2xl border border-zinc-200/80 bg-zinc-50/50 px-4 py-2 text-sm font-medium text-zinc-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus:bg-white focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 outline-none transition-all"
-                value={isDateValid ? format(actionDateObj, "yyyy-MM-dd'T'HH:mm") : ""}
-                onChange={e => {
-                  const val = e.target.value;
-                  if (!val) { setFormData(prev => ({ ...prev, nextActionDate: null })); return; }
-                  const newDate = new Date(val);
-                  if (isValid(newDate)) setFormData(prev => ({ ...prev, nextActionDate: newDate.getTime() }));
-                }}
+                value={form.car}
+                onChange={(e) => setForm((p) => ({ ...p, car: e.target.value }))}
+                placeholder="Или текстом: марка, бюджет…"
+                className="h-11 w-full rounded-xl bg-zinc-50 px-3 text-[13px] outline-none ring-1 ring-leads-line focus:bg-white"
               />
             </div>
-
-            <div className="space-y-2 col-span-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 inline-block">Интересующий Автомобиль</label>
-              <input
-                value={formData.car}
-                onChange={e => setFormData(prev => ({...prev, car: e.target.value}))}
-                className="flex h-11 w-full rounded-2xl border border-zinc-200/80 bg-zinc-50/50 px-4 py-2 text-sm font-medium text-zinc-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus:bg-white focus:border-zinc-400 outline-none transition-all"
-              />
-            </div>
-
-            <div className="space-y-2 col-span-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 mb-1.5">
-                <FileText className="w-3.5 h-3.5" /> Заметки
-              </label>
-              <Textarea
-                value={formData.notes}
-                onChange={e => setFormData(prev => ({...prev, notes: e.target.value}))}
-                className="min-h-[120px] rounded-3xl border-orange-200/50 bg-orange-50/30 focus:bg-orange-50/60 focus:border-orange-300 font-medium text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] p-4 leading-relaxed"
-                placeholder="Свободные заметки..."
-              />
-            </div>
-
           </div>
 
-        </div>
-      </div>
+          <div className="mt-8">
+            <p className="mb-2 text-[11px] font-medium tracking-wide text-leads-subtle uppercase">Заметка</p>
+            <textarea
+              value={form.notes}
+              onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
+              rows={5}
+              className="w-full resize-y rounded-2xl bg-zinc-50 p-3 text-[13px] leading-relaxed outline-none ring-1 ring-leads-line focus:bg-white"
+              placeholder="Что сказал, что обещали"
+            />
+          </div>
 
-      {/* Right Pane - History & Meta */}
-      <div className="w-full md:w-[380px] bg-zinc-50/50 border-t md:border-t-0 md:border-l border-zinc-200/50 flex flex-col md:h-full md:overflow-y-auto shrink-0 relative">
-        <div className="flex-none p-4 border-b border-zinc-200/50 bg-transparent blur-backdrop-sm sticky top-0 z-10">
-          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Активность</h3>
-        </div>
-
-        <div className="flex-1 md:overflow-y-auto p-4 custom-scrollbar">
-          {lead.history && lead.history.length > 0 ? (
-            <div className="relative border-l border-zinc-200 ml-3 space-y-6 pb-4">
-              {lead.history.map((event, i) => (
-                <div key={i} className="relative pl-5">
-                  <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-zinc-300 ring-4 ring-zinc-50" />
-                  <div className="flex flex-col gap-1">
+          <div className="mt-8 pb-24">
+            <p className="mb-3 text-[11px] font-medium tracking-wide text-leads-subtle uppercase">Активность</p>
+            {lead.history?.length ? (
+              <div className="space-y-4 border-l border-leads-line pl-4">
+                {[...lead.history].reverse().map((event, i) => (
+                  <div key={`${event.changedAt}-${i}`}>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={event.status} />
-                      <span className="text-[10px] text-zinc-400 font-medium">
+                      <span className="text-[11px] text-leads-subtle">
                         {format(new Date(event.changedAt), "d MMM yyyy, HH:mm", { locale: ru })}
                       </span>
                     </div>
-                    <span className="text-[10px] text-zinc-400">{event.changedBy}</span>
-                    {event.comment && (
-                      <div className="mt-1.5 text-xs text-zinc-700 bg-white p-2.5 rounded-md border border-zinc-200/60 shadow-sm">
-                        {event.comment}
-                      </div>
-                    )}
+                    <p className="mt-1 text-[11px] text-leads-muted">{event.changedBy}</p>
+                    {event.comment ? <p className="mt-1 text-[12px] text-leads-ink">{event.comment}</p> : null}
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-zinc-400 text-center mt-10">Нет истории</p>
-          )}
-
-          {/* Meta Payload & Car Preview */}
-          {(lead.payload?.carId || (lead.notes && lead.notes.includes("belautocenter.by/catalog/"))) ? (
-            <CarPreview 
-              carId={lead.payload?.carId as string | undefined} 
-              url={lead.notes?.match(/https:\/\/belautocenter\.by\/catalog\/[a-zA-Z0-9_-]+/)?.[0]} 
-            />
-          ) : (
-            lead.payload && Object.keys(lead.payload).filter(k => !["name", "phone", "car", "source", "notes"].includes(k)).length > 0 && (
-              <div className="mt-8 pt-6 border-t border-zinc-200/60">
-                <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2 mb-3">
-                  <Smartphone className="w-3.5 h-3.5" /> Raw Data
-                </h3>
-                <pre className="text-[10px] font-mono text-zinc-500 bg-white p-3 rounded-md border border-zinc-200 overflow-x-auto">
-                  {JSON.stringify(Object.fromEntries(
-                    Object.entries(lead.payload).filter(([k]) => !["name", "phone", "car", "source", "notes"].includes(k))
-                  ), null, 2)}
-                </pre>
+                ))}
               </div>
-            )
-          )}
-        </div>
-
-        {/* Save Footer Action */}
-        {hasChanges && (
-          <div className="fixed bottom-0 left-0 right-0 p-4 md:p-6 bg-white/70 backdrop-blur-2xl border-t border-zinc-200/50 shadow-[0_-20px_40px_-20px_rgba(0,0,0,0.1)] flex flex-col gap-3 z-[60] md:sticky md:bottom-0 md:mt-auto md:w-full md:rounded-br-none">
-            {isNextActionMissing && (
-              <p className="text-[10px] md:text-xs text-red-600 font-medium text-center text-balance px-2 animate-in slide-in-from-bottom-2">Выберите дату (запланировано)</p>
+            ) : (
+              <p className="text-xs text-leads-muted">Пока пусто</p>
             )}
-            <Button
-              onClick={handleSave}
-              disabled={isSaveDisabled}
-              className="w-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] font-semibold h-12 md:h-14 rounded-full disabled:opacity-50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] tracking-wide"
-            >
-              {isSaving ? "Сохранение..." : "Сохранить изменения"}
-            </Button>
           </div>
-        )}
-      </div>
+        </AdsScroller>
 
+        {dirty ? (
+          <div className="border-t border-leads-line bg-white/90 p-4 backdrop-blur">
+            {missingDate ? <p className="mb-2 text-center text-[11px] text-red-600">Нужна дата следующего шага</p> : null}
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={saving || missingDate}
+              className="h-12 w-full rounded-full bg-zinc-900 text-[14px] font-semibold text-white disabled:opacity-40"
+            >
+              {saving ? "Сохраняем…" : "Сохранить"}
+            </button>
+          </div>
+        ) : null}
+
+        {confirmDelete ? (
+          <div className="absolute inset-0 z-[90] flex items-end justify-center bg-zinc-900/30 p-4 md:items-center">
+            <div className="w-full max-w-sm rounded-3xl bg-white p-5">
+              <p className="text-[16px] font-semibold">Удалить клиента?</p>
+              <p className="mt-1 text-[13px] text-leads-muted">Это нельзя отменить.</p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => setConfirmDelete(false)} className="h-11 rounded-full ring-1 ring-leads-line text-[13px] font-medium">
+                  Отмена
+                </button>
+                <button type="button" onClick={() => void remove()} className="h-11 rounded-full bg-red-600 text-[13px] font-semibold text-white">
+                  Удалить
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
-    </div>
+  );
+}
+
+export function LeadRow({
+  lead,
+  cars,
+  selected,
+  onOpen,
+  onOpenCar,
+}: {
+  lead: Lead;
+  cars: CatalogCar[];
+  selected?: boolean;
+  onOpen: () => void;
+  onOpenCar?: (car: CatalogCar) => void;
+}) {
+  const car = resolveLeadCar(lead, cars);
+  const extra = Math.max(0, leadCarIds(lead).length - (car ? 1 : 0));
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(
+        "flex w-full items-center gap-3 px-3 py-3 text-left md:px-4",
+        selected ? "bg-zinc-100" : "hover:bg-zinc-50",
+      )}
+    >
+      <SourceIcon source={lead.source} className="size-4 shrink-0 opacity-50" />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-[14px] font-semibold text-leads-ink">{lead.name || "Без имени"}</p>
+          <StatusBadge status={lead.status} />
+        </div>
+        <p className="mt-0.5 font-mono text-[12px] text-leads-muted">{lead.phone || "нет номера"}</p>
+        {lead.notes ? <p className="mt-0.5 truncate text-[12px] text-leads-subtle">{lead.notes}</p> : null}
+      </div>
+      <div className="hidden min-w-0 max-w-[220px] shrink-0 sm:block">
+        {car ? (
+          <span
+            role="link"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenCar?.(car);
+            }}
+            className="flex items-center gap-2 rounded-xl px-1 py-0.5 hover:bg-white"
+          >
+            <span className="size-8 overflow-hidden rounded-lg bg-zinc-100">
+              {car.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={car.photoUrl} alt="" className="h-full w-full object-cover" />
+              ) : null}
+            </span>
+            <span className="truncate text-[12px] font-medium text-leads-ink">
+              {car.name}
+              {extra ? ` +${extra}` : ""}
+            </span>
+          </span>
+        ) : lead.car ? (
+          <p className="truncate text-[12px] text-leads-muted">{lead.car}</p>
+        ) : null}
+      </div>
+      {lead.nextActionDate && lead.status !== "new" ? (
+        <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-1 font-mono text-[11px] text-leads-ink">
+          {format(lead.nextActionDate, "HH:mm")}
+        </span>
+      ) : null}
+    </button>
   );
 }
