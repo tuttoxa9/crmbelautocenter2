@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { CheckCircle2, ChevronLeft, ChevronRight, Copy, Download, X } from "lucide-react";
+import { format, isSameYear, isToday, isYesterday } from "date-fns";
+import { ru } from "date-fns/locale";
 import { S3Object } from "./useFileManager";
 import { cn } from "@/lib/utils";
 import { fileLabel } from "@/lib/files/displayName";
@@ -16,6 +19,17 @@ interface ImageLightboxProps {
   formatSize: (bytes?: number) => string;
 }
 
+function when(iso?: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  if (isToday(d)) return "Сегодня";
+  if (isYesterday(d)) return "Вчера";
+  return isSameYear(d, new Date())
+    ? format(d, "d MMMM", { locale: ru })
+    : format(d, "d MMMM yyyy", { locale: ru });
+}
+
 export function ImageLightbox({
   images,
   currentIndex,
@@ -26,21 +40,69 @@ export function ImageLightbox({
   formatSize,
 }: ImageLightboxProps) {
   const [loadedPath, setLoadedPath] = useState<string | null>(null);
+  const [failedPath, setFailedPath] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [chrome, setChrome] = useState(true);
+  const hideTimer = useRef(0);
+  const touchRef = useRef<{ x: number; y: number } | null>(null);
+  const wheelLock = useRef(0);
+  const stripRef = useRef<HTMLDivElement>(null);
   const current = images[currentIndex];
-  const imgLoaded = loadedPath === current?.path;
   const url = current ? getPublicUrl(current.path) : "";
+  const imgLoaded = loadedPath === current?.path;
+  const imgFailed = failedPath === current?.path;
+
+  const bumpChrome = useCallback(() => {
+    setChrome(true);
+    window.clearTimeout(hideTimer.current);
+    hideTimer.current = window.setTimeout(() => setChrome(false), 3200);
+  }, []);
+
+  const go = useCallback(
+    (next: number) => {
+      if (next < 0 || next >= images.length) return;
+      onJump(next);
+      bumpChrome();
+    },
+    [images.length, onJump, bumpChrome],
+  );
+
+  useEffect(() => {
+    bumpChrome();
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+      window.clearTimeout(hideTimer.current);
+    };
+  }, [bumpChrome]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft" && currentIndex > 0) onJump(currentIndex - 1);
-      if (e.key === "ArrowRight" && currentIndex < images.length - 1) onJump(currentIndex + 1);
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        go(currentIndex - 1);
+      }
+      if (e.key === "ArrowRight" || e.key === " ") {
+        e.preventDefault();
+        go(currentIndex + 1);
+      }
+      if (e.key === "Home") {
+        e.preventDefault();
+        go(0);
+      }
+      if (e.key === "End") {
+        e.preventDefault();
+        go(images.length - 1);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [currentIndex, images.length, onClose, onJump]);
+  }, [currentIndex, images.length, onClose, go]);
 
   useEffect(() => {
     for (const delta of [-1, 1]) {
@@ -51,106 +113,212 @@ export function ImageLightbox({
     }
   }, [currentIndex, images, getPublicUrl]);
 
-  if (!current) return null;
+  useEffect(() => {
+    const el = stripRef.current?.querySelector(`[data-thumb="${currentIndex}"]`);
+    if (el) el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  }, [currentIndex]);
+
+  if (!current || typeof document === "undefined") return null;
 
   const copyUrl = () => {
     if (!url) return;
-    navigator.clipboard.writeText(url);
+    void navigator.clipboard.writeText(url);
     setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
+    bumpChrome();
+    window.setTimeout(() => setCopied(false), 1600);
   };
 
-  return (
+  const date = when(current.lastModified);
+  const meta = [formatSize(current.size), date].filter(Boolean).join(" · ");
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex flex-col bg-black/95"
-      onTouchStart={(e) => setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY })}
+      className="fixed inset-0 z-[200] flex flex-col bg-black"
+      onMouseMove={bumpChrome}
+      onWheel={(e) => {
+        if (Math.abs(e.deltaY) < 24) return;
+        const now = Date.now();
+        if (now - wheelLock.current < 280) return;
+        wheelLock.current = now;
+        go(e.deltaY > 0 ? currentIndex + 1 : currentIndex - 1);
+      }}
+      onTouchStart={(e) => {
+        touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }}
       onTouchEnd={(e) => {
-        if (!touchStart) return;
-        const dx = touchStart.x - e.changedTouches[0].clientX;
-        const dy = touchStart.y - e.changedTouches[0].clientY;
-        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-          if (dx > 0 && currentIndex < images.length - 1) onJump(currentIndex + 1);
-          if (dx < 0 && currentIndex > 0) onJump(currentIndex - 1);
-        } else if (dy < -70 && Math.abs(dy) > Math.abs(dx)) {
+        const start = touchRef.current;
+        touchRef.current = null;
+        if (!start) return;
+        const dx = start.x - e.changedTouches[0].clientX;
+        const dy = start.y - e.changedTouches[0].clientY;
+        if (Math.abs(dx) < 14 && Math.abs(dy) < 14) {
+          setChrome((v) => {
+            const next = !v;
+            window.clearTimeout(hideTimer.current);
+            if (next) hideTimer.current = window.setTimeout(() => setChrome(false), 3200);
+            return next;
+          });
+          return;
+        }
+        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy)) {
+          go(dx > 0 ? currentIndex + 1 : currentIndex - 1);
+        } else if (dy < -80 && Math.abs(dy) > Math.abs(dx)) {
           onClose();
         }
-        setTouchStart(null);
       }}
     >
-      <div className="flex items-center justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))]">
-        <div className="flex min-w-0 items-center gap-3">
-          <button type="button" onClick={onClose} className="flex size-11 items-center justify-center rounded-xl text-white/70 hover:bg-white/10 hover:text-white">
-            <X className="size-5" />
-          </button>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">{fileLabel(current.name)}</p>
-            <p className="text-xs text-white/50">{formatSize(current.size)}</p>
-          </div>
+      <header
+        className={cn(
+          "absolute inset-x-0 top-0 z-10 flex items-center gap-2 bg-gradient-to-b from-black/80 to-transparent px-3 pt-[max(0.75rem,env(safe-area-inset-top))] pb-8 transition-opacity duration-200",
+          chrome ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex size-11 shrink-0 items-center justify-center rounded-full text-white/80 hover:bg-white/10 hover:text-white"
+          aria-label="Закрыть"
+        >
+          <X className="size-5" />
+        </button>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-white">{fileLabel(current.name)}</p>
+          <p className="truncate text-[11px] text-white/50">
+            {images.length > 1 ? `${currentIndex + 1} из ${images.length}` : ""}
+            {images.length > 1 && meta ? " · " : ""}
+            {meta}
+          </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex shrink-0 items-center">
           {url ? (
-            <button type="button" onClick={copyUrl} className="flex size-11 items-center justify-center rounded-xl text-white/70 hover:bg-white/10" title="Копировать ссылку">
+            <button
+              type="button"
+              onClick={copyUrl}
+              className="flex size-11 items-center justify-center rounded-full text-white/80 hover:bg-white/10"
+              title="Копировать ссылку"
+            >
               {copied ? <CheckCircle2 className="size-4 text-emerald-400" /> : <Copy className="size-4" />}
             </button>
           ) : null}
-          <button type="button" onClick={() => onDownload(current.path)} className="flex size-11 items-center justify-center rounded-xl text-white/70 hover:bg-white/10" title="Скачать">
+          <button
+            type="button"
+            onClick={() => onDownload(current.path)}
+            className="flex size-11 items-center justify-center rounded-full text-white/80 hover:bg-white/10"
+            title="Скачать"
+          >
             <Download className="size-4" />
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 md:px-16">
-        {currentIndex > 0 && (
+      <div className="relative flex min-h-0 flex-1 items-center justify-center">
+        {currentIndex > 0 ? (
           <button
             type="button"
-            className="absolute left-2 hidden size-12 items-center justify-center rounded-2xl text-white/60 hover:bg-white/10 md:flex"
-            onClick={() => onJump(currentIndex - 1)}
+            aria-label="Предыдущее"
+            className={cn(
+              "absolute left-2 z-10 hidden size-12 items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white md:flex",
+              chrome ? "opacity-100" : "pointer-events-none opacity-0",
+            )}
+            onClick={() => go(currentIndex - 1)}
           >
             <ChevronLeft className="size-7" />
           </button>
-        )}
-        <div className="flex max-h-full max-w-full items-center justify-center overflow-auto">
-          {!imgLoaded && <div className="size-40 rounded-2xl bg-white/5" />}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            key={current.path}
-            src={url}
-            alt={fileLabel(current.name)}
-            onLoad={() => setLoadedPath(current.path)}
-            className={cn(
-              "max-h-[calc(100dvh-160px)] max-w-full object-contain select-none",
-              imgLoaded ? "opacity-100" : "absolute opacity-0",
-            )}
-          />
+        ) : null}
+
+        <div
+          className="flex h-full w-full items-center justify-center px-2 py-16 md:px-16"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
+        >
+          {!url || imgFailed ? (
+            <p className="max-w-xs text-center text-sm text-white/50">
+              Нет ссылки для просмотра — скачайте файл
+            </p>
+          ) : (
+            <>
+              {!imgLoaded ? <div className="size-16 rounded-full bg-white/8" /> : null}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                key={current.path}
+                src={url}
+                alt={fileLabel(current.name)}
+                draggable={false}
+                onLoad={() => setLoadedPath(current.path)}
+                onError={() => setFailedPath(current.path)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setChrome((v) => {
+                    const next = !v;
+                    window.clearTimeout(hideTimer.current);
+                    if (next) hideTimer.current = window.setTimeout(() => setChrome(false), 3200);
+                    return next;
+                  });
+                }}
+                className={cn(
+                  "max-h-full max-w-full object-contain select-none",
+                  imgLoaded ? "opacity-100" : "absolute opacity-0",
+                )}
+              />
+            </>
+          )}
         </div>
-        {currentIndex < images.length - 1 && (
+
+        {currentIndex < images.length - 1 ? (
           <button
             type="button"
-            className="absolute right-2 hidden size-12 items-center justify-center rounded-2xl text-white/60 hover:bg-white/10 md:flex"
-            onClick={() => onJump(currentIndex + 1)}
+            aria-label="Следующее"
+            className={cn(
+              "absolute right-2 z-10 hidden size-12 items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white md:flex",
+              chrome ? "opacity-100" : "pointer-events-none opacity-0",
+            )}
+            onClick={() => go(currentIndex + 1)}
           >
             <ChevronRight className="size-7" />
           </button>
-        )}
+        ) : null}
       </div>
 
-      <div className="flex flex-col items-center gap-2 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        {images.length > 1 && images.length <= 12 && (
-          <div className="flex items-center gap-1">
-            {images.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => onJump(i)}
-                className={cn("rounded-full", i === currentIndex ? "h-1.5 w-4 bg-white" : "size-1.5 bg-white/30")}
-              />
-            ))}
+      {images.length > 1 ? (
+        <div
+          className={cn(
+            "absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 to-transparent pt-8 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-opacity duration-200",
+            chrome ? "opacity-100" : "pointer-events-none opacity-0",
+          )}
+        >
+          <div
+            ref={stripRef}
+            className="files-hide-bar flex items-end gap-1.5 overflow-x-auto px-4"
+            onWheel={(e) => e.stopPropagation()}
+          >
+            {images.map((img, i) => {
+              const thumb = getPublicUrl(img.path);
+              const active = i === currentIndex;
+              return (
+                <button
+                  key={img.path}
+                  type="button"
+                  data-thumb={i}
+                  onClick={() => go(i)}
+                  className={cn(
+                    "relative h-14 w-14 shrink-0 overflow-hidden rounded-lg",
+                    active ? "ring-2 ring-white ring-offset-2 ring-offset-black" : "opacity-55 hover:opacity-90",
+                  )}
+                >
+                  {thumb ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="block h-full w-full bg-white/10" />
+                  )}
+                </button>
+              );
+            })}
           </div>
-        )}
-        <p className="text-xs font-medium text-white/40">
-          {currentIndex + 1} / {images.length}
-        </p>
-      </div>
-    </div>
+        </div>
+      ) : null}
+    </div>,
+    document.body,
   );
 }

@@ -327,8 +327,12 @@ export function FileCard({
           isSelected ? "border-white/25 bg-white/8" : "border-white/6 bg-white/[0.035] hover:border-white/12 hover:bg-white/[0.05]",
         )}
         onClick={(e) => {
-          if (selectMode) {
+          if (selectMode || e.shiftKey) {
             onSelect({ shift: e.shiftKey, meta: e.metaKey || e.ctrlKey });
+            return;
+          }
+          if (img || isVideoName(item.name)) {
+            onOpen();
             return;
           }
           if (window.matchMedia("(min-width: 768px)").matches) {
@@ -437,7 +441,7 @@ export function FileRow({
       )}
       onClick={() => {
         if (selectMode) onSelect();
-        else if (item.type === "folder") onOpen();
+        else if (item.type === "folder" || isImageName(item.name) || isVideoName(item.name)) onOpen();
         else if (window.matchMedia("(min-width: 768px)").matches) onSelect();
         else onOpen();
       }}
