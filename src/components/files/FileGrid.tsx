@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { format, isSameYear } from "date-fns";
+import { format, isSameYear, isToday, isYesterday } from "date-fns";
 import { ru } from "date-fns/locale";
 import type { S3Object, SortMode, ViewMode } from "./useFileManager";
 import { FileCard, FileRow, FolderCard, FolderGlyph, getFileIcon } from "./FileCard";
@@ -33,7 +33,11 @@ function dateLabel(iso?: string) {
   if (!iso) return "Без даты";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "Без даты";
-  return isSameYear(d, new Date()) ? format(d, "d MMMM", { locale: ru }) : format(d, "d MMMM yyyy", { locale: ru });
+  if (isToday(d)) return "Сегодня";
+  if (isYesterday(d)) return "Вчера";
+  return isSameYear(d, new Date())
+    ? format(d, "d MMMM", { locale: ru })
+    : format(d, "d MMMM yyyy", { locale: ru });
 }
 
 export function FileGrid(props: FileGridProps) {
