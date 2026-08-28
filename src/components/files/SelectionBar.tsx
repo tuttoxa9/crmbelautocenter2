@@ -1,59 +1,68 @@
 "use client";
 
-import { Download, Trash2, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Download, Loader2, Trash2, X } from "lucide-react";
+import { ruCount } from "@/lib/files/displayName";
 
 interface SelectionBarProps {
   count: number;
   onDownload: () => void;
   onDelete: () => void;
   onClear: () => void;
+  onSelectAll: () => void;
   isDownloading?: boolean;
+  downloadLabel?: string;
 }
 
-export function SelectionBar({ count, onDownload, onDelete, onClear, isDownloading }: SelectionBarProps) {
+export function SelectionBar({
+  count,
+  onDownload,
+  onDelete,
+  onClear,
+  onSelectAll,
+  isDownloading,
+  downloadLabel,
+}: SelectionBarProps) {
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] animate-in slide-in-from-bottom-4 fade-in duration-300">
-      <div className="flex items-center gap-2 bg-zinc-900/95 backdrop-blur-xl text-white px-3 py-2.5 rounded-2xl shadow-2xl shadow-zinc-900/30 border border-zinc-700/50">
-        {/* Count badge */}
-        <div className="flex items-center gap-2 px-2 pr-3 border-r border-zinc-700/60 mr-1">
-          <span className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[11px] font-bold shrink-0">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] flex justify-center px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="pointer-events-auto flex w-full max-w-lg items-center gap-1 rounded-2xl bg-zinc-900/95 px-2 py-2 shadow-2xl ring-1 ring-white/10 backdrop-blur-xl sm:w-auto sm:px-3">
+        <div className="flex items-center gap-2 border-r border-white/10 pr-3 pl-2">
+          <span className="flex size-6 items-center justify-center rounded-full bg-files-ink text-[11px] font-bold text-files-bg">
             {count}
           </span>
-          <span className="text-sm font-medium text-zinc-200 hidden sm:inline whitespace-nowrap">
-            {count === 1 ? "выбран" : "выбрано"}
-          </span>
+          <span className="hidden text-sm text-zinc-200 sm:inline">{ruCount(count, "выбран", "выбрано", "выбрано")}</span>
         </div>
-
-        <Button
+        <button
+          type="button"
+          onClick={onSelectAll}
+          className="h-11 rounded-xl px-3 text-sm text-zinc-300 hover:bg-white/8"
+        >
+          Все
+        </button>
+        <button
+          type="button"
           onClick={onDownload}
           disabled={isDownloading}
-          variant="ghost"
-          size="sm"
-          className="h-9 px-3 text-zinc-300 hover:text-white hover:bg-zinc-700/60 rounded-xl gap-2 text-sm"
+          className="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm text-zinc-200 hover:bg-white/8 disabled:opacity-50"
         >
-          <Download className="w-4 h-4" />
-          <span className="hidden sm:inline">Скачать</span>
-        </Button>
-
-        <Button
+          {isDownloading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+          <span className="hidden sm:inline">{downloadLabel || "Скачать"}</span>
+        </button>
+        <button
+          type="button"
           onClick={onDelete}
-          variant="ghost"
-          size="sm"
-          className="h-9 px-3 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-xl gap-2 text-sm"
+          className="inline-flex h-11 items-center gap-2 rounded-xl px-3 text-sm text-red-400 hover:bg-red-500/15"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="size-4" />
           <span className="hidden sm:inline">Удалить</span>
-        </Button>
-
-        <Button
+        </button>
+        <button
+          type="button"
           onClick={onClear}
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-700/60 rounded-xl shrink-0"
+          aria-label="Снять выделение"
+          className="flex size-11 items-center justify-center rounded-xl text-zinc-500 hover:bg-white/8 hover:text-zinc-300"
         >
-          <X className="w-4 h-4" />
-        </Button>
+          <X className="size-4" />
+        </button>
       </div>
     </div>
   );

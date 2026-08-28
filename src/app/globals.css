@@ -57,6 +57,14 @@
   --color-ads-mid: #3a3a3c;
   --color-ads-ok: #1d1d1f;
   --color-ads-rail: #2c2c2e;
+  --color-files-bg: #111113;
+  --color-files-elev: #18181b;
+  --color-files-card: #1c1c1f;
+  --color-files-ink: #f5f5f7;
+  --color-files-muted: #a1a1aa;
+  --color-files-subtle: #71717a;
+  --color-files-line: #2a2a2e;
+  --color-files-folder: #e8b931;
   --shadow-ads-card: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03), 0 8px 24px rgba(0, 0, 0, 0.04);
   --shadow-ads-float: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 16px 48px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.06);
   --shadow-ads-pill: 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
@@ -326,8 +334,75 @@
   .ads-burn-pulse,
   .ads-spin,
   .ads-spin-lg,
-  .ads-sb-thumb {
+  .ads-sb-thumb,
+  .files-sb-thumb {
     animation: none;
     transition: none;
   }
 }
+
+/* Files studio — scoped to /files */
+.files-os {
+  background: #111113;
+  color: #f5f5f7;
+  -webkit-font-smoothing: antialiased;
+  --files-sb: #f5f5f7;
+}
+.files-os,
+.files-os * {
+  scrollbar-width: none !important;
+}
+.files-os::-webkit-scrollbar,
+.files-os *::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+.files-os button:not(:disabled),
+.files-os [role="button"]:not(:disabled) {
+  cursor: pointer;
+}
+
+.files-hide-bar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.files-hide-bar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+.files-sb-track {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  width: 14px;
+  z-index: 8;
+}
+.files-sb-track.is-left { left: 0; }
+.files-sb-track.is-right { right: 0; }
+.files-sb-thumb {
+  position: absolute;
+  top: 0;
+  left: 5px;
+  width: 4px;
+  border-radius: 99px;
+  background: color-mix(in oklab, var(--files-sb, #f5f5f7) 28%, transparent);
+  will-change: transform, height;
+  cursor: grab;
+  touch-action: none;
+  transition: background-color 160ms ease;
+}
+.files-sb-thumb:hover,
+.files-sb-thumb.is-hot {
+  background: color-mix(in oklab, var(--files-sb, #f5f5f7) 52%, transparent);
+  cursor: grabbing;
+}
+
+.files-crumbs {
+  scrollbar-width: none;
+}
+.files-crumbs::-webkit-scrollbar {
+  display: none;
+}
+

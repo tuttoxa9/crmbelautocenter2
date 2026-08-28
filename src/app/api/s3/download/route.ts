@@ -3,46 +3,40 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3Client, BUCKET_NAME } from "@/lib/s3";
 import { verifyFirebaseIdToken } from "@/lib/verifyToken";
+import { asciiFallbackName, fileLabel } from "@/lib/files/displayName";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get("key");
-    const token = searchParams.get("token");
+    const key = searchParams.get("key") || searchParams.get("path");
+    const authHeader = request.headers.get("Authorization");
+    let token = searchParams.get("token");
+    if (!token && authHeader?.startsWith("Bearer ")) {
+      token = authHeader.slice("Bearer ".length);
+    }
 
     if (!key) {
       return NextResponse.json({ error: "No key provided" }, { status: 400 });
     }
-
     if (!token) {
-       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     try {
-        await verifyFirebaseIdToken(token);
+      await verifyFirebaseIdToken(token);
     } catch {
-        return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    // Извлекаем оригинальное имя файла для скачивания (отрезаем префикс/папки и timestamp если есть)
-    // Timestamp в формате 13 цифр_ (например 1712345678901_filename.jpg)
-    const fileNameRaw = key.split('/').pop() || 'download';
-    let downloadName = fileNameRaw;
-    if (/^\d{13}_/.test(fileNameRaw)) {
-        downloadName = fileNameRaw.substring(14);
-    }
-
+    const downloadName = fileLabel(key.split("/").pop() || "download");
     const command = new GetObjectCommand({
       Bucket: BUCKET_NAME,
       Key: key,
-      ResponseContentDisposition: `attachment; filename="${downloadName}"`,
+      ResponseContentDisposition: `attachment; filename="${asciiFallbackName(downloadName)}"; filename*=UTF-8''${encodeURIComponent(downloadName)}`,
     });
 
     const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-
-    // Перенаправляем на S3 со специальным заголовком Content-Disposition
-    return NextResponse.redirect(signedUrl);
-
+    return NextResponse.json({ url: signedUrl, downloadName });
   } catch (error) {
     console.error("Error generating download url:", error);
     return NextResponse.json({ error: "Failed to download" }, { status: 500 });

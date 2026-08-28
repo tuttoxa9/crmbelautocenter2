@@ -1,307 +1,479 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
-  Folder, File as FileIcon, FileText, Video, Archive,
-  Download, Copy, Eye, EyeOff, Pencil, Trash2,
-  CheckSquare, Square,
+  Archive,
+  Check,
+  Copy,
+  Download,
+  Eye,
+  EyeOff,
+  File as FileIcon,
+  FileText,
+  Folder,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Video,
 } from "lucide-react";
 import { S3Object } from "./useFileManager";
 import { cn } from "@/lib/utils";
-
-// ─── File type helpers ────────────────────────────────────────────────────────
+import { fileLabel, isImageName, isVideoName } from "@/lib/files/displayName";
 
 export function getFileIcon(name: string) {
   const ext = name.split(".").pop()?.toLowerCase() || "";
-  if (/^(jpe?g|png|gif|webp|svg|avif)$/.test(ext))
-    return { Icon: FileIcon, color: "text-sky-400", bg: "bg-sky-500/10" };
-  if (ext === "pdf")
-    return { Icon: FileText, color: "text-red-400", bg: "bg-red-500/10" };
-  if (/^(mp4|mov|avi|webm|mkv)$/.test(ext))
-    return { Icon: Video, color: "text-violet-400", bg: "bg-violet-500/10" };
+  if (/^(jpe?g|png|gif|webp|svg|avif|hei[cf])$/.test(ext))
+    return { Icon: FileIcon, color: "text-zinc-300", bg: "bg-white/6" };
+  if (ext === "pdf") return { Icon: FileText, color: "text-red-400", bg: "bg-red-500/10" };
+  if (/^(mp4|mov|m4v|avi|webm|mkv)$/.test(ext))
+    return { Icon: Video, color: "text-zinc-200", bg: "bg-white/6" };
   if (/^(zip|rar|7z|tar|gz)$/.test(ext))
-    return { Icon: Archive, color: "text-amber-400", bg: "bg-amber-500/10" };
-  return { Icon: FileIcon, color: "text-zinc-500", bg: "bg-white/[0.05]" };
+    return { Icon: Archive, color: "text-files-folder", bg: "bg-amber-500/10" };
+  return { Icon: FileIcon, color: "text-files-subtle", bg: "bg-white/5" };
 }
 
-function isImage(name: string) {
-  return /\.(jpe?g|png|gif|webp|svg|avif)$/i.test(name);
+export function FolderGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 52" className={className} aria-hidden>
+      <path
+        d="M4 14c0-3.3 2.7-6 6-6h12.8c1.5 0 2.9.7 3.8 1.9L30 14h24c3.3 0 6 2.7 6 6v20c0 3.3-2.7 6-6 6H10c-3.3 0-6-2.7-6-6V14z"
+        fill="currentColor"
+        opacity="0.22"
+      />
+      <path
+        d="M4 22c0-3.3 2.7-6 6-6h44c3.3 0 6 2.7 6 6v18c0 3.3-2.7 6-6 6H10c-3.3 0-6-2.7-6-6V22z"
+        fill="currentColor"
+      />
+    </svg>
+  );
 }
 
-// ─── Context Menu (Desktop) ───────────────────────────────────────────────────
-
-interface ContextAction {
+type Action = {
   label: string;
-  icon: React.ElementType;
+  icon: typeof Download;
   onClick: () => void;
   danger?: boolean;
-}
+};
 
-function ContextMenu({ actions, onClose }: { actions: ContextAction[]; onClose: () => void }) {
-  return (
+function AnchoredMenu({
+  open,
+  anchor,
+  actions,
+  onClose,
+}: {
+  open: boolean;
+  anchor: DOMRect | null;
+  actions: Action[];
+  onClose: () => void;
+}) {
+  if (!open || !anchor || typeof document === "undefined") return null;
+  const top = Math.min(anchor.bottom + 6, window.innerHeight - 220);
+  const left = Math.min(Math.max(8, anchor.right - 192), window.innerWidth - 200);
+  return createPortal(
     <>
       <div className="fixed inset-0 z-[90]" onClick={onClose} />
-      <div className="absolute right-0 top-8 z-[100] w-48 bg-zinc-900 border border-white/[0.1] rounded-2xl shadow-2xl py-1.5 animate-in zoom-in-95 fade-in duration-150 origin-top-right">
-        {actions.map((action, i) => (
+      <div
+        className="fixed z-[100] w-48 rounded-2xl bg-zinc-900 py-1.5 shadow-2xl ring-1 ring-white/10"
+        style={{ top, left }}
+      >
+        {actions.map((action) => (
           <button
-            key={i}
-            onClick={(e) => { e.stopPropagation(); action.onClick(); onClose(); }}
+            key={action.label}
+            type="button"
+            onClick={() => {
+              action.onClick();
+              onClose();
+            }}
             className={cn(
-              "flex items-center gap-2.5 w-full px-3.5 py-2 text-sm font-medium transition-colors text-left",
-              action.danger
-                ? "text-red-400 hover:bg-red-500/10"
-                : "text-zinc-300 hover:bg-white/[0.07]"
+              "flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm font-medium",
+              action.danger ? "text-red-400 hover:bg-red-500/10" : "text-zinc-200 hover:bg-white/8",
             )}
           >
-            <action.icon className="w-4 h-4 shrink-0" />
+            <action.icon className="size-4 shrink-0" />
             {action.label}
           </button>
         ))}
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 
-// ─── Mobile Action Sheet ──────────────────────────────────────────────────────
-
-function MobileActionSheet({ item, actions, onClose }: { item: S3Object; actions: ContextAction[]; onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[150] flex items-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" />
+function MobileSheet({
+  title,
+  subtitle,
+  actions,
+  onClose,
+}: {
+  title: string;
+  subtitle: string;
+  actions: Action[];
+  onClose: () => void;
+}) {
+  return createPortal(
+    <div className="fixed inset-0 z-[150] flex items-end md:hidden" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative w-full bg-zinc-900 border-t border-white/[0.08] rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom-4 duration-300 pb-8"
+        className="relative w-full rounded-t-3xl bg-zinc-900 pb-[max(2rem,env(safe-area-inset-bottom))] shadow-2xl ring-1 ring-white/8"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mt-3 mb-4" />
-        <div className="px-5 pb-3 border-b border-white/[0.06]">
-          <p className="text-sm font-semibold text-white truncate">{item.name}</p>
-          <p className="text-xs text-zinc-500 mt-0.5">{item.type === "folder" ? "Папка" : "Файл"}</p>
+        <div className="mx-auto mt-3 mb-4 h-1 w-10 rounded-full bg-white/20" />
+        <div className="border-b border-white/6 px-5 pb-3">
+          <p className="truncate text-sm font-semibold text-white">{title}</p>
+          <p className="mt-0.5 text-xs text-zinc-500">{subtitle}</p>
         </div>
-        <div className="p-3 space-y-1">
-          {actions.map((action, i) => (
+        <div className="space-y-1 p-3">
+          {actions.map((action) => (
             <button
-              key={i}
-              onClick={() => { action.onClick(); onClose(); }}
+              key={action.label}
+              type="button"
+              onClick={() => {
+                action.onClick();
+                onClose();
+              }}
               className={cn(
-                "flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl text-sm font-medium transition-colors text-left",
-                action.danger
-                  ? "text-red-400 hover:bg-red-500/10 active:bg-red-500/20"
-                  : "text-zinc-200 hover:bg-white/[0.07] active:bg-white/[0.12]"
+                "flex min-h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-sm font-medium",
+                action.danger ? "text-red-400 active:bg-red-500/10" : "text-zinc-200 active:bg-white/8",
               )}
             >
-              <action.icon className="w-5 h-5 shrink-0" />
+              <action.icon className="size-5 shrink-0" />
               {action.label}
             </button>
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
-// ─── Folder Card ──────────────────────────────────────────────────────────────
+function useLongPress(onLong: () => void) {
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const moved = useRef(false);
+  return {
+    onTouchStart: () => {
+      moved.current = false;
+      timer.current = setTimeout(() => {
+        if (!moved.current) onLong();
+      }, 420);
+    },
+    onTouchMove: () => {
+      moved.current = true;
+      clearTimeout(timer.current);
+    },
+    onTouchEnd: () => clearTimeout(timer.current),
+  };
+}
+
+function CheckBtn({ selected, onClick, force }: { selected: boolean; onClick: () => void; force?: boolean }) {
+  return (
+    <button
+      type="button"
+      aria-label={selected ? "Снять выделение" : "Выбрать"}
+      className={cn(
+        "absolute top-2 left-2 z-10 flex size-7 items-center justify-center rounded-lg",
+        selected || force ? "opacity-100" : "opacity-0 group-hover:opacity-100 max-md:opacity-0",
+      )}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+    >
+      <span
+        className={cn(
+          "flex size-5 items-center justify-center rounded-[6px] ring-1",
+          selected ? "bg-files-ink ring-files-ink text-files-bg" : "bg-black/40 ring-white/25",
+        )}
+      >
+        {selected ? <Check className="size-3" strokeWidth={3} /> : null}
+      </span>
+    </button>
+  );
+}
 
 interface FolderCardProps {
   item: S3Object;
   isSelected: boolean;
   isHidden: boolean;
-  onSelect: () => void;
-  onClick: () => void;
+  selectMode: boolean;
+  onSelect: (e?: { shift?: boolean; meta?: boolean }) => void;
+  onOpen: () => void;
   onToggleVisibility: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onEnterSelectMode: () => void;
 }
 
-export function FolderCard({ item, isSelected, isHidden, onSelect, onClick, onToggleVisibility, onRename, onDelete }: FolderCardProps) {
-  const [showMenu, setShowMenu] = useState(false);
-  const [showMobileSheet, setShowMobileSheet] = useState(false);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  const actions: ContextAction[] = [
-    { label: isHidden ? "Показывать" : "Скрыть", icon: isHidden ? Eye : EyeOff, onClick: onToggleVisibility },
+export function FolderCard({
+  item,
+  isSelected,
+  isHidden,
+  selectMode,
+  onSelect,
+  onOpen,
+  onToggleVisibility,
+  onRename,
+  onDelete,
+  onEnterSelectMode,
+}: FolderCardProps) {
+  const [menu, setMenu] = useState<DOMRect | null>(null);
+  const [sheet, setSheet] = useState(false);
+  const lp = useLongPress(() => onEnterSelectMode());
+  const label = fileLabel(item.name);
+  const actions: Action[] = [
+    { label: "Открыть", icon: Folder, onClick: onOpen },
+    { label: isHidden ? "Показывать" : "Скрыть у всех", icon: isHidden ? Eye : EyeOff, onClick: onToggleVisibility },
     { label: "Переименовать", icon: Pencil, onClick: onRename },
     { label: "Удалить", icon: Trash2, onClick: onDelete, danger: true },
   ];
-
-  const handleTouchStart = useCallback(() => {
-    longPressTimer.current = setTimeout(() => setShowMobileSheet(true), 500);
-  }, []);
-  const handleTouchEnd = useCallback(() => { clearTimeout(longPressTimer.current); }, []);
 
   return (
     <>
       <div
         className={cn(
-          "group relative flex flex-col items-center p-3 rounded-2xl border transition-all cursor-pointer select-none",
-          "active:scale-[0.95]",
-          isSelected
-            ? "border-indigo-500/50 bg-indigo-500/10 ring-1 ring-indigo-500/30"
-            : "border-white/[0.07] bg-white/[0.04] hover:border-white/[0.14] hover:bg-white/[0.08]",
-          isHidden && "opacity-40"
+          "group relative flex cursor-pointer flex-col items-center rounded-2xl border p-3 select-none",
+          isSelected ? "border-white/25 bg-white/8" : "border-white/6 bg-white/[0.035] hover:border-white/12 hover:bg-white/[0.05]",
+          isHidden && "opacity-50",
         )}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchMove={handleTouchEnd}
-        onContextMenu={(e) => { e.preventDefault(); setShowMenu(true); }}
+        onClick={(e) => {
+          if (selectMode) {
+            onSelect({ shift: e.shiftKey, meta: e.metaKey || e.ctrlKey });
+            return;
+          }
+          if (window.matchMedia("(min-width: 768px)").matches) {
+            onSelect({ shift: e.shiftKey, meta: e.metaKey || e.ctrlKey });
+          } else {
+            onOpen();
+          }
+        }}
+        onDoubleClick={(e) => {
+          e.preventDefault();
+          onOpen();
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setMenu(new DOMRect(e.clientX, e.clientY, 0, 0));
+        }}
+        {...lp}
       >
-        {/* Checkbox */}
-        <button
-          className={cn(
-            "absolute top-2 left-2 z-10 transition-all",
-            isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-          )}
-          onClick={(e) => { e.stopPropagation(); onSelect(); }}
-        >
-          {isSelected
-            ? <CheckSquare className="w-5 h-5 text-indigo-400" />
-            : <Square className="w-5 h-5 text-zinc-600" />}
-        </button>
-
-        {/* Desktop overflow menu */}
-        <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            className="w-7 h-7 rounded-lg bg-zinc-800 border border-white/[0.1] shadow-sm items-center justify-center text-zinc-400 hover:text-white hidden md:flex text-xs font-bold leading-none"
-            onClick={(e) => { e.stopPropagation(); setShowMenu(true); }}
-          >
-            ···
-          </button>
-          {showMenu && <ContextMenu actions={actions} onClose={() => setShowMenu(false)} />}
+        <CheckBtn selected={isSelected} force={selectMode} onClick={() => onSelect()} />
+        <MoreBtn onDesktop={(r) => setMenu(r)} onMobile={() => setSheet(true)} />
+        <div className="mb-2 flex aspect-square w-full items-center justify-center rounded-xl bg-gradient-to-b from-amber-500/16 to-amber-500/6">
+          <FolderGlyph className="h-12 w-[58px] text-files-folder sm:h-14 sm:w-[68px]" />
         </div>
-
-        {/* Folder icon */}
-        <div
-          className="w-full aspect-square flex items-center justify-center mb-2 rounded-xl bg-amber-500/10 transition-colors group-hover:bg-amber-500/15"
-          onClick={onClick}
-        >
-          <Folder className="w-12 h-12 sm:w-14 sm:h-14 text-amber-400 fill-amber-400/25 group-hover:fill-amber-400/40 transition-colors" />
-        </div>
-
-        <span className="text-xs sm:text-[13px] font-medium text-zinc-300 group-hover:text-white w-full text-center truncate px-1 leading-tight transition-colors" title={item.name}>
-          {item.name}
+        <span className="w-full truncate px-1 text-center text-xs font-medium text-zinc-300" title={label}>
+          {label}
         </span>
+        {isHidden ? <span className="mt-0.5 text-[10px] text-files-subtle">Скрыта</span> : null}
       </div>
-
-      {showMobileSheet && (
-        <MobileActionSheet item={item} actions={actions} onClose={() => setShowMobileSheet(false)} />
+      <AnchoredMenu open={!!menu} anchor={menu} actions={actions} onClose={() => setMenu(null)} />
+      {sheet && (
+        <MobileSheet title={label} subtitle="Папка" actions={actions} onClose={() => setSheet(false)} />
       )}
     </>
   );
 }
 
-// ─── File Card ────────────────────────────────────────────────────────────────
-
 interface FileCardProps {
   item: S3Object;
   isSelected: boolean;
-  onSelect: () => void;
-  onOpenLightbox: () => void;
+  selectMode: boolean;
+  onSelect: (e?: { shift?: boolean; meta?: boolean }) => void;
+  onOpen: () => void;
   onDownload: () => void;
   onCopyUrl: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onEnterSelectMode: () => void;
   publicUrl: string;
   formatSize: (bytes?: number) => string;
+  canCopyUrl: boolean;
 }
 
-export function FileCard({ item, isSelected, onSelect, onOpenLightbox, onDownload, onCopyUrl, onRename, onDelete, publicUrl, formatSize }: FileCardProps) {
-  const [showMenu, setShowMenu] = useState(false);
-  const [showMobileSheet, setShowMobileSheet] = useState(false);
+export function FileCard({
+  item,
+  isSelected,
+  selectMode,
+  onSelect,
+  onOpen,
+  onDownload,
+  onCopyUrl,
+  onRename,
+  onDelete,
+  onEnterSelectMode,
+  publicUrl,
+  formatSize,
+  canCopyUrl,
+}: FileCardProps) {
+  const [menu, setMenu] = useState<DOMRect | null>(null);
+  const [sheet, setSheet] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const img = isImage(item.name);
+  const [imgFailed, setImgFailed] = useState(false);
+  const lp = useLongPress(() => onEnterSelectMode());
+  const img = isImageName(item.name);
   const { Icon, color, bg } = getFileIcon(item.name);
+  const label = fileLabel(item.name);
 
-  const actions: ContextAction[] = [
+  const actions: Action[] = [
+    { label: "Открыть", icon: Eye, onClick: onOpen },
     { label: "Скачать", icon: Download, onClick: onDownload },
-    { label: "Копировать ссылку", icon: Copy, onClick: onCopyUrl },
+    ...(canCopyUrl ? [{ label: "Копировать ссылку", icon: Copy, onClick: onCopyUrl }] : []),
     { label: "Переименовать", icon: Pencil, onClick: onRename },
     { label: "Удалить", icon: Trash2, onClick: onDelete, danger: true },
   ];
-
-  const handleClick = () => { if (img) onOpenLightbox(); else onSelect(); };
-  const handleTouchStart = useCallback(() => {
-    longPressTimer.current = setTimeout(() => setShowMobileSheet(true), 500);
-  }, []);
-  const handleTouchEnd = useCallback(() => { clearTimeout(longPressTimer.current); }, []);
 
   return (
     <>
       <div
         className={cn(
-          "group relative flex flex-col items-center p-3 rounded-2xl border transition-all cursor-pointer select-none",
-          "active:scale-[0.95]",
-          isSelected
-            ? "border-indigo-500/50 bg-indigo-500/10 ring-1 ring-indigo-500/30"
-            : "border-white/[0.07] bg-white/[0.04] hover:border-white/[0.14] hover:bg-white/[0.08]"
+          "group relative flex cursor-pointer flex-col items-center rounded-2xl border p-3 select-none",
+          isSelected ? "border-white/25 bg-white/8" : "border-white/6 bg-white/[0.035] hover:border-white/12 hover:bg-white/[0.05]",
         )}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchMove={handleTouchEnd}
-        onContextMenu={(e) => { e.preventDefault(); setShowMenu(true); }}
+        onClick={(e) => {
+          if (selectMode) {
+            onSelect({ shift: e.shiftKey, meta: e.metaKey || e.ctrlKey });
+            return;
+          }
+          if (window.matchMedia("(min-width: 768px)").matches) {
+            onSelect({ shift: e.shiftKey, meta: e.metaKey || e.ctrlKey });
+          } else {
+            onOpen();
+          }
+        }}
+        onDoubleClick={(e) => {
+          e.preventDefault();
+          onOpen();
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          setMenu(new DOMRect(e.clientX, e.clientY, 0, 0));
+        }}
+        {...lp}
       >
-        {/* Checkbox */}
-        <button
-          className={cn(
-            "absolute top-2 left-2 z-10 transition-all",
-            isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-          )}
-          onClick={(e) => { e.stopPropagation(); onSelect(); }}
-        >
-          {isSelected
-            ? <CheckSquare className="w-5 h-5 text-indigo-400" />
-            : <Square className="w-5 h-5 text-zinc-600" />}
-        </button>
-
-        {/* Desktop overflow menu */}
-        <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            className="w-7 h-7 rounded-lg bg-zinc-800 border border-white/[0.1] shadow-sm items-center justify-center text-zinc-400 hover:text-white hidden md:flex text-xs font-bold leading-none"
-            onClick={(e) => { e.stopPropagation(); setShowMenu(true); }}
-          >
-            ···
-          </button>
-          {showMenu && <ContextMenu actions={actions} onClose={() => setShowMenu(false)} />}
-        </div>
-
-        {/* Preview */}
-        <div
-          className={cn(
-            "w-full aspect-square flex items-center justify-center mb-2 rounded-xl overflow-hidden transition-colors relative",
-            img ? "bg-zinc-800" : bg
-          )}
-          onClick={handleClick}
-        >
-          {img ? (
+        <CheckBtn selected={isSelected} force={selectMode} onClick={() => onSelect()} />
+        <MoreBtn onDesktop={(r) => setMenu(r)} onMobile={() => setSheet(true)} />
+        <div className={cn("relative mb-2 flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl", img ? "bg-zinc-800" : bg)}>
+          {img && publicUrl && !imgFailed ? (
             <>
-              {!imgLoaded && <div className="absolute inset-0 bg-white/[0.06] animate-pulse rounded-xl" />}
+              {!imgLoaded && <div className="absolute inset-0 bg-white/6" />}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={publicUrl}
-                alt={item.name}
+                alt={label}
                 loading="lazy"
                 onLoad={() => setImgLoaded(true)}
-                className={cn(
-                  "object-cover w-full h-full group-hover:scale-105 transition-transform duration-300",
-                  imgLoaded ? "opacity-100" : "opacity-0"
-                )}
+                onError={() => setImgFailed(true)}
+                className={cn("h-full w-full object-cover", imgLoaded ? "opacity-100" : "opacity-0")}
               />
             </>
           ) : (
-            <Icon className={cn("w-10 h-10 sm:w-12 sm:h-12", color)} />
+            <Icon className={cn("size-10 sm:size-12", color)} />
+          )}
+          {isVideoName(item.name) && (
+            <span className="absolute right-1.5 bottom-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] text-white">видео</span>
           )}
         </div>
-
-        <span className="text-xs sm:text-[13px] font-medium text-zinc-300 group-hover:text-white w-full text-center truncate px-1 leading-tight transition-colors" title={item.name}>
-          {item.name}
+        <span className="w-full truncate px-1 text-center text-xs font-medium text-zinc-300" title={label}>
+          {label}
         </span>
-        <span className="text-[10px] text-zinc-600 mt-0.5 font-medium group-hover:text-zinc-500 transition-colors">
-          {formatSize(item.size)}
-        </span>
+        <span className="mt-0.5 text-[10px] font-medium text-files-subtle">{formatSize(item.size)}</span>
       </div>
-
-      {showMobileSheet && (
-        <MobileActionSheet item={item} actions={actions} onClose={() => setShowMobileSheet(false)} />
-      )}
+      <AnchoredMenu open={!!menu} anchor={menu} actions={actions} onClose={() => setMenu(null)} />
+      {sheet && <MobileSheet title={label} subtitle="Файл" actions={actions} onClose={() => setSheet(false)} />}
     </>
+  );
+}
+
+function MoreBtn({ onDesktop, onMobile }: { onDesktop: (r: DOMRect) => void; onMobile: () => void }) {
+  const ref = useRef<HTMLButtonElement>(null);
+  return (
+    <button
+      ref={ref}
+      type="button"
+      aria-label="Действия"
+      className="absolute top-2 right-2 z-10 flex size-8 items-center justify-center rounded-lg bg-black/35 text-zinc-200 ring-1 ring-white/10 md:size-7 md:opacity-0 md:group-hover:opacity-100"
+      onClick={(e) => {
+        e.stopPropagation();
+        if (window.matchMedia("(min-width: 768px)").matches) {
+          onDesktop(ref.current?.getBoundingClientRect() ?? new DOMRect());
+        } else {
+          onMobile();
+        }
+      }}
+    >
+      <MoreHorizontal className="size-4" />
+    </button>
+  );
+}
+
+export function FileRow({
+  item,
+  isSelected,
+  isHidden,
+  selectMode,
+  subtitle,
+  onSelect,
+  onOpen,
+  onMenu,
+  onEnterSelectMode,
+  preview,
+}: {
+  item: S3Object;
+  isSelected: boolean;
+  isHidden?: boolean;
+  selectMode: boolean;
+  subtitle: string;
+  onSelect: () => void;
+  onOpen: () => void;
+  onMenu: () => void;
+  onEnterSelectMode: () => void;
+  preview: ReactNode;
+}) {
+  const lp = useLongPress(() => onEnterSelectMode());
+  const label = fileLabel(item.name);
+  return (
+    <div
+      className={cn(
+        "group flex min-h-14 cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 select-none",
+        isSelected ? "bg-white/10" : "hover:bg-white/5",
+        isHidden && "opacity-50",
+      )}
+      onClick={() => {
+        if (selectMode || window.matchMedia("(min-width: 768px)").matches) onSelect();
+        else onOpen();
+      }}
+      onDoubleClick={onOpen}
+      {...lp}
+    >
+      <button
+        type="button"
+        className="flex size-7 shrink-0 items-center justify-center"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
+      >
+        <span className={cn("flex size-5 items-center justify-center rounded-[6px] ring-1", isSelected ? "bg-files-ink ring-files-ink text-files-bg" : "ring-white/20")}>
+          {isSelected ? <Check className="size-3" strokeWidth={3} /> : null}
+        </span>
+      </button>
+      <div className="size-10 shrink-0 overflow-hidden rounded-lg bg-white/6">{preview}</div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-zinc-200">{label}</p>
+        <p className="truncate text-xs text-files-subtle">{subtitle}</p>
+      </div>
+      <button
+        type="button"
+        aria-label="Действия"
+        className="flex size-10 items-center justify-center rounded-lg text-files-subtle hover:text-files-ink"
+        onClick={(e) => {
+          e.stopPropagation();
+          onMenu();
+        }}
+      >
+        <MoreHorizontal className="size-4" />
+      </button>
+    </div>
   );
 }

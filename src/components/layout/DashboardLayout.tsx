@@ -108,7 +108,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
         <div className="md:hidden flex items-center justify-between bg-zinc-950 border-b border-zinc-800 px-4 py-3">
-          <h1 className="text-base font-semibold text-zinc-100 tracking-tight">Белавтоцентр CRM</h1>
+          <h1 className="text-base font-semibold text-zinc-100 tracking-tight">
+            {navItems.find((i) => pathname.startsWith(i.href))?.name || "Белавтоцентр CRM"}
+          </h1>
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="text-zinc-400 hover:text-zinc-100 focus:outline-none"

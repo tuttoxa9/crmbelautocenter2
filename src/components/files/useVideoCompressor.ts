@@ -1,8 +1,21 @@
-import { useState, useCallback, useRef } from 'react';
-import { Conversion, Input, Output, BufferTarget, BlobSource, Mp4OutputFormat, ALL_FORMATS, ConversionOptions, OutputOptions, ConversionVideoOptions, ConversionAudioOptions } from 'mediabunny';
-import { auth } from '@/lib/firebase';
+import { useState, useCallback, useRef } from "react";
+import {
+  Conversion,
+  Input,
+  Output,
+  BufferTarget,
+  BlobSource,
+  Mp4OutputFormat,
+  ALL_FORMATS,
+  ConversionOptions,
+  OutputOptions,
+  ConversionVideoOptions,
+  ConversionAudioOptions,
+} from "mediabunny";
+import { auth } from "@/lib/firebase";
+import { safeFileName } from "@/lib/files/displayName";
 
-export type VideoCompressorStatus = 'idle' | 'compressing' | 'uploading' | 'success' | 'error' | 'no_support';
+export type VideoCompressorStatus = "idle" | "compressing" | "uploading" | "success" | "error" | "no_support";
 
 interface UseVideoCompressorResult {
   status: VideoCompressorStatus;
@@ -17,7 +30,7 @@ interface UseVideoCompressorResult {
 }
 
 export function useVideoCompressor(): UseVideoCompressorResult {
-  const [status, setStatus] = useState<VideoCompressorStatus>('idle');
+  const [status, setStatus] = useState<VideoCompressorStatus>("idle");
   const [compressionProgress, setCompressionProgress] = useState(0);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [originalSize, setOriginalSize] = useState<number | null>(null);
@@ -25,14 +38,12 @@ export function useVideoCompressor(): UseVideoCompressorResult {
   const [error, setError] = useState<string | null>(null);
 
   const xhrRef = useRef<XMLHttpRequest | null>(null);
-  // Optional: keep track of conversion process to abort
   const conversionRef = useRef<Conversion | null>(null);
 
-  // Fallback check: WebCodecs VideoEncoder is needed
-  const isSupported = typeof window !== 'undefined' && 'VideoEncoder' in window;
+  const isSupported = typeof window !== "undefined" && "VideoEncoder" in window;
 
   const reset = useCallback(() => {
-    setStatus(isSupported ? 'idle' : 'no_support');
+    setStatus(isSupported ? "idle" : "no_support");
     setCompressionProgress(0);
     setUploadProgress(0);
     setOriginalSize(null);
@@ -45,139 +56,130 @@ export function useVideoCompressor(): UseVideoCompressorResult {
   const abort = useCallback(() => {
     if (xhrRef.current) xhrRef.current.abort();
     if (conversionRef.current && conversionRef.current.cancel) conversionRef.current.cancel();
-    setStatus('error');
-    setError('Отменено пользователем');
+    setStatus("error");
+    setError("Отменено");
   }, []);
 
-  const compressAndUpload = useCallback(async (file: File, quality: number, prefix: string) => {
-    if (!isSupported) {
-      setStatus('no_support');
-      setError('Ваш браузер не поддерживает WebCodecs. Пожалуйста, используйте свежую версию Chrome или Edge.');
-      return;
-    }
-
-    try {
-      reset();
-      setOriginalSize(file.size);
-      setStatus('compressing');
-      
-      // Calculate target bitrate based on original size and quality
-      // If quality is 100, we aim for ~80% of original. If quality is 50, we aim for ~40% of original.
-      // Usually quality 0-100 translates to a bitrate easily. We assume an average video takes 1MB per second at 8Mbps.
-      // We will define a basic heuristic for bitrate, or dynamic calculation.
-      // 100 quality -> very high bitrate, 1 quality -> 100kbps
-      // Standard safe bitrates for web: 1000kbps (low) up to 8000kbps(high).
-      const MAX_BITRATE = 8_000_000;
-      const MIN_BITRATE = 300_000;
-      const targetBitrate = Math.max(MIN_BITRATE, Math.min(MAX_BITRATE, (quality / 100) * MAX_BITRATE));
-
-      const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
-      
-      const outputFormat: ConversionVideoOptions = {
-         codec: 'avc',
-         bitrate: targetBitrate 
-      };
-
-      const outputAudio: ConversionAudioOptions = {
-        codec: 'aac',
-        bitrate: 128_000, 
-      };
-
-      const outputOptions: OutputOptions<Mp4OutputFormat, BufferTarget> = {
-        target: new BufferTarget(),
-        format: new Mp4OutputFormat(),
-      };
-      
-      const output = new Output(outputOptions);
-      
-      const conversionOptions: ConversionOptions = {
-        input,
-        output,
-        video: outputFormat,
-        audio: outputAudio,
-      };
-
-      const conversion = await Conversion.init(conversionOptions);
-      conversionRef.current = conversion;
-      
-      let compressionPercent = 0;
-      conversion.onProgress = (progress: number) => {
-        compressionPercent = Math.min(100, Math.round(progress * 100));
-        setCompressionProgress(compressionPercent);
-      };
-
-      // Ensure we hit 100
-      await conversion.execute();
-      setCompressionProgress(100);
-
-      // We get it from target.buffer
-      const outputBuffer = outputOptions.target.buffer;
-      if (!outputBuffer) throw new Error('Failed to produce compressed video buffer');
-
-      const compressedBlob = new Blob([outputBuffer], { type: 'video/mp4' });
-      setCompressedSize(compressedBlob.size);
-      
-      setStatus('uploading');
-      
-      const token = await auth?.currentUser?.getIdToken();
-      if (!token) throw new Error('Not authenticated');
-
-      const presignedRes = await fetch('/api/s3/presigned', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          contentType: 'video/mp4',
-          prefix,
-        })
-      });
-
-      if (!presignedRes.ok) throw new Error('Failed to get presigned URL. Server returned ' + presignedRes.status);
-      
-      const presignedData = await presignedRes.json();
-      if (!presignedData.success) throw new Error(presignedData.error || 'Failed to generate URL');
-      const { url } = presignedData;
-      
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhrRef.current = xhr;
-        
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setUploadProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        };
-        
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            setStatus('success');
-            setUploadProgress(100);
-            resolve();
-          } else {
-            console.error('Upload error response:', xhr.responseText);
-            reject(new Error(`Upload failed with status ${xhr.status}`));
-          }
-        };
-        
-        xhr.onerror = () => reject(new Error('Network error during upload'));
-        xhr.onabort = () => reject(new Error('Upload aborted'));
-        
-        xhr.open('PUT', url);
-        xhr.setRequestHeader('Content-Type', 'video/mp4');
-        xhr.send(compressedBlob);
-      });
-
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Произошла ошибка при сжатии или загрузке видео';
-      if (errorMessage !== 'Upload aborted') {
-        setStatus('error');
-        setError(errorMessage);
+  const compressAndUpload = useCallback(
+    async (file: File, quality: number, prefix: string) => {
+      if (!isSupported) {
+        setStatus("no_support");
+        setError("Сжатие в этом браузере недоступно. Откройте Chrome или Edge на компьютере.");
+        return;
       }
-    }
-  }, [reset, isSupported]);
+
+      try {
+        reset();
+        setOriginalSize(file.size);
+        setStatus("compressing");
+
+        const MAX_BITRATE = 8_000_000;
+        const MIN_BITRATE = 300_000;
+        const targetBitrate = Math.max(MIN_BITRATE, Math.min(MAX_BITRATE, (quality / 100) * MAX_BITRATE));
+
+        const input = new Input({ source: new BlobSource(file), formats: ALL_FORMATS });
+
+        const outputFormat: ConversionVideoOptions = {
+          codec: "avc",
+          bitrate: targetBitrate,
+        };
+
+        const outputAudio: ConversionAudioOptions = {
+          codec: "aac",
+          bitrate: 128_000,
+        };
+
+        const outputOptions: OutputOptions<Mp4OutputFormat, BufferTarget> = {
+          target: new BufferTarget(),
+          format: new Mp4OutputFormat(),
+        };
+
+        const output = new Output(outputOptions);
+
+        const conversionOptions: ConversionOptions = {
+          input,
+          output,
+          video: outputFormat,
+          audio: outputAudio,
+        };
+
+        const conversion = await Conversion.init(conversionOptions);
+        conversionRef.current = conversion;
+
+        conversion.onProgress = (progress: number) => {
+          setCompressionProgress(Math.min(100, Math.round(progress * 100)));
+        };
+
+        await conversion.execute();
+        setCompressionProgress(100);
+
+        const outputBuffer = outputOptions.target.buffer;
+        if (!outputBuffer) throw new Error("Не удалось сжать видео");
+
+        const compressedBlob = new Blob([outputBuffer], { type: "video/mp4" });
+        setCompressedSize(compressedBlob.size);
+
+        setStatus("uploading");
+
+        const token = await auth?.currentUser?.getIdToken();
+        if (!token) throw new Error("Сессия истекла, войдите снова");
+
+        const base = safeFileName(file.name.replace(/\.[^.]+$/, "") || "video");
+        const presignedRes = await fetch("/api/s3/presigned", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            fileName: `${base}.mp4`,
+            contentType: "video/mp4",
+            prefix,
+          }),
+        });
+
+        const presignedData = await presignedRes.json().catch(() => ({}));
+        if (!presignedRes.ok || !presignedData.url) {
+          throw new Error(presignedData.error || "Не удалось получить ссылку для загрузки");
+        }
+
+        await new Promise<void>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhrRef.current = xhr;
+
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              setUploadProgress(Math.round((e.loaded / e.total) * 100));
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              setStatus("success");
+              setUploadProgress(100);
+              resolve();
+            } else {
+              reject(new Error(`Ошибка загрузки (${xhr.status})`));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error("Сеть оборвалась во время загрузки"));
+          xhr.onabort = () => reject(new Error("Upload aborted"));
+
+          xhr.open("PUT", presignedData.url);
+          xhr.setRequestHeader("Content-Type", "video/mp4");
+          xhr.send(compressedBlob);
+        });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Не получилось сжать или загрузить видео";
+        if (errorMessage !== "Upload aborted") {
+          setStatus("error");
+          setError(errorMessage);
+        }
+      }
+    },
+    [reset, isSupported],
+  );
 
   return {
     status,
@@ -188,6 +190,6 @@ export function useVideoCompressor(): UseVideoCompressorResult {
     error,
     compressAndUpload,
     reset,
-    abort
+    abort,
   };
 }

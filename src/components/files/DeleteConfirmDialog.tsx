@@ -1,63 +1,66 @@
 "use client";
 
-import { Trash2, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 
-interface DeleteConfirmDialogProps {
+export function DeleteConfirmDialog({
+  title,
+  description,
+  smmWarning,
+  onConfirm,
+  onCancel,
+}: {
   count: number;
+  title: string;
+  description: string;
+  smmWarning?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-}
-
-export function DeleteConfirmDialog({ count, onConfirm, onCancel }: DeleteConfirmDialogProps) {
-  const confirmRef = useRef<HTMLButtonElement>(null);
+}) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
+    cancelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onCancel();
-      if (e.key === "Enter") onConfirm();
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [onConfirm, onCancel]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm animate-in fade-in duration-200"
-        onClick={onCancel}
-      />
-      <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 animate-in zoom-in-95 fade-in duration-200">
-        <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mb-4">
-            <AlertTriangle className="w-7 h-7 text-red-500" />
+    <div className="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-4">
+      <div className="absolute inset-0 bg-zinc-900/50 backdrop-blur-sm" onClick={onCancel} />
+      <div className="relative w-full max-w-sm rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-red-50">
+            <AlertTriangle className="size-7 text-red-500" />
           </div>
-          <h3 className="text-lg font-bold text-zinc-900 mb-1.5">Удалить элементы?</h3>
-          <p className="text-sm text-zinc-500 leading-relaxed">
-            Будет удалено{" "}
-            <span className="font-semibold text-zinc-800">
-              {count} {count === 1 ? "элемент" : count < 5 ? "элемента" : "элементов"}
-            </span>
-            . Это действие нельзя отменить.
-          </p>
+          <h3 className="mb-1.5 text-lg font-semibold text-zinc-900">{title}</h3>
+          <p className="text-sm leading-relaxed text-zinc-500">{description}</p>
+          {smmWarning ? (
+            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-left text-xs text-amber-800">
+              Здесь лежит публичная загрузка SMM. Удаление бьёт по роликам на сайте и в форме.
+            </p>
+          ) : null}
         </div>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="flex-1 rounded-2xl h-11 border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+        <div className="flex gap-3 pb-[env(safe-area-inset-bottom)]">
+          <button
+            ref={cancelRef}
+            type="button"
             onClick={onCancel}
+            className="h-12 flex-1 rounded-2xl border border-zinc-200 text-sm font-medium text-zinc-700"
           >
             Отмена
-          </Button>
-          <Button
-            ref={confirmRef}
-            className="flex-1 rounded-2xl h-11 bg-red-500 hover:bg-red-600 text-white gap-2 transition-all"
+          </button>
+          <button
+            type="button"
             onClick={onConfirm}
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-red-500 text-sm font-semibold text-white hover:bg-red-600"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="size-4" />
             Удалить
-          </Button>
+          </button>
         </div>
       </div>
     </div>

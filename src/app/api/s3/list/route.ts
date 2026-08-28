@@ -12,65 +12,73 @@ export async function GET(request: Request) {
     const idToken = authHeader.split("Bearer ")[1];
 
     try {
-        await verifyFirebaseIdToken(idToken);
+      await verifyFirebaseIdToken(idToken);
     } catch {
-        return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
     const prefix = searchParams.get("prefix") || "";
 
-    const command = new ListObjectsV2Command({
-      Bucket: BUCKET_NAME,
-      Prefix: prefix,
-      Delimiter: "/",
-    });
+    const folders: Array<{
+      name: string;
+      path: string;
+      type: "folder";
+      lastModified?: Date;
+    }> = [];
+    const files: Array<{
+      name: string;
+      path: string;
+      type: "file";
+      size?: number;
+      lastModified?: Date;
+    }> = [];
 
-    const response = await s3Client.send(command);
+    let token: string | undefined;
+    let pages = 0;
+    do {
+      const response = await s3Client.send(
+        new ListObjectsV2Command({
+          Bucket: BUCKET_NAME,
+          Prefix: prefix,
+          Delimiter: "/",
+          ContinuationToken: token,
+        }),
+      );
+      pages += 1;
 
-    const contents = response.Contents || [];
+      const contents = response.Contents || [];
+      const folderMarkers = new Map(
+        contents.filter((c) => c.Key?.endsWith("/")).map((c) => [c.Key, c.LastModified]),
+      );
 
-    const folderObjects = contents.filter((c) => c.Key?.endsWith("/"));
-
-    const folders = await Promise.all(
-      (response.CommonPrefixes || []).map(async (p) => {
-        let lastModified = folderObjects.find((c) => c.Key === p.Prefix)?.LastModified;
-
-        if (!lastModified && p.Prefix) {
-            try {
-                const folderResponse = await s3Client.send(new ListObjectsV2Command({
-                    Bucket: BUCKET_NAME,
-                    Prefix: p.Prefix,
-                    MaxKeys: 1,
-                }));
-                if (folderResponse.Contents && folderResponse.Contents.length > 0) {
-                    lastModified = folderResponse.Contents[0].LastModified;
-                }
-            } catch (e) {
-                console.error(`Failed to fetch last modified for prefix ${p.Prefix}:`, e);
-            }
-        }
-
-        return {
-          name: p.Prefix?.replace(prefix, "").replace("/", ""),
-          path: p.Prefix,
+      for (const p of response.CommonPrefixes || []) {
+        folders.push({
+          name: p.Prefix?.replace(prefix, "").replace(/\/$/, "") || "",
+          path: p.Prefix || "",
           type: "folder",
-          lastModified,
-        };
-      })
-    );
+          lastModified: folderMarkers.get(p.Prefix),
+        });
+      }
 
-    const files = contents
-      .filter((c) => c.Key !== prefix && !c.Key?.endsWith("/"))
-      .map((c) => ({
-        name: c.Key?.replace(prefix, ""),
-        path: c.Key,
-        size: c.Size,
-        lastModified: c.LastModified,
-        type: "file",
-      }));
+      for (const c of contents) {
+        if (!c.Key || c.Key === prefix || c.Key.endsWith("/")) continue;
+        files.push({
+          name: c.Key.replace(prefix, ""),
+          path: c.Key,
+          size: c.Size,
+          lastModified: c.LastModified,
+          type: "file",
+        });
+      }
 
-    return NextResponse.json({ items: [...folders, ...files] });
+      token = response.IsTruncated ? response.NextContinuationToken : undefined;
+    } while (token && pages < 20);
+
+    return NextResponse.json({
+      items: [...folders, ...files],
+      truncated: Boolean(token),
+    });
   } catch (error) {
     console.error("Error listing S3 objects:", error);
     return NextResponse.json({ error: "Failed to list objects" }, { status: 500 });

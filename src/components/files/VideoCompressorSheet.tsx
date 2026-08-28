@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { X, Upload, Loader2, CheckCircle2, AlertCircle, Video, Play, Pause } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertCircle, CheckCircle2, Loader2, Pause, Play, Upload, Video, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVideoCompressor } from "./useVideoCompressor";
+import { formatBytes } from "@/lib/files/displayName";
+
+const PRESETS = [
+  { id: "light", label: "Лёгкий", hint: "для пересылки", quality: 28 },
+  { id: "normal", label: "Обычный", hint: "сайт и TikTok", quality: 52 },
+  { id: "max", label: "Максимум", hint: "почти как было", quality: 82 },
+] as const;
 
 interface VideoCompressorSheetProps {
   isOpen: boolean;
@@ -24,30 +30,44 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
     error,
     compressAndUpload,
     reset,
-    abort
+    abort,
   } = useVideoCompressor();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [quality, setQuality] = useState(50); // 1-100
+  const [preset, setPreset] = useState<(typeof PRESETS)[number]["id"]>("normal");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-
   const [prevOpen, setPrevOpen] = useState(isOpen);
+
   if (isOpen !== prevOpen) {
     setPrevOpen(isOpen);
     if (!isOpen) {
       setSelectedFile(null);
-      setQuality(50);
+      setPreset("normal");
       reset();
     }
   }
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      setSelectedFile(acceptedFiles[0]);
-      reset();
+  useEffect(() => {
+    if (!selectedFile) {
+      setPreviewUrl(null);
+      return;
     }
-  }, [reset]);
+    const u = URL.createObjectURL(selectedFile);
+    setPreviewUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [selectedFile]);
+
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0) {
+        setSelectedFile(acceptedFiles[0]);
+        reset();
+      }
+    },
+    [reset],
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -56,219 +76,198 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
     disabled: status === "compressing" || status === "uploading",
   });
 
+  const quality = PRESETS.find((p) => p.id === preset)?.quality ?? 52;
+
   const handleCompress = () => {
     if (!selectedFile) return;
-    compressAndUpload(selectedFile, quality, currentPrefix).then(() => {
-        // We handle success inside the hook, we can just optionally wait 
-        // to call parent's onUploadSuccess
-    });
+    void compressAndUpload(selectedFile, quality, currentPrefix);
   };
 
+  const prevStatus = useRef(status);
   useEffect(() => {
-    if (status === "success") {
-       onUploadSuccess();
-    }
+    if (status === "success" && prevStatus.current !== "success") onUploadSuccess();
+    prevStatus.current = status;
   }, [status, onUploadSuccess]);
 
-  const formatSize = (bytes?: number | null) => {
-    if (bytes === undefined || bytes === null) return "—";
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-  };
+  const busy = status === "compressing" || status === "uploading";
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !busy) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, busy, onClose]);
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[120] flex items-end md:items-center justify-center">
-      <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => { if(status !== 'compressing' && status !== 'uploading') onClose(); }} />
+  const estimate = selectedFile ? selectedFile.size * Math.max(0.12, quality / 100) : 0;
 
-      <div className="relative w-full md:max-w-xl bg-white rounded-t-3xl md:rounded-3xl shadow-2xl animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-300 flex flex-col max-h-[90vh] md:max-h-[85vh]">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-zinc-100 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-50 flex items-center justify-center">
-              <Video className="w-5 h-5 text-indigo-500" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-zinc-900">Сжатие видео</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">App Router + Mediabunny (WebCodecs)</p>
-            </div>
+  return (
+    <div className="fixed inset-0 z-[120] flex items-end justify-center md:items-center">
+      <div
+        className="absolute inset-0 bg-zinc-900/45 backdrop-blur-sm"
+        onClick={() => {
+          if (!busy) onClose();
+        }}
+      />
+      <div className="relative flex max-h-[90vh] w-full flex-col rounded-t-3xl bg-white shadow-2xl md:max-h-[85vh] md:max-w-xl md:rounded-3xl">
+        <div className="flex items-center justify-between border-b border-zinc-100 px-5 pt-5 pb-4">
+          <div>
+            <h3 className="text-base font-semibold text-zinc-900">Сжать видео</h3>
+            <p className="mt-0.5 text-xs text-zinc-500">Положим в текущую папку</p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-xl text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100"
+          <button
+            type="button"
+            className="flex size-9 items-center justify-center rounded-xl text-zinc-400 hover:bg-zinc-100"
             onClick={onClose}
-            disabled={status === "compressing" || status === "uploading"}
+            disabled={busy}
           >
-            <X className="w-4 h-4" />
-          </Button>
+            <X className="size-4" />
+          </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
-          
-          {/* Dropzone or Preview */}
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
           {!selectedFile ? (
             <div
               {...getRootProps()}
               className={cn(
-                "border-2 border-dashed rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all",
-                isDragActive ? "border-indigo-500 bg-indigo-50/50" : "border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-zinc-50"
+                "flex cursor-pointer flex-col items-center rounded-3xl border-2 border-dashed p-8 text-center",
+                isDragActive ? "border-zinc-900 bg-zinc-50" : "border-zinc-200 hover:border-zinc-300",
               )}
             >
               <input {...getInputProps()} />
-              <div className="w-16 h-16 rounded-2xl bg-white shadow-sm border border-zinc-100 flex items-center justify-center mb-4">
-                <Upload className="w-6 h-6 text-indigo-400" />
+              <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-zinc-50 ring-1 ring-zinc-100">
+                <Upload className="size-6 text-zinc-500" />
               </div>
-              <h4 className="text-sm font-semibold text-zinc-800 mb-1">Загрузите видео</h4>
-              <p className="text-xs text-zinc-500 max-w-[200px]">Перетащите файл сюда или нажмите для выбора</p>
+              <h4 className="text-sm font-semibold text-zinc-800">Выберите ролик</h4>
+              <p className="mt-1 max-w-[220px] text-xs text-zinc-500">С телефона — из Фото. На компьютере можно перетащить.</p>
             </div>
           ) : (
             <div className="space-y-4">
-               {/* Video Preview */}
-               <div className="relative rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center group">
-                  <video 
+              <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl bg-black">
+                {previewUrl && (
+                  <video
                     ref={videoRef}
-                    src={URL.createObjectURL(selectedFile)}
-                    className="max-w-full max-h-full object-contain"
+                    src={previewUrl}
+                    className="max-h-full max-w-full object-contain"
                     onEnded={() => setIsPlaying(false)}
                   />
-                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={togglePlay} className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center hover:bg-white/30 transition-colors">
-                      {isPlaying ? <Pause className="w-5 h-5 text-white" /> : <Play className="w-5 h-5 text-white ml-1" />}
-                    </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!videoRef.current) return;
+                    if (isPlaying) videoRef.current.pause();
+                    else void videoRef.current.play();
+                    setIsPlaying(!isPlaying);
+                  }}
+                  className="absolute flex size-12 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md"
+                >
+                  {isPlaying ? <Pause className="size-5" /> : <Play className="size-5 ml-0.5" />}
+                </button>
+                <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md bg-black/50 px-2 py-1 text-[10px] text-white">
+                  <Video className="size-3" />
+                  {selectedFile.name}
+                </div>
+              </div>
+
+              {status === "no_support" ? (
+                <div className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
+                  Сжатие в этом браузере недоступно. Откройте с компьютера в Chrome или Edge — или загрузите файл как есть через «Загрузить».
+                </div>
+              ) : ["idle", "error"].includes(status) ? (
+                <div className="space-y-3 rounded-2xl bg-zinc-50 p-4">
+                  <p className="text-xs font-semibold text-zinc-800">Качество</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {PRESETS.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setPreset(p.id)}
+                        className={cn(
+                          "rounded-xl px-2 py-2.5 text-center ring-1",
+                          preset === p.id ? "bg-zinc-900 text-white ring-zinc-900" : "bg-white text-zinc-700 ring-zinc-200",
+                        )}
+                      >
+                        <span className="block text-xs font-semibold">{p.label}</span>
+                        <span className={cn("mt-0.5 block text-[10px]", preset === p.id ? "text-white/70" : "text-zinc-400")}>
+                          {p.hint}
+                        </span>
+                      </button>
+                    ))}
                   </div>
-                  {/* File badge */}
-                  <div className="absolute top-3 left-3 px-2 py-1 rounded-md bg-black/50 backdrop-blur-md text-[10px] font-medium text-white flex items-center gap-1.5">
-                    <Video className="w-3 h-3" />
-                    {selectedFile.name}
-                  </div>
-               </div>
+                  <p className="text-[11px] text-zinc-500">
+                    {formatBytes(originalSize || selectedFile.size)} → примерно {formatBytes(estimate)}
+                  </p>
+                </div>
+              ) : null}
 
-               {/* Quality Slider (only show if not processing) */}
-               {["idle", "error", "no_support"].includes(status) ? (
-                 <div className="space-y-3 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                    <div className="flex justify-between items-end">
-                       <div>
-                         <label className="text-xs font-semibold text-zinc-800 block mb-1">Качество и битрейт ({quality}%)</label>
-                         <p className="text-[10px] text-zinc-500">Чем меньше %, тем сильнее сжатие.</p>
-                       </div>
-                       <div className="text-xs font-medium text-zinc-600">
-                          {formatSize(originalSize || selectedFile.size)} → ~{formatSize((selectedFile.size * Math.max(0.1, quality/100)))}
-                       </div>
-                    </div>
-                    <input 
-                      type="range" 
-                      min="1" 
-                      max="100" 
-                      value={quality} 
-                      onChange={(e) => setQuality(Number(e.target.value))}
-                      className="w-full accent-indigo-500"
-                    />
-                 </div>
-               ) : null}
+              {(status === "compressing" || status === "uploading" || status === "success") && (
+                <div className="space-y-4 rounded-2xl border border-zinc-100 p-4">
+                  <p className="text-xs text-zinc-500">Сжатие идёт, не сворачивайте телефон</p>
+                  <Stage label="Сжимаем" active={status === "compressing"} done={status === "uploading" || status === "success"} pct={compressionProgress} />
+                  <Stage label="Отправляем" active={status === "uploading"} done={status === "success"} pct={uploadProgress} />
+                  {status === "success" && compressedSize ? (
+                    <p className="text-xs font-medium text-emerald-700">
+                      {formatBytes(originalSize)} → {formatBytes(compressedSize)}
+                    </p>
+                  ) : null}
+                </div>
+              )}
 
-               {/* Progress UI */}
-               {(status === "compressing" || status === "uploading" || status === "success") && (
-                 <div className="space-y-4 p-4 rounded-2xl border border-zinc-100 bg-white shadow-sm">
-                    {/* Stage 1: Compression */}
-                    <div className="space-y-2">
-                       <div className="flex justify-between text-xs font-semibold">
-                          <span className={cn("flex items-center gap-1.5", status === "compressing" ? "text-indigo-600" : "text-zinc-400")}>
-                             {status === "compressing" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                             {(status === "uploading" || status === "success") && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                             Сжатие видео...
-                          </span>
-                          <span className="text-zinc-500">{compressionProgress}%</span>
-                       </div>
-                       <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-indigo-500 rounded-full transition-all duration-300"
-                            style={{ width: `${compressionProgress}%` }}
-                          />
-                       </div>
-                    </div>
-
-                    {/* Stage 2: Upload */}
-                    <div className="space-y-2">
-                       <div className="flex justify-between text-xs font-semibold">
-                          <span className={cn("flex items-center gap-1.5", status === "uploading" ? "text-indigo-600" : "text-zinc-400")}>
-                             {status === "uploading" && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                             {status === "success" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                             Ожидание...
-                             {status === "compressing" ? null : "Загрузка в R2..."}
-                          </span>
-                          <span className="text-zinc-500">{uploadProgress}%</span>
-                       </div>
-                       <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
-                          <div 
-                            className={cn("h-full rounded-full transition-all duration-300", status === "success" ? "bg-emerald-500" : "bg-indigo-500")}
-                            style={{ width: `${uploadProgress}%` }}
-                          />
-                       </div>
-                    </div>
-
-                    {/* End size */}
-                    {status === "success" && compressedSize && (
-                      <div className="pt-2 mt-2 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-500">
-                         <span>Итоговый размер:</span>
-                         <span className="font-semibold text-emerald-600 px-2 py-1 bg-emerald-50 rounded-md">
-                           {formatSize(originalSize)} → {formatSize(compressedSize)} ({(100 - (compressedSize / (originalSize || 1)) * 100).toFixed(1)}% сжатия)
-                         </span>
-                      </div>
-                    )}
-                 </div>
-               )}
-
-               {/* Error */}
-               {status === "error" && error && (
-                 <div className="p-3 bg-red-50 text-red-600 text-xs rounded-xl flex items-start gap-2">
-                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                   {error}
-                 </div>
-               )}
+              {status === "error" && error && (
+                <div className="flex items-start gap-2 rounded-xl bg-red-50 p-3 text-xs text-red-600">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  {error}
+                </div>
+              )}
             </div>
           )}
-
         </div>
 
-        {/* Footer */}
-        <div className="p-5 border-t border-zinc-100 shrink-0">
-           {status === "success" ? (
-              <Button className="w-full rounded-2xl h-12 bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm" onClick={onClose}>
-                Завершить
-              </Button>
-           ) : status === "compressing" || status === "uploading" ? (
-              <Button variant="outline" className="w-full rounded-2xl h-12 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={abort}>
-                Отменить
-              </Button>
-           ) : (
-              <Button 
-                className="w-full rounded-2xl h-12 bg-zinc-900 hover:bg-zinc-800 text-white shadow-sm font-semibold transition-all disabled:opacity-50"
-                onClick={handleCompress}
-                disabled={!selectedFile || status === "no_support"}
-              >
-                Сжать и загрузить в R2
-              </Button>
-           )}
+        <div className="border-t border-zinc-100 p-5">
+          {status === "success" ? (
+            <button type="button" className="h-12 w-full rounded-2xl bg-zinc-900 text-sm font-semibold text-white" onClick={onClose}>
+              Показать в папке
+            </button>
+          ) : busy ? (
+            <button type="button" className="h-12 w-full rounded-2xl border border-red-200 text-sm font-medium text-red-600" onClick={abort}>
+              Отменить
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="h-12 w-full rounded-2xl bg-zinc-900 text-sm font-semibold text-white disabled:opacity-40"
+              onClick={handleCompress}
+              disabled={!selectedFile || status === "no_support"}
+            >
+              Сжать и загрузить
+            </button>
+          )}
         </div>
-        
+      </div>
+    </div>
+  );
+}
+
+function Stage({ label, active, done, pct }: { label: string; active: boolean; done: boolean; pct: number }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between text-xs font-semibold">
+        <span className={cn("flex items-center gap-1.5", active ? "text-zinc-900" : "text-zinc-400")}>
+          {active && <Loader2 className="size-3.5 animate-spin" />}
+          {done && <CheckCircle2 className="size-3.5 text-emerald-500" />}
+          {label}
+        </span>
+        <span className="text-zinc-500">{pct}%</span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100">
+        <div
+          className={cn("h-full rounded-full transition-[width] duration-150 ease-linear", done ? "bg-emerald-500" : "bg-zinc-800")}
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   );

@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { CopyObjectCommand, DeleteObjectCommand, ListObjectsV2Command, CopyObjectCommandInput } from "@aws-sdk/client-s3";
+import {
+  CopyObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+  type CopyObjectCommandInput,
+} from "@aws-sdk/client-s3";
 import { s3Client, BUCKET_NAME } from "@/lib/s3";
 import { verifyFirebaseIdToken } from "@/lib/verifyToken";
 
@@ -20,38 +25,67 @@ export async function POST(request: Request) {
     if (!oldKey || !newKey) {
       return NextResponse.json({ error: "oldKey and newKey required" }, { status: 400 });
     }
+    if (oldKey === newKey) {
+      return NextResponse.json({ success: true });
+    }
+    if (typeof newKey !== "string" || newKey.includes("..")) {
+      return NextResponse.json({ error: "Некорректное имя" }, { status: 400 });
+    }
 
     const isFolder = oldKey.endsWith("/");
+    const copied: string[] = [];
+    const failedDeletes: string[] = [];
 
     if (isFolder) {
-      // For folders: list all objects, copy each, delete originals
-      const listCommand = new ListObjectsV2Command({ Bucket: BUCKET_NAME, Prefix: oldKey });
-      const listResponse = await s3Client.send(listCommand);
-      const objects = listResponse.Contents || [];
+      let token: string | undefined;
+      const objects: string[] = [];
+      do {
+        const listResponse = await s3Client.send(
+          new ListObjectsV2Command({ Bucket: BUCKET_NAME, Prefix: oldKey, ContinuationToken: token }),
+        );
+        for (const obj of listResponse.Contents || []) {
+          if (obj.Key) objects.push(obj.Key);
+        }
+        token = listResponse.IsTruncated ? listResponse.NextContinuationToken : undefined;
+      } while (token);
 
-      await Promise.all(objects.map(async (obj) => {
-        if (!obj.Key) return;
-        const newObjKey = obj.Key.replace(oldKey, newKey);
+      for (const objKey of objects) {
+        const newObjKey = objKey.replace(oldKey, newKey);
         const copyParams: CopyObjectCommandInput = {
           Bucket: BUCKET_NAME,
-          CopySource: `${BUCKET_NAME}/${obj.Key}`,
+          CopySource: `${BUCKET_NAME}/${encodeURIComponent(objKey).replace(/%2F/g, "/")}`,
           Key: newObjKey,
         };
         await s3Client.send(new CopyObjectCommand(copyParams));
-        await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: obj.Key }));
-      }));
+        copied.push(objKey);
+        try {
+          await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: objKey }));
+        } catch {
+          failedDeletes.push(objKey);
+        }
+      }
     } else {
-      // Single file rename
       const copyParams: CopyObjectCommandInput = {
         Bucket: BUCKET_NAME,
-        CopySource: `${BUCKET_NAME}/${oldKey}`,
+        CopySource: `${BUCKET_NAME}/${encodeURIComponent(oldKey).replace(/%2F/g, "/")}`,
         Key: newKey,
       };
       await s3Client.send(new CopyObjectCommand(copyParams));
-      await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: oldKey }));
+      try {
+        await s3Client.send(new DeleteObjectCommand({ Bucket: BUCKET_NAME, Key: oldKey }));
+      } catch {
+        failedDeletes.push(oldKey);
+      }
     }
 
-    return NextResponse.json({ success: true });
+    if (failedDeletes.length > 0) {
+      return NextResponse.json({
+        success: true,
+        warning: "Файл на месте под новым именем, старый тоже мог остаться — обновите список",
+      });
+    }
+
+    return NextResponse.json({ success: true, copied: copied.length });
   } catch (error) {
     console.error("Error renaming in S3:", error);
     return NextResponse.json({ error: "Failed to rename" }, { status: 500 });
