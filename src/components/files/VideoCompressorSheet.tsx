@@ -20,6 +20,18 @@ interface VideoCompressorSheetProps {
   onUploadSuccess: () => void;
 }
 
+function releaseVideoEl(el: HTMLVideoElement | null) {
+  if (!el) return;
+  try {
+    el.pause();
+    el.removeAttribute("src");
+    el.srcObject = null;
+    el.load();
+  } catch {
+    /* ignore */
+  }
+}
+
 export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadSuccess }: VideoCompressorSheetProps) {
   const {
     status,
@@ -28,7 +40,9 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
     originalSize,
     compressedSize,
     error,
+    canUploadRaw,
     compressAndUpload,
+    uploadRaw,
     reset,
     abort,
   } = useVideoCompressor();
@@ -36,6 +50,7 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preset, setPreset] = useState<(typeof PRESETS)[number]["id"]>("normal");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [poster, setPoster] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [prevOpen, setPrevOpen] = useState(isOpen);
@@ -43,8 +58,10 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
   if (isOpen !== prevOpen) {
     setPrevOpen(isOpen);
     if (!isOpen) {
+      releaseVideoEl(videoRef.current);
       setSelectedFile(null);
       setPreset("normal");
+      setPoster(null);
       reset();
     }
   }
@@ -63,6 +80,8 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
         setSelectedFile(acceptedFiles[0]);
+        setPoster(null);
+        setIsPlaying(false);
         reset();
       }
     },
@@ -77,19 +96,54 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
   });
 
   const quality = PRESETS.find((p) => p.id === preset)?.quality ?? 52;
+  const busy = status === "compressing" || status === "uploading";
+
+  const snapPoster = () => {
+    const v = videoRef.current;
+    if (!v || v.videoWidth < 2) return;
+    try {
+      const c = document.createElement("canvas");
+      c.width = v.videoWidth;
+      c.height = v.videoHeight;
+      c.getContext("2d")?.drawImage(v, 0, 0);
+      setPoster(c.toDataURL("image/jpeg", 0.55));
+    } catch {
+      /* canvas may be tainted */
+    }
+  };
 
   const handleCompress = () => {
     if (!selectedFile) return;
-    void compressAndUpload(selectedFile, quality, currentPrefix);
+    snapPoster();
+    setIsPlaying(false);
+    releaseVideoEl(videoRef.current);
+    window.setTimeout(() => {
+      void compressAndUpload(selectedFile, quality, currentPrefix);
+    }, 140);
   };
+
+  const handleUploadRaw = () => {
+    if (!selectedFile) return;
+    snapPoster();
+    setIsPlaying(false);
+    releaseVideoEl(videoRef.current);
+    window.setTimeout(() => {
+      void uploadRaw(selectedFile, currentPrefix);
+    }, 80);
+  };
+
+  useEffect(() => {
+    if (status !== "error" && status !== "idle") return;
+    const v = videoRef.current;
+    if (!v || !previewUrl) return;
+    if (!v.getAttribute("src")) v.src = previewUrl;
+  }, [status, previewUrl]);
 
   const prevStatus = useRef(status);
   useEffect(() => {
     if (status === "success" && prevStatus.current !== "success") onUploadSuccess();
     prevStatus.current = status;
   }, [status, onUploadSuccess]);
-
-  const busy = status === "compressing" || status === "uploading";
 
   useEffect(() => {
     if (!isOpen) return;
@@ -147,26 +201,34 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
           ) : (
             <div className="space-y-4">
               <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl bg-black">
-                {previewUrl && (
+                {poster && busy ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={poster} alt="" className="max-h-full max-w-full object-contain" />
+                ) : previewUrl ? (
                   <video
                     ref={videoRef}
                     src={previewUrl}
+                    playsInline
+                    muted
+                    preload="metadata"
                     className="max-h-full max-w-full object-contain"
                     onEnded={() => setIsPlaying(false)}
                   />
+                ) : null}
+                {!busy && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!videoRef.current) return;
+                      if (isPlaying) videoRef.current.pause();
+                      else void videoRef.current.play();
+                      setIsPlaying(!isPlaying);
+                    }}
+                    className="absolute flex size-12 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md"
+                  >
+                    {isPlaying ? <Pause className="size-5" /> : <Play className="size-5 ml-0.5" />}
+                  </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!videoRef.current) return;
-                    if (isPlaying) videoRef.current.pause();
-                    else void videoRef.current.play();
-                    setIsPlaying(!isPlaying);
-                  }}
-                  className="absolute flex size-12 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md"
-                >
-                  {isPlaying ? <Pause className="size-5" /> : <Play className="size-5 ml-0.5" />}
-                </button>
                 <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md bg-black/50 px-2 py-1 text-[10px] text-white">
                   <Video className="size-3" />
                   {selectedFile.name}
@@ -175,7 +237,7 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
 
               {status === "no_support" ? (
                 <div className="rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
-                  Сжатие в этом браузере недоступно. Откройте с компьютера в Chrome или Edge — или загрузите файл как есть через «Загрузить».
+                  Сжатие в этом браузере недоступно. Можно загрузить как есть или открыть с компьютера в Chrome / Edge.
                 </div>
               ) : ["idle", "error"].includes(status) ? (
                 <div className="space-y-3 rounded-2xl bg-zinc-50 p-4">
@@ -206,8 +268,14 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
 
               {(status === "compressing" || status === "uploading" || status === "success") && (
                 <div className="space-y-4 rounded-2xl border border-zinc-100 p-4">
-                  <p className="text-xs text-zinc-500">Сжатие идёт, не сворачивайте телефон</p>
-                  <Stage label="Сжимаем" active={status === "compressing"} done={status === "uploading" || status === "success"} pct={compressionProgress} />
+                  <p className="text-xs text-zinc-500">
+                    {status === "uploading" && !compressionProgress
+                      ? "Отправляем оригинал, не сворачивайте телефон"
+                      : "Сжатие идёт, не сворачивайте телефон"}
+                  </p>
+                  {status === "compressing" || compressionProgress > 0 ? (
+                    <Stage label="Сжимаем" active={status === "compressing"} done={status === "uploading" || status === "success"} pct={compressionProgress} />
+                  ) : null}
                   <Stage label="Отправляем" active={status === "uploading"} done={status === "success"} pct={uploadProgress} />
                   {status === "success" && compressedSize ? (
                     <p className="text-xs font-medium text-emerald-700">
@@ -236,12 +304,25 @@ export function VideoCompressorSheet({ isOpen, onClose, currentPrefix, onUploadS
             <button type="button" className="h-12 w-full rounded-2xl border border-red-200 text-sm font-medium text-red-600" onClick={abort}>
               Отменить
             </button>
+          ) : status === "error" && canUploadRaw && selectedFile ? (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="h-12 rounded-2xl border border-zinc-200 text-sm font-medium text-zinc-800"
+                onClick={handleCompress}
+              >
+                Ещё раз
+              </button>
+              <button type="button" className="h-12 rounded-2xl bg-zinc-900 text-sm font-semibold text-white" onClick={handleUploadRaw}>
+                Как есть
+              </button>
+            </div>
           ) : (
             <button
               type="button"
               className="h-12 w-full rounded-2xl bg-zinc-900 text-sm font-semibold text-white disabled:opacity-40"
               onClick={handleCompress}
-              disabled={!selectedFile || status === "no_support"}
+              disabled={!selectedFile}
             >
               Сжать и загрузить
             </button>
