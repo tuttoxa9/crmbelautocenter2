@@ -42,7 +42,7 @@ function dateLabel(iso?: string) {
 
 export function FileGrid(props: FileGridProps) {
   const { items, viewMode, groupByDate } = props;
-  const useGroups = viewMode === "grid" && groupByDate;
+  const useGroups = groupByDate;
 
   const sections: { key: string; items: S3Object[] }[] = [];
   if (useGroups) {
