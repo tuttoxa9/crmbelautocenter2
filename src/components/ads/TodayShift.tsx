@@ -1,8 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
-import { Check } from "lucide-react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Check, ChevronDown, MoreHorizontal } from "lucide-react";
 import { type AdCampaignType, type AdCar, type AdsSettings } from "@/lib/types";
 import { MONTHS_LONG, getCalendarDaysLeft, getMinskDateKey } from "@/lib/services/adsService";
 import { cn } from "@/lib/utils";
@@ -11,12 +12,19 @@ import { RotationTimeline } from "./RotationTimeline";
 import { CarThumb } from "./CarThumb";
 import { GhostBtn, PrimaryBtn, Spinner } from "./chrome";
 
+type ActionItem = {
+  label: string;
+  danger?: boolean;
+  onSelect: () => void;
+};
+
 export function TodayShift({
   cars,
   settings,
   busyIds,
   balancing,
   onSwitch,
+  onDelete,
   onBalance,
   onOpenWarehouse,
   onDayClick,
@@ -26,6 +34,7 @@ export function TodayShift({
   busyIds: Set<string>;
   balancing: boolean;
   onSwitch: (car: AdCar, campaign: AdCampaignType) => void;
+  onDelete: (car: AdCar) => void;
   onBalance: () => void;
   onOpenWarehouse: () => void;
   onDayClick: (offset: number, date: Date, dayCars: AdCar[]) => void;
@@ -121,27 +130,43 @@ export function TodayShift({
           </p>
         ) : (
           <div>
-            {shootList.map((car) =>
-              shootTab === "waiting" ? (
-                <ShootRow
-                  key={car.id}
-                  car={car}
-                  label="Ждёт ролик"
-                  action="Отснято"
-                  busy={!!car.id && busyIds.has(car.id)}
-                  onClick={() => onSwitch(car, "ready_for_ads")}
-                />
-              ) : (
+            {shootList.map((car) => {
+              const busy = !!car.id && busyIds.has(car.id);
+              if (shootTab === "waiting") {
+                return (
+                  <ShootRow
+                    key={car.id}
+                    car={car}
+                    label="Ждёт ролик"
+                    busy={busy}
+                    primary={{
+                      label: "Отснято",
+                      onSelect: () => onSwitch(car, "ready_for_ads"),
+                    }}
+                    menuLabel="Ещё"
+                    items={[
+                      { label: "В РК 1", onSelect: () => onSwitch(car, "rk1") },
+                      { label: "В РК 2", onSelect: () => onSwitch(car, "rk2") },
+                      { label: "Убрать", danger: true, onSelect: () => onDelete(car) },
+                    ]}
+                  />
+                );
+              }
+              return (
                 <ShootRow
                   key={car.id}
                   car={car}
                   label="Готово к эфиру"
-                  action="В РК 1"
-                  busy={!!car.id && busyIds.has(car.id)}
-                  onClick={() => onSwitch(car, "rk1")}
+                  busy={busy}
+                  menuLabel="Действия"
+                  items={[
+                    { label: "В РК 1", onSelect: () => onSwitch(car, "rk1") },
+                    { label: "В РК 2", onSelect: () => onSwitch(car, "rk2") },
+                    { label: "Убрать", danger: true, onSelect: () => onDelete(car) },
+                  ]}
                 />
-              ),
-            )}
+              );
+            })}
           </div>
         )}
       </div>
@@ -203,15 +228,17 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 function ShootRow({
   car,
   label,
-  action,
   busy,
-  onClick,
+  primary,
+  menuLabel,
+  items,
 }: {
   car: AdCar;
   label: string;
-  action: string;
   busy: boolean;
-  onClick: () => void;
+  primary?: ActionItem;
+  menuLabel: string;
+  items: ActionItem[];
 }) {
   return (
     <div className="relative flex items-center gap-2.5 rounded-xl px-1 py-1.5">
@@ -220,15 +247,143 @@ function ShootRow({
         <p className="truncate text-sm font-medium text-ads-ink">{car.name}</p>
         <p className="text-xs text-ads-muted">{label}</p>
       </div>
+      <div className="flex shrink-0 items-center gap-1">
+        {primary ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={primary.onSelect}
+            className="inline-flex h-8 items-center rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper disabled:opacity-40"
+          >
+            {busy ? <Spinner /> : primary.label}
+          </button>
+        ) : null}
+        <ActionMenu label={menuLabel} busy={busy} items={items} iconOnly={!!primary} />
+      </div>
+    </div>
+  );
+}
+
+function ActionMenu({
+  label,
+  busy,
+  items,
+  iconOnly,
+}: {
+  label: string;
+  busy: boolean;
+  items: ActionItem[];
+  iconOnly?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+
+  const place = useCallback(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+    const r = btn.getBoundingClientRect();
+    const menuW = 188;
+    const menuH = items.length * 40 + 8;
+    const gap = 6;
+    const pad = 8;
+    const left = Math.min(Math.max(pad, r.right - menuW), window.innerWidth - menuW - pad);
+    const below = r.bottom + gap;
+    const fitsBelow = below + menuH <= window.innerHeight - pad;
+    const top = fitsBelow ? below : Math.max(pad, r.top - gap - menuH);
+    setCoords({ top, left });
+  }, [items.length]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    place();
+  }, [open, place]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: Event) => {
+      const t = e.target as Node;
+      if (btnRef.current?.contains(t) || panelRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    const onScroll = () => setOpen(false);
+    window.addEventListener("pointerdown", onPointer);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      window.removeEventListener("pointerdown", onPointer);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, [open, place]);
+
+  return (
+    <>
       <button
+        ref={btnRef}
         type="button"
         disabled={busy}
-        onClick={onClick}
-        className="inline-flex h-8 items-center rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper disabled:opacity-40"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={label}
+        title={label}
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "inline-flex h-8 items-center justify-center text-xs font-medium disabled:opacity-40",
+          iconOnly
+            ? "size-8 rounded-lg text-ads-subtle hover:bg-ads-bg hover:text-ads-ink"
+            : "gap-1 rounded-lg bg-ads-ink px-2.5 text-ads-paper",
+        )}
       >
-        {busy ? <Spinner /> : action}
+        {busy && !iconOnly ? (
+          <Spinner />
+        ) : iconOnly ? (
+          <MoreHorizontal className="size-4" />
+        ) : (
+          <>
+            {label}
+            <ChevronDown className="size-3.5 opacity-70" />
+          </>
+        )}
       </button>
-    </div>
+      {open
+        ? createPortal(
+            <div
+              ref={panelRef}
+              role="menu"
+              style={{ top: coords.top, left: coords.left }}
+              className="fixed z-[80] w-[188px] overflow-hidden rounded-xl bg-ads-card py-1 shadow-ads-float ring-1 ring-black/8"
+            >
+              {items.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    item.onSelect();
+                  }}
+                  className={cn(
+                    "flex h-10 w-full items-center px-3 text-left text-sm",
+                    item.danger
+                      ? "text-ads-danger hover:bg-ads-danger-soft"
+                      : "text-ads-ink hover:bg-ads-surface",
+                  )}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
 

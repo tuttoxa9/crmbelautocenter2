@@ -340,6 +340,7 @@ export function AdsDashboard() {
               busyIds={busyIds}
               balancing={isBalancing}
               onSwitch={handlers.onSwitch}
+              onDelete={handlers.onDelete}
               onBalance={() => void handleBalanceTimeline()}
               onOpenWarehouse={() => setWarehouseOpen(true)}
               onDayClick={(offset, date, dayCars) =>
