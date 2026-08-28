@@ -39,25 +39,15 @@ export function leadCarIds(lead: Lead): string[] {
 }
 
 export function leadMatchesCar(lead: Lead, car: CatalogCar): boolean {
-  if (leadCarIds(lead).includes(car.id)) return true;
-  const text = (lead.car || "").toLowerCase().trim();
-  if (!text) return false;
-  const make = (car.make || "").toLowerCase();
-  const model = (car.model || "").toLowerCase();
-  if (make && model && text.includes(make) && text.includes(model)) return true;
-  const name = (car.name || "").toLowerCase();
-  if (name.length > 5 && text.includes(name)) return true;
-  return false;
+  return leadCarIds(lead).includes(car.id);
 }
 
 export function resolveLeadCar(lead: Lead, cars: CatalogCar[]): CatalogCar | null {
-  const ids = leadCarIds(lead);
-  for (const id of ids) {
+  for (const id of leadCarIds(lead)) {
     const hit = cars.find((c) => c.id === id);
     if (hit) return hit;
   }
-  if (!lead.car) return null;
-  return cars.find((c) => leadMatchesCar(lead, c)) || null;
+  return null;
 }
 
 export function carTitle(car: CatalogCar) {

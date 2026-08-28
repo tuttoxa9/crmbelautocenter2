@@ -239,18 +239,29 @@ export function AdsScroller({
   viewportClassName,
   contentClassName,
   side = "left",
+  nested = false,
 }: {
   children: ReactNode;
   className?: string;
   viewportClassName?: string;
   contentClassName?: string;
   side?: "left" | "right";
+  nested?: boolean;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const metricsRef = useRef<ScrollMetrics>({ needed: false, thumbTop: 0, thumbH: 48, trackH: 0 });
   const [metrics, setMetrics] = useState<ScrollMetrics>(metricsRef.current);
   const [hot, setHot] = useState(false);
+  const [finePointer, setFinePointer] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const sync = () => setFinePointer(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const measure = useCallback(() => {
     const el = viewportRef.current;
@@ -302,6 +313,7 @@ export function AdsScroller({
   }, [measure]);
 
   const onThumbDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!finePointer) return;
     e.preventDefault();
     e.stopPropagation();
     const el = viewportRef.current;
@@ -334,6 +346,7 @@ export function AdsScroller({
   };
 
   const onTrackDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!finePointer) return;
     if ((e.target as HTMLElement).dataset.thumb === "1") return;
     const el = viewportRef.current;
     if (!el) return;
@@ -346,19 +359,23 @@ export function AdsScroller({
   };
 
   return (
-    <div className={cn("relative min-h-0", className)}>
+    <div className={cn("relative min-h-0", nested && "max-lg:contents", className)}>
       <div
         ref={viewportRef}
         className={cn(
-          "ads-hide-bar h-full min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain",
+          "ads-hide-bar min-h-0",
+          nested
+            ? "max-lg:h-auto max-lg:overflow-visible lg:h-full lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain"
+            : "h-full overflow-x-hidden overflow-y-auto overscroll-contain [touch-action:pan-y]",
           viewportClassName,
         )}
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
         <div ref={contentRef} className={contentClassName}>
           {children}
         </div>
       </div>
-      {metrics.needed ? (
+      {finePointer && metrics.needed ? (
         <div
           className={cn("ads-sb-track", side === "right" ? "is-right" : "is-left")}
           onPointerDown={onTrackDown}

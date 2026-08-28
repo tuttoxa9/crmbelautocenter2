@@ -305,11 +305,17 @@
 .ads-hide-bar {
   scrollbar-width: none;
   -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
 }
 .ads-hide-bar::-webkit-scrollbar {
   width: 0;
   height: 0;
   display: none;
+}
+
+.ads-scroll {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
 }
 
 .ads-sb-track {
@@ -318,6 +324,12 @@
   bottom: 6px;
   width: 14px;
   z-index: 8;
+}
+@media (hover: none), (pointer: coarse) {
+  .ads-sb-track {
+    display: none;
+    pointer-events: none;
+  }
 }
 .ads-sb-track.is-left {
   left: 0;

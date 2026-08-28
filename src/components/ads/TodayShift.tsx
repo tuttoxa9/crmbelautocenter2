@@ -52,7 +52,7 @@ export function TodayShift({
 
   return (
     <div className="ads-pane ads-shift flex min-h-0 flex-col">
-      <AdsScroller className="min-h-0 flex-1">
+      <AdsScroller nested className="min-h-0 flex-1">
       <div className="px-5 pt-5 pb-4">
         <p className="text-xs font-medium text-ads-subtle">Смена</p>
         <h2 className="mt-0.5 text-xl leading-tight font-semibold tracking-tight text-ads-ink">{dateLabel}</h2>
