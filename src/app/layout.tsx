@@ -26,9 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
+    <html lang="ru" className="dark">
       <body
-        className={`${inter.variable} font-sans bg-[#F4F5F7] text-zinc-900 transition-colors duration-500`}
+        className={`${inter.variable} font-sans bg-black text-zinc-100 antialiased`}
       >
         <SettingsProvider>
           <AuthProvider>
