@@ -95,23 +95,23 @@ export const TONE_BAR: Record<BurnTone, string> = {
   warn: "bg-amber-500",
   critical: "bg-rose-500",
   overdue: "bg-rose-600",
-  queue: "bg-zinc-300",
+  queue: "bg-white/20",
 };
 
 export const TONE_TRACK: Record<BurnTone, string> = {
-  ok: "bg-zinc-100",
-  mid: "bg-zinc-100",
-  warn: "bg-amber-100",
-  critical: "bg-rose-100",
-  overdue: "bg-rose-100",
-  queue: "bg-zinc-100",
+  ok: "bg-white/[0.06]",
+  mid: "bg-white/[0.06]",
+  warn: "bg-amber-500/15",
+  critical: "bg-rose-500/15",
+  overdue: "bg-rose-500/15",
+  queue: "bg-white/[0.06]",
 };
 
 export const TONE_TEXT: Record<BurnTone, string> = {
-  ok: "text-zinc-700",
-  mid: "text-zinc-800",
-  warn: "text-amber-800",
-  critical: "text-rose-700",
-  overdue: "text-rose-700",
+  ok: "text-zinc-300",
+  mid: "text-zinc-200",
+  warn: "text-amber-200",
+  critical: "text-rose-300",
+  overdue: "text-rose-300",
   queue: "text-zinc-500",
 };

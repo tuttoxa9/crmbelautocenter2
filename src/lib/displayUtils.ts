@@ -18,18 +18,18 @@ export const getStatusLabel = (status: LeadStatus) => {
 
 export const getStatusColor = (status: LeadStatus) => {
   const map: Record<LeadStatus, string> = {
-    new: "bg-blue-100 text-blue-700 border-blue-200",
-    in_progress: "bg-amber-100 text-amber-700 border-amber-200",
-    visit: "bg-purple-100 text-purple-700 border-purple-200",
-    refusal: "bg-zinc-100 text-zinc-700 border-zinc-200",
-    bank_refusal: "bg-red-100 text-red-700 border-red-200",
-    success: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    no_answer: "bg-orange-100 text-orange-700 border-orange-200",
-    spam: "bg-zinc-100 text-zinc-500 border-zinc-200",
-    thinking: "bg-indigo-100 text-indigo-700 border-indigo-200",
-    callback: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    new: "bg-blue-500/10 text-blue-200 border-blue-500/20",
+    in_progress: "bg-amber-500/10 text-amber-200 border-amber-500/20",
+    visit: "bg-violet-500/10 text-violet-200 border-violet-500/20",
+    refusal: "bg-white/[0.06] text-zinc-300 border-white/10",
+    bank_refusal: "bg-red-500/10 text-red-300 border-red-500/20",
+    success: "bg-emerald-500/10 text-emerald-200 border-emerald-500/20",
+    no_answer: "bg-orange-500/10 text-orange-200 border-orange-500/20",
+    spam: "bg-white/[0.06] text-zinc-500 border-white/10",
+    thinking: "bg-indigo-500/10 text-indigo-200 border-indigo-500/20",
+    callback: "bg-yellow-500/10 text-yellow-200 border-yellow-500/20",
   };
-  return map[status] || "bg-zinc-100 text-zinc-700";
+  return map[status] || "bg-white/[0.06] text-zinc-300";
 };
 
 export const getSourceLabel = (source: string) => {
