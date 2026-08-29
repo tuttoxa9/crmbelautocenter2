@@ -38,9 +38,9 @@ export function CarPreview({ carId, url }: CarPreviewProps) {
 
   if (loading) {
     return (
-      <div className="mt-8 animate-pulse border-t border-zinc-200/60 pt-6">
-        <div className="mb-4 h-4 w-32 rounded bg-zinc-200" />
-        <div className="h-24 w-full rounded-xl bg-zinc-100" />
+      <div className="mt-8 animate-pulse border-t border-white/10 pt-6">
+        <div className="mb-4 h-4 w-32 rounded bg-white/15" />
+        <div className="h-24 w-full rounded-xl bg-white/[0.08]" />
       </div>
     );
   }
@@ -49,7 +49,7 @@ export function CarPreview({ carId, url }: CarPreviewProps) {
 
   if (!car) {
     return (
-      <div className="mt-8 border-t border-zinc-200/60 pt-6">
+      <div className="mt-8 border-t border-white/10 pt-6">
         <a href={href} target="_blank" rel="noreferrer" className="text-xs text-blue-500 hover:underline">
           {href}
         </a>
@@ -58,11 +58,11 @@ export function CarPreview({ carId, url }: CarPreviewProps) {
   }
 
   return (
-    <div className="mt-8 border-t border-zinc-200/60 pt-6">
+    <div className="mt-8 border-t border-white/10 pt-6">
       <h3 className="mb-3 text-xs font-bold tracking-wider text-zinc-500 uppercase">Заинтересовавший авто</h3>
-      <a href={href} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border border-zinc-200 bg-white">
+      <a href={href} target="_blank" rel="noreferrer" className="group block overflow-hidden rounded-xl border border-white/10 bg-[#141416]">
         <div className="flex h-24">
-          <div className="flex w-1/3 shrink-0 items-center justify-center overflow-hidden bg-zinc-100">
+          <div className="flex w-1/3 shrink-0 items-center justify-center overflow-hidden bg-white/[0.08]">
             {car.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={car.photoUrl} alt={car.name} className="h-full w-full object-cover" />
@@ -72,8 +72,8 @@ export function CarPreview({ carId, url }: CarPreviewProps) {
           </div>
           <div className="flex w-2/3 min-w-0 flex-col justify-between p-3">
             <div>
-              <h4 className="truncate text-sm font-bold text-zinc-900">{car.name}</h4>
-              <div className="mt-0.5 text-xs font-semibold text-zinc-700">
+              <h4 className="truncate text-sm font-bold text-zinc-100">{car.name}</h4>
+              <div className="mt-0.5 text-xs font-semibold text-zinc-300">
                 {car.priceUsd ? `${car.priceUsd.toLocaleString("ru-RU")} $` : "Цена не указана"}
                 {car.isSold ? " · продана" : ""}
               </div>
