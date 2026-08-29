@@ -182,7 +182,7 @@ export function LeadsApp() {
   return (
     <div className="leads-os ads-os flex h-full min-h-0 flex-col bg-leads-bg text-leads-ink">
       <header className="flex flex-col gap-3 border-b border-leads-line px-3 py-3 md:flex-row md:items-center md:px-5">
-        <div className="flex items-center gap-1 rounded-full bg-white p-0.5 ring-1 ring-leads-line">
+        <div className="flex items-center gap-1 rounded-full bg-[#141416] p-0.5 ring-1 ring-leads-line">
           {([
             ["day", "День"],
             ["auto", "Авто"],
@@ -194,7 +194,7 @@ export function LeadsApp() {
               onClick={() => setModePersist(id)}
               className={cn(
                 "rounded-full px-3.5 py-1.5 text-[13px] font-semibold",
-                mode === id ? "bg-zinc-900 text-white" : "text-leads-muted hover:text-leads-ink",
+                mode === id ? "bg-white text-black" : "text-leads-muted hover:text-leads-ink",
               )}
             >
               {label}
@@ -202,7 +202,7 @@ export function LeadsApp() {
           ))}
         </div>
 
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-white px-3 py-2 ring-1 ring-leads-line">
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-[#141416] px-3 py-2 ring-1 ring-leads-line">
           <Search className="size-4 text-leads-subtle" />
           <input
             id="leads-search"
@@ -218,7 +218,7 @@ export function LeadsApp() {
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          className="hidden h-10 items-center justify-center rounded-full bg-zinc-900 px-4 text-[13px] font-semibold text-white md:flex"
+          className="hidden h-10 items-center justify-center rounded-full bg-white px-4 text-[13px] font-semibold text-black md:flex"
         >
           Клиент
         </button>
@@ -237,7 +237,7 @@ export function LeadsApp() {
                 <button
                   type="button"
                   onClick={() => setAddOpen(true)}
-                  className="flex h-10 w-full items-center justify-center rounded-full bg-zinc-900 text-[13px] font-semibold text-white"
+                  className="flex h-10 w-full items-center justify-center rounded-full bg-white text-[13px] font-semibold text-black"
                 >
                   Клиент
                 </button>
@@ -250,7 +250,7 @@ export function LeadsApp() {
                     onClick={() => setTabPersist(t.id)}
                     className={cn(
                       "flex items-center justify-between rounded-xl px-3 py-2.5 text-left text-[14px] md:py-1.5 md:text-[13px]",
-                      tab === t.id ? "bg-white font-semibold shadow-sm" : "text-leads-muted hover:bg-white/70 hover:text-leads-ink",
+                      tab === t.id ? "bg-white text-black font-semibold" : "text-leads-muted hover:bg-white/[0.08] hover:text-leads-ink",
                     )}
                   >
                     <span>{t.label}</span>
@@ -302,7 +302,7 @@ export function LeadsApp() {
         {mode === "base" ? (
           <div className="min-w-0 flex-1">
             <AdsScroller className="h-full" contentClassName="pb-24">
-              <div className="divide-y divide-leads-line bg-white md:mx-3 md:mt-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+              <div className="divide-y divide-leads-line bg-[#141416] md:mx-3 md:mt-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
                 {baseRows.map((lead) => (
                   <LeadRow
                     key={lead.id}
@@ -337,7 +337,7 @@ export function LeadsApp() {
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="flex h-12 items-center justify-center rounded-full bg-zinc-900 px-5 text-[13px] font-semibold text-white shadow-lg"
+            className="flex h-12 items-center justify-center rounded-full bg-white px-5 text-[13px] font-semibold text-black shadow-lg"
           >
             Клиент
           </button>
