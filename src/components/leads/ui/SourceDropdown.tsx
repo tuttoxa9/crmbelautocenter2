@@ -38,7 +38,7 @@ export function SourceDropdown({ value, onChange, className }: SourceDropdownPro
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between gap-1.5 w-full h-8 md:h-10 px-2.5 md:px-3 py-1.5 md:py-2 bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-zinc-900 transition-all text-xs md:text-sm font-medium text-zinc-700 hover:text-zinc-900"
+        className="flex items-center justify-between gap-1.5 w-full h-8 md:h-10 px-2.5 md:px-3 py-1.5 md:py-2 bg-white/[0.06] hover:bg-white/[0.08] border border-white/10 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-white transition-all text-xs md:text-sm font-medium text-zinc-300 hover:text-zinc-100"
       >
         <span className="flex items-center gap-2">
           <SourceIcon source={value} className="w-4 h-4 text-zinc-500" />
@@ -48,7 +48,7 @@ export function SourceDropdown({ value, onChange, className }: SourceDropdownPro
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white/95 backdrop-blur-xl border border-zinc-200 rounded-md shadow-xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 py-1">
+        <div className="absolute z-50 w-full mt-1 bg-[#1c1c1f]/95 backdrop-blur-xl border border-white/10 rounded-md shadow-xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 py-1">
           {SOURCES.map((source) => (
             <button
               key={source}
@@ -57,13 +57,13 @@ export function SourceDropdown({ value, onChange, className }: SourceDropdownPro
                 onChange(source);
                 setIsOpen(false);
               }}
-              className="flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-zinc-100 text-zinc-800"
+              className="flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-white/[0.06] text-zinc-200"
             >
               <span className="flex items-center gap-2">
                 <SourceIcon source={source} className="w-4 h-4 text-zinc-500" />
                 {getSourceLabel(source)}
               </span>
-              {value === source && <Check className="w-4 h-4 text-zinc-900" />}
+              {value === source && <Check className="w-4 h-4 text-zinc-100" />}
             </button>
           ))}
         </div>
