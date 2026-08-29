@@ -76,7 +76,7 @@ export function DailyTasksModal({
                 <div className="space-y-2">
                   <div className="flex items-baseline justify-between gap-2">
                     <h3 className="text-xs font-medium text-ads-warn">Долг TikTok · {debts.length}</h3>
-                    <span className="text-[10px] text-ads-subtle">не в ротации</span>
+                    <span className="text-[10px] text-ads-subtle">напоминание</span>
                   </div>
                   <div className="overflow-hidden rounded-2xl bg-ads-card ring-1 ring-ads-warn/25">
                     {debts.map((debt, i) => (
@@ -89,7 +89,7 @@ export function DailyTasksModal({
                           <div className="truncate text-sm font-medium text-ads-ink">{debt.name}</div>
                           <div className="mt-0.5 text-xs text-ads-muted">
                             {debt.year ? `${debt.year} · ` : ""}
-                            {debt.priceUsd != null ? `$${Number(debt.priceUsd).toLocaleString("ru-RU")}` : "со склада"}
+                            {debt.priceUsd != null ? `$${Number(debt.priceUsd).toLocaleString("ru-RU")}` : "доп. видео"}
                           </div>
                         </div>
                         {onRemoveDebt ? (

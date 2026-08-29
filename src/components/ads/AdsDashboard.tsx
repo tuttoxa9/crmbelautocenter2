@@ -489,7 +489,7 @@ export function AdsDashboard() {
         onSaveSettings={handleSaveSettings}
         airCount={airCount}
         totalCatalogCars={catalogCars.length}
-        warehouse={warehouse}
+        cars={catalogCars}
         onSaveDebts={handleSaveDebts}
       />
       <DailyTasksModal

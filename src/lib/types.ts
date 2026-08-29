@@ -111,7 +111,7 @@ export interface AdCar {
   updatedAt: number;
 }
 
-/** Информативный долг TikTok за прошлый день. Не влияет на ротацию. */
+/** Информативное напоминание о доп. видео TikTok. Не влияет на ротацию. */
 export interface TikTokDebt {
   id: string;
   dateKey: string;

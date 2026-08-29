@@ -25,13 +25,15 @@ export function RotationTimeline({
     const [year, month, day] = todayKey.split("-").map(Number);
     const today = new Date(year, month - 1, day);
     const oldestDebt = debts.reduce((min, d) => (d.dateKey < min ? d.dateKey : min), todayKey);
-    const pastDays = Math.min(30, Math.max(7, Math.max(0, getDateKeyDiffDays(oldestDebt, todayKey))));
+    const newestDebt = debts.reduce((max, d) => (d.dateKey > max ? d.dateKey : max), todayKey);
+    const pastDays = Math.min(60, Math.max(7, Math.max(0, getDateKeyDiffDays(oldestDebt, todayKey))));
+    const futureDays = Math.min(60, Math.max(days, Math.max(0, getDateKeyDiffDays(todayKey, newestDebt)) + 1));
 
     const active = cars.filter((c) => c.campaign === "rk1" || c.campaign === "rk2");
     const byOffset: Record<number, AdCar[]> = {};
     active.forEach((car) => {
       const left = getCalendarDaysLeft(car.targetRotationDate, car.startedAt, car.maxDays);
-      if (left < -pastDays || left > days - 1) return;
+      if (left < -pastDays || left > futureDays - 1) return;
       if (!byOffset[left]) byOffset[left] = [];
       byOffset[left].push(car);
     });
@@ -39,13 +41,13 @@ export function RotationTimeline({
     const debtsByOffset: Record<number, TikTokDebt[]> = {};
     debts.forEach((debt) => {
       const left = getDateKeyDiffDays(todayKey, debt.dateKey);
-      if (left < -pastDays || left > days - 1) return;
+      if (left < -pastDays || left > futureDays - 1) return;
       if (!debtsByOffset[left]) debtsByOffset[left] = [];
       debtsByOffset[left].push(debt);
     });
 
     const lastWithCars = Math.max(-1, ...Object.keys(byOffset).map(Number));
-    return Array.from({ length: pastDays + days }, (_, i) => {
+    return Array.from({ length: pastDays + futureDays }, (_, i) => {
       const offset = i - pastDays;
       const d = new Date(today.getTime());
       d.setDate(d.getDate() + offset);
