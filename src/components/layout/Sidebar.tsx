@@ -29,17 +29,17 @@ export function Sidebar() {
       className={cn(
         "group/rail fixed inset-y-0 left-0 z-30 hidden md:flex",
         "w-[72px] hover:w-[240px] focus-within:w-[240px]",
-        "flex-col overflow-hidden border-r border-white/[0.06] bg-black text-zinc-100",
+        "flex-col bg-black text-zinc-100",
         "transition-[width] duration-150 ease-out motion-reduce:transition-none",
       )}
     >
-      <div className="flex h-14 shrink-0 items-center px-4">
-        <span className="min-w-0 truncate text-[13px] font-semibold tracking-tight text-zinc-100 opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">
+      <div className="flex h-12 shrink-0 items-center overflow-hidden px-5">
+        <span className="whitespace-nowrap text-[13px] font-semibold tracking-tight text-zinc-100 opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">
           Белавтоцентр
         </span>
       </div>
 
-      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-2 py-1">
+      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-x-hidden overflow-y-auto px-3 py-1">
         {items.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
@@ -48,12 +48,12 @@ export function Sidebar() {
               href={item.href}
               title={item.name}
               className={cn(
-                "flex h-11 items-center gap-3 rounded-xl px-[14px] text-[13px] font-medium transition-colors",
+                "flex h-11 items-center gap-3 rounded-xl px-2.5 text-[13px] font-medium transition-colors",
                 isActive ? "bg-white/[0.08] text-white" : "text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-100",
               )}
             >
               <item.icon className="size-5 shrink-0" strokeWidth={1.5} />
-              <span className="min-w-0 truncate opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">
+              <span className="min-w-0 truncate whitespace-nowrap opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">
                 {item.name}
               </span>
             </Link>
@@ -61,16 +61,16 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="flex h-14 shrink-0 items-center justify-center px-2 group-hover/rail:justify-start group-focus-within/rail:justify-start">
+      <div className="flex h-16 shrink-0 items-center overflow-hidden px-3 pb-3">
         <button
           type="button"
           onClick={() => void handleLogout()}
           title="Выйти"
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/[0.06] hover:text-white"
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl text-zinc-400 hover:bg-white/[0.06] hover:text-white"
         >
-          <LogOut className="size-4" strokeWidth={1.5} />
+          <LogOut className="size-5" strokeWidth={1.5} />
         </button>
-        <span className="ml-1 hidden min-w-0 flex-1 truncate text-[11px] text-zinc-500 group-hover/rail:block group-focus-within/rail:block">
+        <span className="ml-2 min-w-0 flex-1 truncate text-[11px] text-zinc-500 opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">
           {user?.email || "Пользователь"}
         </span>
       </div>
