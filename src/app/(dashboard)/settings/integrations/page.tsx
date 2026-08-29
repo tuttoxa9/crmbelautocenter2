@@ -73,11 +73,11 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full space-y-6">
+    <div className="flex flex-col h-full space-y-6 bg-black text-zinc-100">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900">Интеграции</h2>
-          <p className="text-sm text-gray-500 mt-1">Подключение Meta Lead Ads и TikTok Forms</p>
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-100">Интеграции</h2>
+          <p className="text-sm text-zinc-400 mt-1">Подключение Meta Lead Ads и TikTok Forms</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -143,7 +143,7 @@ export default function IntegrationsPage() {
             <TableBody>
               {integrations.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                  <TableCell colSpan={5} className="text-center text-zinc-400 py-8">
                     Интеграций пока нет. Добавьте первую!
                   </TableCell>
                 </TableRow>
@@ -153,22 +153,22 @@ export default function IntegrationsPage() {
                     <TableCell className="font-medium">{integration.name}</TableCell>
                     <TableCell>
                       {integration.source === 'meta' ? (
-                        <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20">Meta</span>
+                        <span className="inline-flex items-center rounded-md bg-blue-500/15 px-2 py-1 text-xs font-medium text-blue-300 ring-1 ring-inset ring-blue-600/20">Meta</span>
                       ) : (
-                        <span className="inline-flex items-center rounded-md bg-zinc-50 px-2 py-1 text-xs font-medium text-zinc-700 ring-1 ring-inset ring-zinc-600/20">TikTok</span>
+                        <span className="inline-flex items-center rounded-md bg-white/[0.04] px-2 py-1 text-xs font-medium text-zinc-300 ring-1 ring-inset ring-zinc-600/20">TikTok</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-gray-500 font-mono text-xs">{integration.formId || "Не указан"}</TableCell>
+                    <TableCell className="text-zinc-400 font-mono text-xs">{integration.formId || "Не указан"}</TableCell>
                     <TableCell>
                       {integration.isActive ? (
-                        <span className="text-emerald-600 text-sm font-medium flex items-center"><Play className="h-3 w-3 mr-1" /> Активен</span>
+                        <span className="text-emerald-400 text-sm font-medium flex items-center"><Play className="h-3 w-3 mr-1" /> Активен</span>
                       ) : (
-                        <span className="text-gray-400 text-sm font-medium flex items-center"><Square className="h-3 w-3 mr-1" /> Остановлен</span>
+                        <span className="text-zinc-500 text-sm font-medium flex items-center"><Square className="h-3 w-3 mr-1" /> Остановлен</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => handleToggleActive(integration.id!, integration.isActive)} title={integration.isActive ? "Остановить" : "Запустить"}>
-                        {integration.isActive ? <Square className="h-4 w-4 text-gray-500" /> : <Play className="h-4 w-4 text-emerald-500" />}
+                        {integration.isActive ? <Square className="h-4 w-4 text-zinc-400" /> : <Play className="h-4 w-4 text-emerald-500" />}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDelete(integration.id!)} className="text-red-500">
                         <Trash2 className="h-4 w-4" />

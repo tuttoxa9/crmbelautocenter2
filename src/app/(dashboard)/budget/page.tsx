@@ -70,7 +70,7 @@ function PlatformBadge({ platform }: { platform: AdPlatform }) {
   const isMeta = platform === "meta";
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${
-      isMeta ? "bg-blue-100 text-blue-700" : "bg-black/10 text-zinc-800"
+      isMeta ? "bg-white/[0.08] text-zinc-100" : "bg-white/[0.06] text-zinc-300"
     }`}>
       {isMeta ? <MetaIcon className="w-3 h-3" /> : <TikTokIcon className="w-3 h-3" />}
       {isMeta ? "Meta" : "TikTok"}
@@ -92,7 +92,7 @@ function InlineEdit({ value, onSave, className }: { value: string; onSave: (v: s
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => { if (e.key === "Enter") commit(); if (e.key === "Escape") setEditing(false); }}
-        className={`bg-white border border-blue-400 rounded-md px-2 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${className}`}
+        className={`bg-[#1c1c1f] border border-white/20 rounded-md px-2 py-0.5 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-white/20 ${className}`}
       />
     );
   }
@@ -100,7 +100,7 @@ function InlineEdit({ value, onSave, className }: { value: string; onSave: (v: s
     <button
       onClick={() => { setDraft(value); setEditing(true); }}
       title="Нажмите чтобы изменить название"
-      className={`text-left hover:text-blue-700 transition-colors flex items-center gap-1.5 cursor-text ${className}`}
+      className={`text-left hover:text-zinc-100 transition-colors flex items-center gap-1.5 cursor-text ${className}`}
     >
       <span>{value}</span>
       <Pencil className="w-3 h-3 opacity-30 hover:opacity-70 transition-opacity shrink-0" />
@@ -117,7 +117,7 @@ function CopyButton({ text }: { text: string }) {
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <button onClick={copy} title="Скопировать" className="p-1 rounded hover:bg-zinc-200 transition-colors text-zinc-400 hover:text-zinc-700">
+    <button onClick={copy} title="Скопировать" className="p-1 rounded hover:bg-white/[0.08] transition-colors text-zinc-500 hover:text-zinc-100">
       {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
     </button>
   );
@@ -295,8 +295,8 @@ export default function BudgetPage() {
   // ─── Loading state ───────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#F8FAFC]">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      <div className="flex items-center justify-center h-full bg-black">
+        <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
       </div>
     );
   }
@@ -304,18 +304,18 @@ export default function BudgetPage() {
   // ─── Empty state ─────────────────────────────────────────────────
   if (plans.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-[#F8FAFC] p-8 text-center">
-        <div className="w-20 h-20 bg-white rounded-3xl shadow-md border border-zinc-100 flex items-center justify-center mb-6">
-          <DollarSign className="w-9 h-9 text-blue-500" />
+      <div className="flex flex-col items-center justify-center h-full bg-black p-8 text-center">
+        <div className="w-20 h-20 bg-[#141416] rounded-3xl border border-white/10 flex items-center justify-center mb-6">
+          <DollarSign className="w-9 h-9 text-zinc-300" />
         </div>
-        <h2 className="text-2xl font-bold text-zinc-900 mb-2">Калькулятор бюджета</h2>
+        <h2 className="text-2xl font-bold text-zinc-100 mb-2">Калькулятор бюджета</h2>
         <p className="text-zinc-500 max-w-sm leading-relaxed mb-8">
           Создайте первый план, чтобы рассчитать дневные бюджеты для Meta Ads и TikTok Ads.
         </p>
         <button
           onClick={addPlan}
           disabled={isSaving}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-60"
+          className="flex items-center gap-2 px-6 py-3 bg-white text-black rounded-xl font-semibold hover:bg-zinc-200 transition-colors disabled:opacity-60"
         >
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
           Создать план
@@ -325,11 +325,11 @@ export default function BudgetPage() {
   }
 
   return (
-    <div className="flex h-full bg-[#F8FAFC] overflow-hidden">
+    <div className="flex h-full bg-black overflow-hidden">
 
       {/* ═══ Left: Plans sidebar ═════════════════════════════════════ */}
-      <div className="w-[220px] shrink-0 bg-white border-r border-zinc-200/80 flex flex-col">
-        <div className="px-4 py-4 border-b border-zinc-100">
+      <div className="w-[220px] shrink-0 bg-[#141416] border-r border-white/10 flex flex-col">
+        <div className="px-4 py-4 border-b border-white/10">
           <h2 className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Планы</h2>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
@@ -339,8 +339,8 @@ export default function BudgetPage() {
               onClick={() => setActivePlanId(plan.id!)}
               className={`w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-sm transition-all group ${
                 plan.id === activePlanId
-                  ? "bg-blue-600 text-white font-semibold"
-                  : "text-zinc-600 hover:bg-zinc-100 font-medium"
+                  ? "bg-white text-black font-semibold"
+                  : "text-zinc-400 hover:bg-white/[0.06] font-medium"
               }`}
             >
               <span className="truncate">{plan.name}</span>
@@ -355,11 +355,11 @@ export default function BudgetPage() {
             </button>
           ))}
         </div>
-        <div className="p-3 border-t border-zinc-100">
+        <div className="p-3 border-t border-white/10">
           <button
             onClick={addPlan}
             disabled={isSaving}
-            className="w-full flex items-center justify-center gap-2 py-2 text-[13px] font-semibold text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-2 text-[13px] font-semibold text-zinc-200 hover:bg-white/[0.06] rounded-xl transition-colors disabled:opacity-50"
           >
             <Plus className="w-4 h-4" />
             Новый план
@@ -371,12 +371,12 @@ export default function BudgetPage() {
       {activePlan && (
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Top bar */}
-          <div className="h-16 px-6 bg-white border-b border-zinc-200/80 flex items-center justify-between shrink-0">
+          <div className="h-16 px-6 bg-[#141416] border-b border-white/10 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-4">
               <InlineEdit
                 value={activePlan.name}
                 onSave={(name) => mutatePlan((p) => ({ ...p, name }))}
-                className="text-lg font-bold text-zinc-900"
+                className="text-lg font-bold text-zinc-100"
               />
               {isSaving && (
                 <span className="flex items-center gap-1.5 text-[12px] text-zinc-400">
@@ -386,8 +386,8 @@ export default function BudgetPage() {
             </div>
 
             {/* Monthly budget input */}
-            <div className="flex items-center gap-2 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2">
-              <DollarSign className="w-4 h-4 text-blue-600" />
+            <div className="flex items-center gap-2 bg-black border border-white/10 rounded-xl px-4 py-2">
+              <DollarSign className="w-4 h-4 text-zinc-400" />
               <label className="text-[12px] font-semibold text-zinc-500 shrink-0">Бюджет / месяц:</label>
               <input
                 type="number"
@@ -397,33 +397,33 @@ export default function BudgetPage() {
                   const v = Number(e.target.value);
                   if (!isNaN(v)) mutatePlan((p) => ({ ...p, monthlyBudget: v }));
                 }}
-                className="w-24 bg-transparent text-right font-mono font-bold text-zinc-900 text-[15px] focus:outline-none"
+                className="w-24 bg-transparent text-right font-mono font-bold text-zinc-100 text-[15px] focus:outline-none"
               />
               <span className="text-[13px] font-bold text-zinc-400">$</span>
             </div>
           </div>
 
           {/* KPI bar */}
-          <div className="px-6 py-3 bg-white border-b border-zinc-100 flex items-center gap-6 text-[13px] shrink-0">
+          <div className="px-6 py-3 bg-[#141416] border-b border-white/10 flex items-center gap-6 text-[13px] shrink-0">
             <div className="flex items-center gap-2 text-zinc-500">
-              <TrendingUp className="w-4 h-4 text-blue-500" />
+              <TrendingUp className="w-4 h-4 text-zinc-400" />
               <span>Дневной бюджет:</span>
-              <span className="font-black text-zinc-900 font-mono">${dailyTotal.toFixed(2)}</span>
+              <span className="font-black text-zinc-100 font-mono">${dailyTotal.toFixed(2)}</span>
             </div>
-            <div className="h-4 w-px bg-zinc-200" />
+            <div className="h-4 w-px bg-white/10" />
             <div className="flex items-center gap-2 text-zinc-500">
               <LayoutGrid className="w-4 h-4 text-zinc-400" />
               <span>Кампаний:</span>
-              <span className="font-bold text-zinc-800">{activePlan.campaigns.length}</span>
+              <span className="font-bold text-zinc-200">{activePlan.campaigns.length}</span>
             </div>
-            <div className="h-4 w-px bg-zinc-200" />
+            <div className="h-4 w-px bg-white/10" />
             <div className="flex items-center gap-2 text-zinc-500">
               <Layers className="w-4 h-4 text-zinc-400" />
               <span>Групп объявлений:</span>
-              <span className="font-bold text-zinc-800">{totalAdGroups}</span>
+              <span className="font-bold text-zinc-200">{totalAdGroups}</span>
             </div>
             {totalAdGroups === 0 && (
-              <div className="ml-auto flex items-center gap-1.5 text-amber-600 bg-amber-50 px-3 py-1 rounded-lg text-[12px] font-medium">
+              <div className="ml-auto flex items-center gap-1.5 text-amber-300 bg-amber-500/10 px-3 py-1 rounded-lg text-[12px] font-medium">
                 <AlertCircle className="w-3.5 h-3.5" />
                 Добавьте группы объявлений для расчёта
               </div>
@@ -435,15 +435,15 @@ export default function BudgetPage() {
             <div className="max-w-3xl mx-auto space-y-4 pb-20">
 
               {activePlan.campaigns.length === 0 && (
-                <div className="text-center py-16 border-2 border-dashed border-zinc-200 rounded-2xl bg-zinc-50/50">
-                  <LayoutGrid className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
-                  <p className="text-[15px] font-semibold text-zinc-600 mb-1">Кампаний пока нет</p>
+                <div className="text-center py-16 border-2 border-dashed border-white/10 rounded-2xl bg-[#141416]">
+                  <LayoutGrid className="w-8 h-8 text-zinc-500 mx-auto mb-3" />
+                  <p className="text-[15px] font-semibold text-zinc-300 mb-1">Кампаний пока нет</p>
                   <p className="text-sm text-zinc-400 mb-6">Добавьте кампанию для Meta или TikTok</p>
                   <div className="flex items-center justify-center gap-3">
-                    <button onClick={() => addCampaign("meta")} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm">
+                    <button onClick={() => addCampaign("meta")} className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-xl text-sm font-semibold hover:bg-zinc-200 transition-colors">
                       <MetaIcon className="w-4 h-4" /> Meta Ads
                     </button>
-                    <button onClick={() => addCampaign("tiktok")} className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-xl text-sm font-semibold hover:bg-zinc-700 transition-colors shadow-sm">
+                    <button onClick={() => addCampaign("tiktok")} className="flex items-center gap-2 px-4 py-2 bg-[#1c1c1f] text-zinc-100 rounded-xl text-sm font-semibold hover:bg-white/10 transition-colors ring-1 ring-white/10">
                       <TikTokIcon className="w-4 h-4" /> TikTok Ads
                     </button>
                   </div>
@@ -455,16 +455,16 @@ export default function BudgetPage() {
                 const campResults = results.filter((r) => r.campaignId === camp.id);
 
                 return (
-                  <div key={camp.id} className="bg-white rounded-2xl border border-zinc-200/80 shadow-sm overflow-hidden">
+                  <div key={camp.id} className="bg-[#141416] rounded-2xl border border-white/10 overflow-hidden">
                     {/* Campaign header */}
-                    <div className="flex items-center gap-3 px-5 py-4 border-b border-zinc-100">
-                      <button onClick={() => toggleCampaign(camp.id)} className="text-zinc-400 hover:text-zinc-700 transition-colors">
+                    <div className="flex items-center gap-3 px-5 py-4 border-b border-white/10">
+                      <button onClick={() => toggleCampaign(camp.id)} className="text-zinc-500 hover:text-zinc-100 transition-colors">
                         {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                       </button>
                       <PlatformBadge platform={camp.platform} />
-                      <InlineEdit value={camp.name} onSave={(name) => updateCampaignName(camp.id, name)} className="font-bold text-zinc-800 flex-1" />
+                      <InlineEdit value={camp.name} onSave={(name) => updateCampaignName(camp.id, name)} className="font-bold text-zinc-100 flex-1" />
                       <span className="text-[12px] text-zinc-400 font-medium shrink-0">{camp.adGroups.length} гр.</span>
-                      <button onClick={() => deleteCampaign(camp.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-zinc-300 hover:text-red-500 transition-colors">
+                      <button onClick={() => deleteCampaign(camp.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -478,40 +478,40 @@ export default function BudgetPage() {
                         {camp.adGroups.map((grp) => {
                           const grpResult = campResults.find((r) => r.adGroupId === grp.id);
                           return (
-                            <div key={grp.id} className="border border-zinc-100 rounded-[1.25rem] bg-zinc-50/50 overflow-hidden">
+                            <div key={grp.id} className="border border-white/10 rounded-[1.25rem] bg-black overflow-hidden">
                               {/* Group row */}
                               <div className="flex items-center gap-3 px-4 py-3">
                                 {/* Premium toggle */}
                                 <button
                                   onClick={() => updateAdGroup(camp.id, grp.id, { isPremium: !grp.isPremium })}
                                   title="Высокая стоимость автомобиля (Премиум)"
-                                  className={`shrink-0 p-1 rounded-lg transition-all ${grp.isPremium ? "text-amber-500 bg-amber-50" : "text-zinc-300 hover:text-amber-400"}`}
+                                  className={`shrink-0 p-1 rounded-lg transition-all ${grp.isPremium ? "text-amber-400 bg-amber-500/10" : "text-zinc-600 hover:text-amber-400"}`}
                                 >
                                   <Star className="w-4 h-4" fill={grp.isPremium ? "currentColor" : "none"} />
                                 </button>
-                                <InlineEdit value={grp.name} onSave={(name) => updateAdGroup(camp.id, grp.id, { name })} className="font-semibold text-[14px] text-zinc-800 flex-1" />
+                                <InlineEdit value={grp.name} onSave={(name) => updateAdGroup(camp.id, grp.id, { name })} className="font-semibold text-[14px] text-zinc-100 flex-1" />
                                 {grp.isPremium && (
-                                  <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full shrink-0">Премиум</span>
+                                  <span className="text-[10px] font-bold bg-amber-500/15 text-amber-300 px-2 py-0.5 rounded-full shrink-0">Премиум</span>
                                 )}
                                 {grpResult && grpResult.dailyBudget > 0 && (
-                                  <div className="shrink-0 flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1">
-                                    <span className="font-black text-blue-700 font-mono text-[13px]">${grpResult.dailyBudget.toFixed(2)}</span>
-                                    <span className="text-[10px] text-blue-400 font-medium">/день</span>
+                                  <div className="shrink-0 flex items-center gap-1 bg-white/[0.06] border border-white/10 rounded-lg px-3 py-1">
+                                    <span className="font-black text-zinc-100 font-mono text-[13px]">${grpResult.dailyBudget.toFixed(2)}</span>
+                                    <span className="text-[10px] text-zinc-500 font-medium">/день</span>
                                     <CopyButton text={grpResult.dailyBudget.toFixed(2)} />
                                   </div>
                                 )}
-                                <button onClick={() => deleteAdGroup(camp.id, grp.id)} className="p-1 rounded-lg hover:bg-red-50 text-zinc-200 hover:text-red-400 transition-colors">
+                                <button onClick={() => deleteAdGroup(camp.id, grp.id)} className="p-1 rounded-lg hover:bg-red-500/10 text-zinc-600 hover:text-red-400 transition-colors">
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
                               </div>
 
                               {/* Ads inside group */}
                               {grp.ads.length > 0 && (
-                                <div className="px-4 pb-2 space-y-1.5 border-t border-zinc-100 pt-2">
+                                <div className="px-4 pb-2 space-y-1.5 border-t border-white/10 pt-2">
                                   {grp.ads.map((ad) => (
                                     <div key={ad.id} className="flex items-center gap-2 pl-6">
                                       <FileText className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
-                                      <InlineEdit value={ad.name} onSave={(name) => updateAdName(camp.id, grp.id, ad.id, name)} className="text-[13px] text-zinc-600 flex-1" />
+                                      <InlineEdit value={ad.name} onSave={(name) => updateAdName(camp.id, grp.id, ad.id, name)} className="text-[13px] text-zinc-400 flex-1" />
                                       <button onClick={() => deleteAd(camp.id, grp.id, ad.id)} className="p-0.5 text-zinc-200 hover:text-red-400 transition-colors">
                                         <X className="w-3 h-3" />
                                       </button>
@@ -520,10 +520,10 @@ export default function BudgetPage() {
                                 </div>
                               )}
                               {/* Add ad button */}
-                              <div className="px-4 py-2 border-t border-zinc-100/60">
+                              <div className="px-4 py-2 border-t border-white/10">
                                 <button
                                   onClick={() => addAd(camp.id, grp.id)}
-                                  className="flex items-center gap-1.5 text-[12px] text-zinc-400 hover:text-blue-600 transition-colors font-medium pl-6"
+                                  className="flex items-center gap-1.5 text-[12px] text-zinc-500 hover:text-zinc-100 transition-colors font-medium pl-6"
                                 >
                                   <Plus className="w-3.5 h-3.5" /> Добавить объявление
                                 </button>
@@ -534,7 +534,7 @@ export default function BudgetPage() {
 
                         <button
                           onClick={() => addAdGroup(camp.id)}
-                          className="w-full flex items-center justify-center gap-2 py-2.5 text-[13px] font-semibold text-zinc-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors border-2 border-dashed border-zinc-200 hover:border-blue-200"
+                          className="w-full flex items-center justify-center gap-2 py-2.5 text-[13px] font-semibold text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] rounded-xl transition-colors border-2 border-dashed border-white/10 hover:border-white/20"
                         >
                           <Plus className="w-3.5 h-3.5" /> Добавить группу объявлений
                         </button>
@@ -547,10 +547,10 @@ export default function BudgetPage() {
               {/* Add campaign buttons */}
               {activePlan.campaigns.length > 0 && (
                 <div className="flex gap-3 pt-2">
-                  <button onClick={() => addCampaign("meta")} className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-blue-200 text-blue-600 rounded-2xl text-[13px] font-semibold hover:bg-blue-50 transition-colors">
+                  <button onClick={() => addCampaign("meta")} className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-white/15 text-zinc-200 rounded-2xl text-[13px] font-semibold hover:bg-white/[0.04] transition-colors">
                     <MetaIcon className="w-4 h-4" /> + Meta Ads кампания
                   </button>
-                  <button onClick={() => addCampaign("tiktok")} className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-zinc-200 text-zinc-600 rounded-2xl text-[13px] font-semibold hover:bg-zinc-50 transition-colors">
+                  <button onClick={() => addCampaign("tiktok")} className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-dashed border-white/15 text-zinc-400 rounded-2xl text-[13px] font-semibold hover:bg-white/[0.04] transition-colors">
                     <TikTokIcon className="w-4 h-4" /> + TikTok Ads кампания
                   </button>
                 </div>
@@ -562,8 +562,8 @@ export default function BudgetPage() {
 
       {/* ═══ Right: Results panel ════════════════════════════════════ */}
       {activePlan && results.length > 0 && (
-        <div className="w-[300px] shrink-0 bg-white border-l border-zinc-200/80 flex flex-col overflow-hidden">
-          <div className="px-5 py-4 border-b border-zinc-100">
+        <div className="w-[300px] shrink-0 bg-[#141416] border-l border-white/10 flex flex-col overflow-hidden">
+          <div className="px-5 py-4 border-b border-white/10">
             <h3 className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Итоговые настройки</h3>
             <p className="text-[11px] text-zinc-400 mt-0.5">Что поставить в Meta / TikTok</p>
           </div>
@@ -571,22 +571,22 @@ export default function BudgetPage() {
             {results.map((r) => (
               <div
                 key={r.adGroupId}
-                className={`p-3 rounded-[1.25rem] border ${r.isPremium ? "bg-amber-50/60 border-amber-100" : "bg-zinc-50 border-zinc-100"}`}
+                className={`p-3 rounded-[1.25rem] border ${r.isPremium ? "bg-amber-500/10 border-amber-500/20" : "bg-black border-white/10"}`}
               >
                 <div className="flex items-start justify-between gap-2 mb-1.5">
                   <div className="min-w-0">
                     <p className="text-[11px] text-zinc-400 font-medium truncate">{r.campaignName}</p>
-                    <p className="text-[13px] font-bold text-zinc-800 truncate flex items-center gap-1">
+                    <p className="text-[13px] font-bold text-zinc-100 truncate flex items-center gap-1">
                       {r.isPremium && <Star className="w-3 h-3 text-amber-500 shrink-0" fill="currentColor" />}
                       {r.adGroupName}
                     </p>
                   </div>
                   <PlatformBadge platform={r.platform} />
                 </div>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-zinc-200/60">
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
                   <div>
                     <div className="text-[11px] text-zinc-400 font-medium">Дневной бюджет</div>
-                    <div className="font-black text-[18px] text-zinc-900 font-mono leading-tight">
+                    <div className="font-black text-[18px] text-zinc-100 font-mono leading-tight">
                       ${r.dailyBudget.toFixed(2)}
                     </div>
                   </div>
@@ -597,9 +597,9 @@ export default function BudgetPage() {
                   <span>${r.monthlyBudget.toFixed(0)}/мес</span>
                 </div>
                 {/* Progress bar */}
-                <div className="mt-2 h-1 bg-zinc-200 rounded-full overflow-hidden">
+                <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${r.isPremium ? "bg-amber-400" : "bg-blue-500"}`}
+                    className={`h-full rounded-full transition-all ${r.isPremium ? "bg-amber-400" : "bg-zinc-300"}`}
                     style={{ width: `${Math.min(r.percentage, 100)}%` }}
                   />
                 </div>
@@ -608,10 +608,10 @@ export default function BudgetPage() {
           </div>
 
           {/* Summary footer */}
-          <div className="p-4 border-t border-zinc-100 bg-zinc-50">
-            <div className="flex justify-between text-[13px] font-semibold text-zinc-700">
+          <div className="p-4 border-t border-white/10 bg-black">
+            <div className="flex justify-between text-[13px] font-semibold text-zinc-300">
               <span>Итого / день:</span>
-              <span className="font-mono font-black text-zinc-900">${dailyTotal.toFixed(2)}</span>
+              <span className="font-mono font-black text-zinc-100">${dailyTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-[12px] text-zinc-400 mt-1">
               <span>Итого / месяц:</span>

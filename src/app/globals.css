@@ -40,7 +40,7 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  --color-ads-bg: #0a0a0b;
+  --color-ads-bg: #000000;
   --color-ads-surface: #141416;
   --color-ads-card: #141416;
   --color-ads-ink: #f5f5f7;
@@ -57,14 +57,14 @@
   --color-ads-mid: #a1a1aa;
   --color-ads-ok: #34d399;
   --color-ads-rail: #d4d4d8;
-  --color-leads-bg: #0a0a0b;
+  --color-leads-bg: #000000;
   --color-leads-card: #141416;
   --color-leads-ink: #f5f5f7;
   --color-leads-muted: #a1a1aa;
   --color-leads-subtle: #71717a;
   --color-leads-line: rgba(255, 255, 255, 0.08);
   --color-leads-line-strong: rgba(255, 255, 255, 0.14);
-  --color-files-bg: #0a0a0b;
+  --color-files-bg: #000000;
   --color-files-elev: #141416;
   --color-files-card: #1c1c1f;
   --color-files-ink: #f5f5f7;
@@ -173,13 +173,15 @@
     background-clip: content-box;
   }
   body {
-    @apply bg-background text-foreground font-normal tracking-normal;
+    @apply bg-black text-foreground font-normal tracking-normal;
     -webkit-font-smoothing: antialiased;
+    background-color: #000000;
+    color-scheme: dark;
   }
 }
 
 .ads-os {
-  background: #0a0a0b;
+  background: #000000;
   color: #f5f5f7;
   -webkit-font-smoothing: antialiased;
   --ads-sb: var(--color-ads-ink, #f5f5f7);
@@ -192,7 +194,7 @@
 .ads-os [role="button"]:not(:disabled) { cursor: pointer; }
 
 .leads-os {
-  background: #0a0a0b;
+  background: #000000;
   color: #f5f5f7;
   -webkit-font-smoothing: antialiased;
   --ads-sb: #f5f5f7;
@@ -240,7 +242,7 @@
 }
 
 .files-os {
-  background: #0a0a0b;
+  background: #000000;
   color: #f5f5f7;
   -webkit-font-smoothing: antialiased;
   --files-sb: #f5f5f7;

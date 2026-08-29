@@ -237,17 +237,17 @@ export default function SmmUploadClient() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-zinc-50 flex flex-col items-center pt-6 sm:pt-12 px-4">
+    <div className="min-h-screen w-full bg-black flex flex-col items-center pt-6 sm:pt-12 px-4">
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-zinc-900">Медиафайлы для авто</h1>
+          <h1 className="text-2xl font-bold text-zinc-100">Медиафайлы для авто</h1>
           <p className="text-sm text-zinc-500">
             Загрузите обложку или видео для выбранного автомобиля
           </p>
         </div>
 
         {!selectedCar ? (
-          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-4 space-y-4">
+          <div className="bg-[#141416] rounded-2xl border border-white/10 shadow-sm p-4 space-y-4">
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
@@ -255,7 +255,7 @@ export default function SmmUploadClient() {
                 placeholder="Поиск по названию..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 h-10 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-zinc-900 bg-white"
+                className="w-full pl-9 pr-4 h-10 border border-white/10 rounded-xl text-sm focus:ring-2 focus:ring-white/20 focus:border-zinc-400 text-zinc-100 bg-[#141416]"
               />
             </div>
 
@@ -273,10 +273,10 @@ export default function SmmUploadClient() {
                   <button
                     key={car.id}
                     onClick={() => setSelectedCar(car)}
-                    className="w-full flex items-center justify-between p-3 rounded-xl border border-zinc-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-left"
+                    className="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 hover:border-white/20 hover:bg-white/[0.06] transition-colors text-left"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-white/[0.08] flex items-center justify-center shrink-0">
                         {car.photoUrl ? (
                           <img src={car.photoUrl} alt="" className="w-full h-full object-cover rounded-lg" />
                         ) : (
@@ -284,22 +284,22 @@ export default function SmmUploadClient() {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-sm text-zinc-900 truncate">{car.name}</div>
+                        <div className="font-semibold text-sm text-zinc-100 truncate">{car.name}</div>
                         <div className="text-xs text-zinc-500">{car.year}</div>
                       </div>
                     </div>
                     <div className="flex gap-2 items-center flex-wrap justify-end pl-2">
                       {car.videoCoverUrl && (
-                        <div className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-[10px] font-bold shrink-0">
+                        <div className="bg-amber-500/150/20 text-amber-300 px-2 py-1 rounded text-[10px] font-bold shrink-0">
                           ЕСТЬ ОБЛОЖКА
                         </div>
                       )}
                       {car.videoUrl && (
-                        <div className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-[10px] font-bold shrink-0">
+                        <div className="bg-emerald-500/100/20 text-emerald-300 px-2 py-1 rounded text-[10px] font-bold shrink-0">
                           ЕСТЬ ВИДЕО
                         </div>
                       )}
-                      <div className="w-6 h-6 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-white/[0.08] flex items-center justify-center text-zinc-400 shrink-0">
                         <CheckCircle2 className="w-4 h-4 opacity-0" />
                       </div>
                     </div>
@@ -309,19 +309,19 @@ export default function SmmUploadClient() {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-4 sm:p-6 space-y-6">
+          <div className="bg-[#141416] rounded-2xl border border-white/10 shadow-sm p-4 sm:p-6 space-y-6">
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setSelectedCar(null)}
-                className="text-sm text-blue-600 font-medium hover:underline flex-shrink-0"
+                className="text-sm text-blue-300 font-medium hover:underline flex-shrink-0"
               >
                 ← Назад
               </button>
-              <div className="font-semibold text-base sm:text-lg text-zinc-900 truncate">{selectedCar.name}</div>
+              <div className="font-semibold text-base sm:text-lg text-zinc-100 truncate">{selectedCar.name}</div>
             </div>
 
             {error && (
-              <div className="p-3 bg-rose-50 text-rose-700 text-sm rounded-xl border border-rose-200">
+              <div className="p-3 bg-rose-500/10 text-rose-300 text-sm rounded-xl border border-rose-500/20">
                 {error}
               </div>
             )}
@@ -329,15 +329,15 @@ export default function SmmUploadClient() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Photo Upload Box */}
               {uploadSuccessPhoto ? (
-                <div className="h-48 flex flex-col items-center justify-center text-amber-600 space-y-3 border-2 border-amber-100 bg-amber-50 rounded-2xl">
-                  <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                <div className="h-48 flex flex-col items-center justify-center text-amber-400 space-y-3 border-2 border-amber-400/20 bg-amber-500/15 rounded-2xl">
+                  <div className="w-12 h-12 bg-amber-500/150/20 rounded-full flex items-center justify-center">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <p className="font-semibold text-center text-sm">Обложка загружена!</p>
                 </div>
               ) : (
                 <label className={`block border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors h-48 flex flex-col justify-center ${
-                  isUploadingPhoto ? "border-amber-300 bg-amber-50" : "border-zinc-200 hover:border-amber-400 hover:bg-zinc-50"
+                  isUploadingPhoto ? "border-amber-400/40 bg-amber-500/15" : "border-white/10 hover:border-amber-400/60 hover:bg-white/[0.06]"
                 }`}>
                   <input
                     ref={photoInputRef}
@@ -354,18 +354,18 @@ export default function SmmUploadClient() {
                   <div className="flex flex-col items-center space-y-3">
                     {isUploadingPhoto ? (
                       <>
-                        <Loader2 className="w-8 h-8 text-amber-600 animate-spin" />
-                        <div className="font-semibold text-amber-900 text-sm">Загрузка... {uploadProgressPhoto}%</div>
-                        <div className="w-full max-w-xs h-1.5 bg-amber-100 rounded-full overflow-hidden">
+                        <Loader2 className="w-8 h-8 text-amber-400 animate-spin" />
+                        <div className="font-semibold text-amber-200 text-sm">Загрузка... {uploadProgressPhoto}%</div>
+                        <div className="w-full max-w-xs h-1.5 bg-amber-500/150/20 rounded-full overflow-hidden">
                           <div className="h-full bg-amber-600 transition-all duration-300" style={{ width: `${uploadProgressPhoto}%` }} />
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 mb-2">
+                        <div className="w-10 h-10 bg-white/[0.08] rounded-full flex items-center justify-center text-zinc-500 mb-2">
                           <ImageIcon className="w-5 h-5" />
                         </div>
-                        <div className="font-semibold text-zinc-900 px-4 text-sm">
+                        <div className="font-semibold text-zinc-100 px-4 text-sm">
                           {selectedCar.videoCoverUrl ? "Заменить обложку" : "Загрузить обложку"}
                         </div>
                         <div className="text-xs text-zinc-500">JPG/PNG</div>
@@ -377,15 +377,15 @@ export default function SmmUploadClient() {
 
               {/* Video Upload Box */}
               {uploadSuccessVideo ? (
-                <div className="h-48 flex flex-col items-center justify-center text-emerald-600 space-y-3 border-2 border-emerald-100 bg-emerald-50 rounded-2xl">
-                  <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                <div className="h-48 flex flex-col items-center justify-center text-emerald-600 space-y-3 border-2 border-emerald-500/20 bg-emerald-500/10 rounded-2xl">
+                  <div className="w-12 h-12 bg-emerald-500/100/20 rounded-full flex items-center justify-center">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
                   <p className="font-semibold text-center text-sm">Видео загружено!</p>
                 </div>
               ) : (
                 <label className={`block border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-colors h-48 flex flex-col justify-center ${
-                  isUploadingVideo ? "border-emerald-300 bg-emerald-50" : "border-zinc-200 hover:border-emerald-400 hover:bg-zinc-50"
+                  isUploadingVideo ? "border-emerald-400/40 bg-emerald-500/10" : "border-white/10 hover:border-emerald-400/60 hover:bg-white/[0.06]"
                 }`}>
                   <input
                     ref={videoInputRef}
@@ -404,16 +404,16 @@ export default function SmmUploadClient() {
                       <>
                         <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
                         <div className="font-semibold text-emerald-900 text-sm">Загрузка... {uploadProgressVideo}%</div>
-                        <div className="w-full max-w-xs h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+                        <div className="w-full max-w-xs h-1.5 bg-emerald-500/100/20 rounded-full overflow-hidden">
                           <div className="h-full bg-emerald-600 transition-all duration-300" style={{ width: `${uploadProgressVideo}%` }} />
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 mb-2">
+                        <div className="w-10 h-10 bg-white/[0.08] rounded-full flex items-center justify-center text-zinc-500 mb-2">
                           <Video className="w-5 h-5" />
                         </div>
-                        <div className="font-semibold text-zinc-900 px-4 text-sm">
+                        <div className="font-semibold text-zinc-100 px-4 text-sm">
                           {selectedCar.videoUrl ? "Заменить видео" : "Загрузить видео"}
                         </div>
                         <div className="text-xs text-zinc-500">До 1 ГБ, MP4/MOV</div>
@@ -429,7 +429,7 @@ export default function SmmUploadClient() {
       
       {/* Fake Verification Toast */}
       <div 
-        className={`fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-500 z-50 ${
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 bg-[#141416] text-black px-5 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 transition-all duration-500 z-50 ${
           showVerification ? "translate-y-0 opacity-100" : "translate-y-[150%] opacity-0"
         }`}
       >

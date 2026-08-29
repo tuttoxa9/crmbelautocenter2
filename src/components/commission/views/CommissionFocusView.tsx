@@ -95,21 +95,21 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
   return (
     <div className="absolute inset-0 z-[100] flex justify-end overflow-hidden">
       <div 
-        className="absolute inset-0 bg-zinc-900/30 backdrop-blur-md animate-in fade-in duration-500 hidden md:block" 
+        className="absolute inset-0 bg-black/70 backdrop-blur-md animate-in fade-in duration-500 hidden md:block" 
         onClick={onClose} 
       />
 
-      <div className="relative w-full md:w-[900px] h-full bg-white/95 backdrop-blur-xl md:shadow-[0_0_80px_-20px_rgba(0,0,0,0.5)] md:border-l border-zinc-200/50 z-50 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden animate-in fade-in-0 slide-in-from-right-16 duration-500 pb-20 md:pb-0 md:rounded-l-[2.5rem] overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="relative w-full md:w-[900px] h-full bg-[#141416] backdrop-blur-xl md:shadow-[0_0_80px_-20px_rgba(0,0,0,0.5)] md:border-l border-white/10 z-50 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden animate-in fade-in-0 slide-in-from-right-16 duration-500 pb-20 md:pb-0 md:rounded-l-[2.5rem] overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
 
-      <div className="flex-1 flex flex-col md:h-full bg-transparent md:border-r border-zinc-100/50 md:overflow-y-auto custom-scrollbar shrink-0">
+      <div className="flex-1 flex flex-col md:h-full bg-transparent md:border-r border-white/10 md:overflow-y-auto custom-scrollbar shrink-0">
 
-        <div className="flex-none h-14 border-b border-zinc-200/50 flex items-center justify-between px-3 md:px-6 bg-white/60 backdrop-blur-lg sticky top-0 z-30">
+        <div className="flex-none h-14 border-b border-white/10 flex items-center justify-between px-3 md:px-6 bg-[#141416]/90 backdrop-blur-lg sticky top-0 z-30">
           <div className="flex items-center gap-2 md:gap-3">
-            <Button variant="ghost" onClick={onClose} className="text-zinc-500 hover:text-zinc-900 -ml-2 px-2 md:px-3 flex items-center gap-1 h-auto py-2">
+            <Button variant="ghost" onClick={onClose} className="text-zinc-500 hover:text-zinc-100 -ml-2 px-2 md:px-3 flex items-center gap-1 h-auto py-2">
               <ChevronLeft className="w-6 h-6 -ml-1" />
               <span className="text-[15px] font-medium md:text-sm">Назад</span>
             </Button>
-            <div className="w-px h-4 bg-zinc-200 hidden md:block" />
+            <div className="w-px h-4 bg-white/15 hidden md:block" />
 
             <span className="text-[10px] md:text-xs text-zinc-400 font-mono hidden sm:inline">ID: {lead.id?.slice(-6)}</span>
           </div>
@@ -125,12 +125,12 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
             <input
               value={formData.name}
               onChange={e => setFormData(prev => ({...prev, name: e.target.value}))}
-              className="text-[26px] sm:text-3xl md:text-4xl font-extrabold text-zinc-900 w-full bg-transparent border-none outline-none transition-colors"
+              className="text-[26px] sm:text-3xl md:text-4xl font-extrabold text-zinc-100 w-full bg-transparent border-none outline-none transition-colors"
             />
 
             <div className="mt-4 flex items-center gap-4">
               <div
-                className="flex items-center gap-2 bg-zinc-100/50 hover:bg-zinc-100 border border-zinc-200/50 px-4 py-2 rounded-full cursor-pointer transition-colors group shadow-sm"
+                className="flex items-center gap-2 bg-white/[0.06] hover:bg-white/[0.08] border border-white/10 px-4 py-2 rounded-full cursor-pointer transition-colors group shadow-sm"
                 onClick={() => {
                   if(formData.phone) {
                     navigator.clipboard.writeText(formData.phone);
@@ -142,7 +142,7 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
                 <input
                   value={formData.phone}
                   onChange={e => setFormData(prev => ({...prev, phone: formatPhone(e.target.value)}))}
-                  className="font-mono text-base md:text-lg font-bold bg-transparent outline-none text-zinc-800 min-w-0"
+                  className="font-mono text-base md:text-lg font-bold bg-transparent outline-none text-zinc-200 min-w-0"
                   style={{ width: `${Math.max((formData.phone?.length || 1) + 1, 10)}ch` }}
                 />
                 {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-zinc-300 opacity-0 group-hover:opacity-100" />}
@@ -150,7 +150,7 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
             </div>
           </div>
 
-          <div className="h-px bg-zinc-100 w-full" />
+          <div className="h-px bg-white/[0.08] w-full" />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 md:gap-y-6">
 
@@ -171,7 +171,7 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
               </label>
               <input
                 type="datetime-local"
-                className="flex h-11 w-full rounded-2xl border border-zinc-200/80 bg-zinc-50/50 px-4 py-2 text-sm font-medium text-zinc-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus:bg-white focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 outline-none transition-all"
+                className="flex h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium text-zinc-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus:bg-white/[0.06] focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 outline-none transition-all"
                 value={isDateValid ? format(actionDateObj, "yyyy-MM-dd'T'HH:mm") : ""}
                 onChange={e => {
                   const val = e.target.value;
@@ -187,7 +187,7 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
               <input
                 value={formData.car}
                 onChange={e => setFormData(prev => ({...prev, car: e.target.value}))}
-                className="flex h-11 w-full rounded-2xl border border-zinc-200/80 bg-zinc-50/50 px-4 py-2 text-sm font-medium text-zinc-900 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus:bg-white focus:border-zinc-400 outline-none transition-all"
+                className="flex h-11 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium text-zinc-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] focus:bg-white/[0.06] focus:border-zinc-400 outline-none transition-all"
               />
             </div>
 
@@ -198,7 +198,7 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
               <Textarea
                 value={formData.notes}
                 onChange={e => setFormData(prev => ({...prev, notes: e.target.value}))}
-                className="min-h-[120px] rounded-3xl border-orange-200/50 bg-orange-50/30 focus:bg-orange-50/60 focus:border-orange-300 font-medium text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] p-4 leading-relaxed"
+                className="min-h-[120px] rounded-3xl border-amber-400/20 bg-amber-500/10 focus:bg-amber-500/15 focus:border-amber-400/40 font-medium text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] p-4 leading-relaxed"
                 placeholder="Свободные заметки..."
               />
             </div>
@@ -208,17 +208,17 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
         </div>
       </div>
 
-      <div className="w-full md:w-[380px] bg-zinc-50/50 border-t md:border-t-0 md:border-l border-zinc-200/50 flex flex-col md:h-full md:overflow-y-auto shrink-0 relative">
-        <div className="flex-none p-4 border-b border-zinc-200/50 bg-transparent blur-backdrop-sm sticky top-0 z-10">
+      <div className="w-full md:w-[380px] bg-[#0a0a0b] border-t md:border-t-0 md:border-l border-white/10 flex flex-col md:h-full md:overflow-y-auto shrink-0 relative">
+        <div className="flex-none p-4 border-b border-white/10 bg-transparent blur-backdrop-sm sticky top-0 z-10">
           <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Активность</h3>
         </div>
 
         <div className="flex-1 md:overflow-y-auto p-4 custom-scrollbar">
           {lead.history && lead.history.length > 0 ? (
-            <div className="relative border-l border-zinc-200 ml-3 space-y-6 pb-4">
+            <div className="relative border-l border-white/10 ml-3 space-y-6 pb-4">
               {lead.history.map((event, i) => (
                 <div key={i} className="relative pl-5">
-                  <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-zinc-300 ring-4 ring-zinc-50" />
+                  <div className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-zinc-300 ring-4 ring-[#141416]" />
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                       <StatusBadge status={event.status} />
@@ -228,7 +228,7 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
                     </div>
                     <span className="text-[10px] text-zinc-400">{event.changedBy}</span>
                     {event.comment && (
-                      <div className="mt-1.5 text-xs text-zinc-700 bg-white p-2.5 rounded-md border border-zinc-200/60 shadow-sm">
+                      <div className="mt-1.5 text-xs text-zinc-300 bg-[#141416] p-2.5 rounded-md border border-white/10 shadow-sm">
                         {event.comment}
                       </div>
                     )}
@@ -247,11 +247,11 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
             />
           ) : (
             lead.payload && Object.keys(lead.payload).filter(k => !["name", "phone", "car", "source", "notes"].includes(k)).length > 0 && (
-              <div className="mt-8 pt-6 border-t border-zinc-200/60">
+              <div className="mt-8 pt-6 border-t border-white/10">
                 <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2 mb-3">
                   <Smartphone className="w-3.5 h-3.5" /> Raw Data
                 </h3>
-                <pre className="text-[10px] font-mono text-zinc-500 bg-white p-3 rounded-md border border-zinc-200 overflow-x-auto">
+                <pre className="text-[10px] font-mono text-zinc-500 bg-[#141416] p-3 rounded-md border border-white/10 overflow-x-auto">
                   {JSON.stringify(Object.fromEntries(
                     Object.entries(lead.payload).filter(([k]) => !["name", "phone", "car", "source", "notes"].includes(k))
                   ), null, 2)}
@@ -262,14 +262,14 @@ export function CommissionFocusView({ lead, onClose }: CommissionFocusViewProps)
         </div>
 
         {hasChanges && (
-          <div className="fixed bottom-0 left-0 right-0 p-4 md:p-6 bg-white/70 backdrop-blur-2xl border-t border-zinc-200/50 shadow-[0_-20px_40px_-20px_rgba(0,0,0,0.1)] flex flex-col gap-3 z-[60] md:sticky md:bottom-0 md:mt-auto md:w-full md:rounded-br-none">
+          <div className="fixed bottom-0 left-0 right-0 p-4 md:p-6 bg-[#141416]/95 backdrop-blur-2xl border-t border-white/10 shadow-[0_-20px_40px_-20px_rgba(0,0,0,0.1)] flex flex-col gap-3 z-[60] md:sticky md:bottom-0 md:mt-auto md:w-full md:rounded-br-none">
             {isNextActionMissing && (
               <p className="text-[10px] md:text-xs text-red-600 font-medium text-center text-balance px-2 animate-in slide-in-from-bottom-2">Выберите дату (запланировано)</p>
             )}
             <Button
               onClick={handleSave}
               disabled={isSaveDisabled}
-              className="w-full bg-zinc-900 hover:bg-zinc-800 text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] font-semibold h-12 md:h-14 rounded-full disabled:opacity-50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] tracking-wide"
+              className="w-full bg-white hover:bg-zinc-200 text-black shadow-[0_8px_30px_rgba(0,0,0,0.12)] font-semibold h-12 md:h-14 rounded-full disabled:opacity-50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] tracking-wide"
             >
               {isSaving ? "Сохранение..." : "Сохранить изменения"}
             </Button>

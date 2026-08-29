@@ -51,7 +51,7 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center justify-center gap-2 w-full h-11 bg-zinc-900 hover:bg-zinc-800 text-white rounded-full text-sm font-semibold transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]"
+        className="flex items-center justify-center gap-2 w-full h-11 bg-white hover:bg-zinc-200 text-black rounded-full text-sm font-semibold transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98]"
       >
         <Plus className="w-4 h-4" /> Добавить запись
       </button>
@@ -61,14 +61,14 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div 
-        className="fixed inset-0 bg-zinc-900/40 backdrop-blur-md animate-in fade-in duration-300" 
+        className="fixed inset-0 bg-black/70 backdrop-blur-md animate-in fade-in duration-300" 
         onClick={() => setIsOpen(false)} 
       />
 
-      <div className="bg-white/95 backdrop-blur-xl border border-zinc-200/50 rounded-[2rem] w-full max-w-xl shadow-[0_0_60px_-15px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in-95 duration-300 relative z-10 flex flex-col">
-        <div className="flex justify-between items-center px-6 py-5 border-b border-zinc-100/50 bg-white/40 rounded-t-[2rem]">
-          <h3 className="font-extrabold text-xl text-zinc-900 tracking-tight">Добавить запись</h3>
-          <button onClick={() => setIsOpen(false)} className="text-zinc-400 hover:text-zinc-900 bg-zinc-100/50 hover:bg-zinc-200/50 p-2 rounded-full transition-colors">
+      <div className="bg-[#141416] backdrop-blur-xl border border-white/10 rounded-[2rem] w-full max-w-xl shadow-[0_0_60px_-15px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in-95 duration-300 relative z-10 flex flex-col">
+        <div className="flex justify-between items-center px-6 py-5 border-b border-white/10 bg-[#141416] rounded-t-[2rem]">
+          <h3 className="font-extrabold text-xl text-zinc-100 tracking-tight">Добавить запись</h3>
+          <button onClick={() => setIsOpen(false)} className="text-zinc-400 hover:text-zinc-100 bg-white/[0.06] hover:bg-white/[0.08] p-2 rounded-full transition-colors">
             <X className="w-5 h-5"/>
           </button>
         </div>
@@ -80,7 +80,7 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
               <input
                 autoFocus required
                 value={formData.name} onChange={e => setFormData(prev => ({...prev, name: e.target.value}))}
-                className="w-full h-11 px-4 text-sm border border-zinc-200/80 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-zinc-50/50 focus:bg-white transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                className="w-full h-11 px-4 text-sm text-zinc-100 border border-white/10 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-white/[0.04] focus:bg-white/[0.06] transition-all"
               />
             </div>
             
@@ -89,7 +89,7 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
               <input
                 required
                 value={formData.phone} onChange={e => setFormData(prev => ({...prev, phone: formatPhone(e.target.value)}))}
-                className="w-full h-11 px-4 text-sm font-mono border border-zinc-200/80 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-zinc-50/50 focus:bg-white transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                className="w-full h-11 px-4 text-sm font-mono text-zinc-100 border border-white/10 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-white/[0.04] focus:bg-white/[0.06] transition-all"
               />
             </div>
             
@@ -97,7 +97,7 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
               <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Ссылка на объявление</label>
               <input
                 value={formData.car} onChange={e => setFormData(prev => ({...prev, car: e.target.value}))}
-                className="w-full h-11 px-4 text-sm border border-zinc-200/80 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-zinc-50/50 focus:bg-white transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                className="w-full h-11 px-4 text-sm text-zinc-100 border border-white/10 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-white/[0.04] focus:bg-white/[0.06] transition-all"
               />
             </div>
 
@@ -116,7 +116,7 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
               </label>
               <input
                 type="datetime-local"
-                className="w-full h-11 px-4 text-sm border border-zinc-200/80 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-zinc-50/50 focus:bg-white transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]"
+                className="w-full h-11 px-4 text-sm text-zinc-100 border border-white/10 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 bg-white/[0.04] focus:bg-white/[0.06] transition-all"
                 value={isDateValid ? format(actionDateObj, "yyyy-MM-dd'T'HH:mm") : ""}
                 onChange={e => {
                   const val = e.target.value;
@@ -133,19 +133,19 @@ export function QuickAddCommission({ onSuccess }: QuickAddCommissionProps) {
               <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Заметка менеджера</label>
               <textarea
                 value={formData.notes} onChange={e => setFormData(prev => ({...prev, notes: e.target.value}))}
-                className="w-full min-h-[90px] p-4 text-sm border border-orange-200/50 rounded-3xl outline-none focus:border-orange-300 focus:ring-1 focus:ring-orange-300 bg-orange-50/30 focus:bg-orange-50/60 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] resize-y custom-scrollbar"
+                className="w-full min-h-[90px] p-4 text-sm text-zinc-100 border border-amber-400/20 rounded-3xl outline-none focus:border-amber-400/40 focus:ring-1 focus:ring-amber-400/30 bg-amber-500/10 focus:bg-amber-500/15 transition-all resize-y custom-scrollbar"
               />
             </div>
           </div>
 
-          <div className="pt-2 mt-2 border-t border-zinc-100/50 flex flex-col gap-2">
+          <div className="pt-2 mt-2 border-t border-white/10 flex flex-col gap-2">
             {isNextActionMissing && (
               <p className="text-[10px] text-red-500 text-center font-medium animate-in slide-in-from-bottom-1">Обязательно выберите дату (След. шаг)</p>
             )}
             <button 
               type="submit" 
               disabled={isSubmitting || isNextActionMissing} 
-              className="w-full h-12 bg-zinc-900 hover:bg-zinc-800 text-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] text-sm font-semibold rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              className="w-full h-12 bg-white hover:bg-zinc-200 text-black shadow-[0_8px_30px_rgba(0,0,0,0.12)] text-sm font-semibold rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
             >
               {isSubmitting ? "Создание..." : "Добавить запись"}
             </button>

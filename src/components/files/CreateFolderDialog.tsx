@@ -26,7 +26,7 @@ export function CreateFolderDialog({
 
   return (
     <div className="fixed inset-0 z-[200] flex items-end justify-center p-0 sm:items-center sm:p-4">
-      <div className="absolute inset-0 bg-zinc-900/50 backdrop-blur-sm" onClick={onCancel} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onCancel} />
       <form
         className="relative w-full max-w-sm rounded-t-3xl bg-[#141416] p-6 shadow-2xl sm:rounded-3xl"
         onSubmit={(e) => {

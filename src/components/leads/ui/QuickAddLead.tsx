@@ -121,7 +121,7 @@ export function QuickAddLead({ cars, allLeads, presetCar, open: openProp, onOpen
           }
           setOpen(true);
         }}
-        className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-zinc-900 text-[13px] font-semibold text-white"
+        className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-white text-[13px] font-semibold text-black"
       >
         <Plus className="size-4" /> Клиент
       </button>
@@ -130,8 +130,8 @@ export function QuickAddLead({ cars, allLeads, presetCar, open: openProp, onOpen
 
   return (
     <div className="fixed inset-0 z-[140] flex items-end justify-center p-0 md:items-center md:p-4">
-      <div className="absolute inset-0 bg-zinc-900/35" onClick={() => setOpen(false)} />
-      <div className="relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white md:rounded-3xl">
+      <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
+      <div className="relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-[#141416] text-zinc-100 ring-1 ring-white/10 md:rounded-3xl">
         {picker ? (
           <div className="absolute inset-0 z-10">
             <CarPicker
@@ -150,31 +150,31 @@ export function QuickAddLead({ cars, allLeads, presetCar, open: openProp, onOpen
             />
           </div>
         ) : null}
-        <div className="flex items-center justify-between border-b border-leads-line px-5 py-4">
-          <h3 className="text-[17px] font-semibold">Новый клиент</h3>
-          <button type="button" onClick={() => setOpen(false)} className="flex size-8 items-center justify-center rounded-full text-leads-muted hover:bg-zinc-100">
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <h3 className="text-[17px] font-semibold text-zinc-100">Новый клиент</h3>
+          <button type="button" onClick={() => setOpen(false)} className="flex size-8 items-center justify-center rounded-full text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-100">
             <X className="size-4" />
           </button>
         </div>
         <form onSubmit={(e) => void submit(e)} className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           <div className="grid grid-cols-2 gap-3">
             <label className="col-span-2 sm:col-span-1">
-              <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">Имя</span>
+              <span className="mb-1 block text-[11px] font-medium text-zinc-500 uppercase">Имя</span>
               <input
                 required
                 autoFocus
                 value={form.name}
                 onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                className="h-11 w-full rounded-xl bg-zinc-50 px-3 text-[14px] outline-none ring-1 ring-leads-line focus:bg-white"
+                className="h-11 w-full rounded-xl bg-white/[0.04] px-3 text-[14px] text-zinc-100 outline-none ring-1 ring-white/10 placeholder:text-zinc-600 focus:bg-white/[0.06] focus:ring-zinc-400"
               />
             </label>
             <label className="col-span-2 sm:col-span-1">
-              <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">Телефон</span>
+              <span className="mb-1 block text-[11px] font-medium text-zinc-500 uppercase">Телефон</span>
               <input
                 required
                 value={form.phone}
                 onChange={(e) => setForm((p) => ({ ...p, phone: formatPhone(e.target.value) }))}
-                className="h-11 w-full rounded-xl bg-zinc-50 px-3 font-mono text-[14px] outline-none ring-1 ring-leads-line focus:bg-white"
+                className="h-11 w-full rounded-xl bg-white/[0.04] px-3 font-mono text-[14px] text-zinc-100 outline-none ring-1 ring-white/10 placeholder:text-zinc-600 focus:bg-white/[0.06] focus:ring-zinc-400"
               />
             </label>
           </div>
@@ -182,7 +182,7 @@ export function QuickAddLead({ cars, allLeads, presetCar, open: openProp, onOpen
             <button
               type="button"
               onClick={() => onOpenDuplicate?.(dup)}
-              className="w-full rounded-xl bg-amber-50 px-3 py-2 text-left text-[12px] text-amber-800 ring-1 ring-amber-200/80 hover:bg-amber-100"
+              className="w-full rounded-xl bg-amber-500/15 px-3 py-2 text-left text-[12px] text-amber-200 ring-1 ring-amber-400/40 hover:bg-amber-500/20"
             >
               Номер уже есть: {dup.name || "без имени"} · открыть
             </button>
@@ -190,8 +190,8 @@ export function QuickAddLead({ cars, allLeads, presetCar, open: openProp, onOpen
 
           <div>
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-[11px] font-medium text-leads-subtle uppercase">Авто</span>
-              <button type="button" onClick={() => setPicker(true)} className="text-[12px] font-medium">
+              <span className="text-[11px] font-medium text-zinc-500 uppercase">Авто</span>
+              <button type="button" onClick={() => setPicker(true)} className="text-[12px] font-medium text-zinc-200 hover:text-white">
                 Со склада
               </button>
             </div>
@@ -213,44 +213,44 @@ export function QuickAddLead({ cars, allLeads, presetCar, open: openProp, onOpen
                 value={form.car}
                 onChange={(e) => setForm((p) => ({ ...p, car: e.target.value }))}
                 placeholder="Или текстом"
-                className="h-11 w-full rounded-xl bg-zinc-50 px-3 text-[14px] outline-none ring-1 ring-leads-line focus:bg-white"
+                className="h-11 w-full rounded-xl bg-white/[0.04] px-3 text-[14px] text-zinc-100 outline-none ring-1 ring-white/10 placeholder:text-zinc-600 focus:bg-white/[0.06] focus:ring-zinc-400"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">Статус</span>
+              <span className="mb-1 block text-[11px] font-medium text-zinc-500 uppercase">Статус</span>
               <StatusDropdown value={form.status} onChange={(status) => setForm((p) => ({ ...p, status }))} />
             </div>
             <div>
-              <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">Источник</span>
+              <span className="mb-1 block text-[11px] font-medium text-zinc-500 uppercase">Источник</span>
               <SourceDropdown value={form.source} onChange={(source) => setForm((p) => ({ ...p, source }))} />
             </div>
           </div>
 
           <div>
-            <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">
+            <span className="mb-1 block text-[11px] font-medium text-zinc-500 uppercase">
               Следующий шаг {needsNextAction(form.status) ? "*" : ""}
             </span>
             <DatePresets value={form.nextActionDate} onChange={(nextActionDate) => setForm((p) => ({ ...p, nextActionDate }))} />
           </div>
 
           <label className="block">
-            <span className="mb-1 block text-[11px] font-medium text-leads-subtle uppercase">Заметка</span>
+            <span className="mb-1 block text-[11px] font-medium text-zinc-500 uppercase">Заметка</span>
             <textarea
               value={form.notes}
               onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))}
               rows={3}
-              className="w-full rounded-2xl bg-zinc-50 p-3 text-[13px] outline-none ring-1 ring-leads-line focus:bg-white"
+              className="w-full rounded-2xl bg-white/[0.04] p-3 text-[13px] text-zinc-100 outline-none ring-1 ring-white/10 placeholder:text-zinc-600 focus:bg-white/[0.06]"
             />
           </label>
 
-          {missingDate ? <p className="text-center text-[11px] text-red-600">Нужна дата следующего шага</p> : null}
+          {missingDate ? <p className="text-center text-[11px] text-red-400">Нужна дата следующего шага</p> : null}
           <button
             type="submit"
             disabled={submitting || missingDate}
-            className="h-12 w-full rounded-full bg-zinc-900 text-[14px] font-semibold text-white disabled:opacity-40"
+            className="h-12 w-full rounded-full bg-white text-[14px] font-semibold text-black disabled:opacity-40"
           >
             {submitting ? "Создаём…" : "Добавить"}
           </button>

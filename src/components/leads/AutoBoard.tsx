@@ -83,7 +83,7 @@ export function AutoBoard({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col bg-black">
       <div className="flex gap-1 px-4 py-2">
         {(
           [
@@ -98,7 +98,7 @@ export function AutoBoard({
             onClick={() => setFilter(id)}
             className={cn(
               "rounded-full px-3 py-1.5 text-[12px] font-medium",
-              filter === id ? "bg-zinc-900 text-white" : "text-leads-muted hover:bg-white",
+              filter === id ? "bg-white text-black" : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-100",
             )}
           >
             {label}
@@ -107,7 +107,7 @@ export function AutoBoard({
       </div>
       <AdsScroller className="min-h-0 flex-1" contentClassName="px-3 pb-24">
         {cards.length === 0 ? (
-          <p className="px-4 py-16 text-center text-sm text-leads-muted">
+          <p className="px-4 py-16 text-center text-sm text-zinc-500">
             {filter === "active" ? "Пока никто не привязан к авто" : "Пусто"}
           </p>
         ) : (
@@ -117,21 +117,21 @@ export function AutoBoard({
                 key={car.id}
                 type="button"
                 onClick={() => onOpenCar(car)}
-                className="overflow-hidden rounded-3xl bg-white text-left ring-1 ring-leads-line hover:ring-zinc-400"
+                className="overflow-hidden rounded-3xl bg-[#141416] text-left ring-1 ring-white/10 hover:ring-white/25"
               >
-                <div className="aspect-[16/9] bg-zinc-100">
+                <div className="aspect-[16/9] bg-[#1c1c1f]">
                   {car.photoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={car.photoUrl} alt="" className="h-full w-full object-cover" />
                   ) : null}
                 </div>
                 <div className="p-3">
-                  <p className="truncate text-[14px] font-semibold text-leads-ink">{carTitle(car)}</p>
-                  <p className="mt-0.5 text-[12px] text-leads-muted">
+                  <p className="truncate text-[14px] font-semibold text-zinc-100">{carTitle(car)}</p>
+                  <p className="mt-0.5 text-[12px] text-zinc-400">
                     {car.priceUsd ? `${car.priceUsd.toLocaleString("ru-RU")} $` : "без цены"}
                     {car.isSold ? " · продана" : ""}
                   </p>
-                  <p className="mt-2 text-[12px] text-leads-ink">
+                  <p className="mt-2 text-[12px] text-zinc-300">
                     {active.length} {active.length === 1 ? "клиент" : "клиентов"}
                     {visits ? ` · ${visits} приезда` : ""}
                     {calls ? ` · ${calls} звонка` : ""}
@@ -192,20 +192,20 @@ function CarDossier({
   const rows = lists[tab].sort((a, b) => (b.nextActionDate || b.createdAt) - (a.nextActionDate || a.createdAt));
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-start gap-3 border-b border-leads-line px-4 py-3">
-        <button type="button" onClick={onClose} className="mt-1 flex size-9 items-center justify-center rounded-full text-leads-muted hover:bg-white">
+    <div className="flex h-full min-h-0 flex-col bg-black">
+      <div className="flex items-start gap-3 border-b border-white/10 px-4 py-3">
+        <button type="button" onClick={onClose} className="mt-1 flex size-9 items-center justify-center rounded-full text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-100">
           <X className="size-4" />
         </button>
-        <div className="size-16 shrink-0 overflow-hidden rounded-2xl bg-zinc-200">
+        <div className="size-16 shrink-0 overflow-hidden rounded-2xl bg-[#1c1c1f]">
           {car.photoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={car.photoUrl} alt="" className="h-full w-full object-cover" />
           ) : null}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[17px] font-semibold text-leads-ink">{carTitle(car)}</p>
-          <p className="text-[13px] text-leads-muted">
+          <p className="truncate text-[17px] font-semibold text-zinc-100">{carTitle(car)}</p>
+          <p className="text-[13px] text-zinc-400">
             {car.priceUsd ? `${car.priceUsd.toLocaleString("ru-RU")} $` : "без цены"}
             {car.mileage ? ` · ${car.mileage.toLocaleString("ru-RU")} км` : ""}
             {car.isSold ? " · продана" : ""}
@@ -214,12 +214,12 @@ function CarDossier({
             href={`https://belautocenter.by/catalog/${car.id}`}
             target="_blank"
             rel="noreferrer"
-            className="mt-1 inline-block text-[11px] text-leads-subtle hover:text-leads-ink"
+            className="mt-1 inline-block text-[11px] text-zinc-500 hover:text-zinc-100"
           >
             Открыть на сайте
           </a>
         </div>
-        <button type="button" onClick={onAdd} className="flex h-10 items-center gap-1 rounded-full bg-zinc-900 px-3 text-[12px] font-semibold text-white">
+        <button type="button" onClick={onAdd} className="flex h-10 items-center gap-1 rounded-full bg-white px-3 text-[12px] font-semibold text-black">
           <Plus className="size-3.5" /> Клиент
         </button>
       </div>
@@ -239,7 +239,7 @@ function CarDossier({
             onClick={() => setTab(id)}
             className={cn(
               "shrink-0 rounded-full px-3 py-1.5 text-[12px] font-medium",
-              tab === id ? "bg-zinc-900 text-white" : "text-leads-muted hover:bg-white",
+              tab === id ? "bg-white text-black" : "text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-100",
             )}
           >
             {label}
@@ -249,9 +249,9 @@ function CarDossier({
 
       <AdsScroller className="min-h-0 flex-1" contentClassName="pb-24">
         {rows.length === 0 ? (
-          <p className="px-6 py-16 text-center text-sm text-leads-muted">Пока никого</p>
+          <p className="px-6 py-16 text-center text-sm text-zinc-500">Пока никого</p>
         ) : (
-          <div className="divide-y divide-leads-line bg-white md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+          <div className="divide-y divide-white/10 bg-[#141416] md:mx-3 md:rounded-2xl md:ring-1 md:ring-white/10">
             {rows.map((lead) => (
               <div key={lead.id}>
                 <LeadRow
@@ -261,7 +261,7 @@ function CarDossier({
                   onOpen={() => onOpenLead(lead)}
                 />
                 {lead.nextActionDate ? (
-                  <p className="-mt-2 mb-2 px-12 text-[11px] text-leads-subtle">
+                  <p className="-mt-2 mb-2 px-12 text-[11px] text-zinc-500">
                     {getStatusLabel(lead.status)} · {format(lead.nextActionDate, "d MMM, HH:mm", { locale: ru })}
                   </p>
                 ) : null}

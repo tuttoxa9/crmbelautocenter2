@@ -36,14 +36,14 @@ function CustomSelect({ value, onChange, options, openUpward }: CustomSelectProp
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full h-11 px-4 text-sm bg-white border border-zinc-200 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-semibold text-zinc-800 shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] hover:bg-zinc-50/50 cursor-pointer"
+        className="flex items-center justify-between w-full h-11 px-4 text-sm bg-[#141416] border border-white/10 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-semibold text-zinc-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] hover:bg-white/[0.04] cursor-pointer"
       >
         <span>{currentOption.label}</span>
         <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (
-        <div className={`absolute z-50 left-0 right-0 p-1.5 bg-white border border-zinc-200/80 rounded-2xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in duration-150 ease-out ${
+        <div className={`absolute z-50 left-0 right-0 p-1.5 bg-[#141416] border border-white/10 rounded-2xl shadow-xl max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in duration-150 ease-out ${
           openUpward ? "bottom-full mb-2 slide-in-from-bottom-2" : "top-full mt-2 slide-in-from-top-2"
         }`}>
           {options.map(option => (
@@ -56,12 +56,12 @@ function CustomSelect({ value, onChange, options, openUpward }: CustomSelectProp
               }}
               className={`flex items-center justify-between w-full px-3 py-2 text-sm rounded-xl text-left transition-colors cursor-pointer ${
                 option.value === value
-                  ? "bg-zinc-950 text-white font-semibold"
-                  : "text-zinc-700 hover:bg-zinc-100"
+                  ? "bg-white text-black font-semibold"
+                  : "text-zinc-300 hover:bg-white/[0.08]"
               }`}
             >
               <span>{option.label}</span>
-              {option.value === value && <Check className="w-4 h-4 text-white" />}
+              {option.value === value && <Check className="w-4 h-4 text-black" />}
             </button>
           ))}
         </div>
@@ -72,8 +72,8 @@ function CustomSelect({ value, onChange, options, openUpward }: CustomSelectProp
 
 function InterfaceSettings() {
   return (
-    <div className="mt-2 rounded-2xl border border-zinc-200 bg-white p-5">
-      <p className="font-semibold text-zinc-900">Лиды</p>
+    <div className="mt-2 rounded-2xl border border-white/10 bg-[#141416] p-5">
+      <p className="font-semibold text-zinc-100">Лиды</p>
       <p className="mt-1 text-sm leading-relaxed text-zinc-500">
         В разделе теперь три режима: <b>День</b> (приезды и перезвоны по дате), <b>Авто</b> (склад и клиенты на машину) и <b>База</b> (вся история). Переключатель — сверху в самих Лидах.
       </p>
@@ -239,10 +239,10 @@ export default function SettingsPage() {
   // Only admin has access to settings
   if (userRole !== "admin") {
     return (
-      <div className="flex h-full items-center justify-center p-8 bg-zinc-50">
+      <div className="flex h-full items-center justify-center p-8 bg-black">
         <div className="text-center text-zinc-500">
           <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-          <p className="font-semibold text-zinc-950">Доступ запрещен</p>
+          <p className="font-semibold text-zinc-100">Доступ запрещен</p>
           <p className="text-sm mt-1">Требуются права администратора для изменения настроек.</p>
         </div>
       </div>
@@ -250,21 +250,21 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-zinc-50 overflow-hidden">
+    <div className="flex flex-col h-full bg-black overflow-hidden">
       {/* Header */}
-      <div className="border-b border-zinc-200 bg-white px-6 py-5">
-        <h2 className="text-2xl font-bold tracking-tight text-zinc-950">Настройки</h2>
+      <div className="border-b border-white/10 bg-[#141416] px-6 py-5">
+        <h2 className="text-2xl font-bold tracking-tight text-zinc-100">Настройки</h2>
         <p className="text-sm text-zinc-500 mt-1">Управление параметрами CRM и интеграциями</p>
       </div>
 
       {/* Tabs Selector */}
-      <div className="flex border-b border-zinc-200 bg-white px-6 overflow-x-auto custom-scrollbar">
+      <div className="flex border-b border-white/10 bg-[#141416] px-6 overflow-x-auto custom-scrollbar">
         <button
           onClick={() => setActiveTab("interface")}
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
             activeTab === "interface"
-              ? "border-zinc-950 text-zinc-950 font-bold"
-              : "border-transparent text-zinc-500 hover:text-zinc-900"
+              ? "border-white text-white font-bold"
+              : "border-transparent text-zinc-500 hover:text-white"
           }`}
         >
           <LayoutGrid className="w-4 h-4" />
@@ -274,8 +274,8 @@ export default function SettingsPage() {
           onClick={() => setActiveTab("telegram")}
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
             activeTab === "telegram"
-              ? "border-zinc-950 text-zinc-950 font-bold"
-              : "border-transparent text-zinc-500 hover:text-zinc-900"
+              ? "border-white text-white font-bold"
+              : "border-transparent text-zinc-500 hover:text-white"
           }`}
         >
           <Bot className="w-4 h-4" />
@@ -285,8 +285,8 @@ export default function SettingsPage() {
           onClick={() => setActiveTab("integrations")}
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
             activeTab === "integrations"
-              ? "border-zinc-950 text-zinc-950 font-bold"
-              : "border-transparent text-zinc-500 hover:text-zinc-900"
+              ? "border-white text-white font-bold"
+              : "border-transparent text-zinc-500 hover:text-white"
           }`}
         >
           <Link2 className="w-4 h-4" />
@@ -296,8 +296,8 @@ export default function SettingsPage() {
           onClick={() => setActiveTab("cleanup")}
           className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all ${
             activeTab === "cleanup"
-              ? "border-zinc-950 text-zinc-950 font-bold"
-              : "border-transparent text-zinc-500 hover:text-zinc-900"
+              ? "border-white text-white font-bold"
+              : "border-transparent text-zinc-500 hover:text-white"
           }`}
         >
           <Trash2 className="w-4 h-4" />
@@ -309,10 +309,10 @@ export default function SettingsPage() {
       <div className="flex-1 overflow-y-auto p-6">
         {activeTab === "interface" ? (
           <div className="max-w-2xl space-y-6">
-            <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl">
+            <Card className="border-white/10 shadow-sm bg-[#141416] rounded-2xl">
               <CardHeader>
                 <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <LayoutGrid className="w-5 h-5 text-zinc-700" />
+                  <LayoutGrid className="w-5 h-5 text-zinc-300" />
                   Версия интерфейса CRM
                 </CardTitle>
                 <CardDescription>
@@ -332,8 +332,8 @@ export default function SettingsPage() {
               <div
                 className={`p-4 rounded-xl flex items-center gap-3 border animate-in fade-in duration-200 ${
                   toast.type === "success"
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : "bg-red-50 border-red-200 text-red-800"
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                    : "bg-red-500/10 border-red-500/20 text-red-300"
                 }`}
               >
                 {toast.type === "success" ? (
@@ -347,7 +347,7 @@ export default function SettingsPage() {
 
             <form onSubmit={handleSave} className="space-y-6">
               {/* Telegram Bot Credentials Card */}
-              <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl">
+              <Card className="border-white/10 shadow-sm bg-[#141416] rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold">Параметры Telegram бота</CardTitle>
                   <CardDescription>
@@ -355,9 +355,9 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  <div className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-200/50">
+                  <div className="flex items-center justify-between p-4 bg-white/[0.04] rounded-2xl border border-white/10">
                     <div className="space-y-0.5">
-                      <Label htmlFor="telegram-active" className="text-sm font-bold text-zinc-800">
+                      <Label htmlFor="telegram-active" className="text-sm font-bold text-zinc-200">
                         Включить уведомления
                       </Label>
                       <p className="text-xs text-zinc-500">
@@ -372,7 +372,7 @@ export default function SettingsPage() {
                         onChange={(e) => setSettings({ ...settings, isActive: e.target.checked })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-zinc-950"></div>
+                      <div className="w-11 h-6 bg-white/15 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-zinc-100 after:border-white/15 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-white peer-checked:after:bg-black"></div>
                     </label>
                   </div>
 
@@ -386,10 +386,10 @@ export default function SettingsPage() {
                       placeholder="7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4"
                       value={settings.botToken}
                       onChange={(e) => setSettings({ ...settings, botToken: e.target.value })}
-                      className="h-11 px-4 text-sm border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl"
+                      className="h-11 px-4 text-sm border-white/10 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl"
                     />
                     <p className="text-[11px] text-zinc-400">
-                      Токен, полученный от бота <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-zinc-950 underline font-semibold">@BotFather</a>.
+                      Токен, полученный от бота <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-zinc-100 underline font-semibold">@BotFather</a>.
                     </p>
                   </div>
 
@@ -402,7 +402,7 @@ export default function SettingsPage() {
                       placeholder="-1002721193947"
                       value={settings.chatId}
                       onChange={(e) => setSettings({ ...settings, chatId: e.target.value })}
-                      className="h-11 px-4 text-sm font-mono border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl"
+                      className="h-11 px-4 text-sm font-mono border-white/10 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl"
                     />
                     <p className="text-[11px] text-zinc-400">
                       ID группы (обычно начинается с <code>-100</code>). Бот должен быть добавлен в группу.
@@ -415,7 +415,7 @@ export default function SettingsPage() {
                       variant="outline"
                       onClick={handleTestConnection}
                       disabled={isTesting}
-                      className="w-full sm:w-auto h-10 border-zinc-200 hover:bg-zinc-50 text-zinc-700 rounded-full font-semibold transition-all px-6"
+                      className="w-full sm:w-auto h-10 border-white/10 hover:bg-white/[0.06] text-zinc-300 rounded-full font-semibold transition-all px-6"
                     >
                       {isTesting ? (
                         <>
@@ -434,10 +434,10 @@ export default function SettingsPage() {
               </Card>
 
               {/* Reminder Settings Card */}
-              <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl">
+              <Card className="border-white/10 shadow-sm bg-[#141416] rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <CalendarRange className="w-5 h-5 text-zinc-700" />
+                    <CalendarRange className="w-5 h-5 text-zinc-300" />
                     Настройка напоминаний о задачах
                   </CardTitle>
                   <CardDescription>
@@ -449,8 +449,8 @@ export default function SettingsPage() {
                     {statusesList.map((status, index) => {
                       const currentValue = settings.reminderRules?.[status.id] ?? 0;
                       return (
-                        <div key={status.id} className="flex flex-col gap-1.5 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200/50">
-                          <Label htmlFor={`status-rule-${status.id}`} className="text-xs font-bold text-zinc-600 tracking-wider">
+                        <div key={status.id} className="flex flex-col gap-1.5 p-3.5 bg-white/[0.04] rounded-2xl border border-white/10">
+                          <Label htmlFor={`status-rule-${status.id}`} className="text-xs font-bold text-zinc-400 tracking-wider">
                             {status.label}
                           </Label>
                           <CustomSelect
@@ -471,7 +471,7 @@ export default function SettingsPage() {
                 <Button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full h-12 bg-zinc-950 hover:bg-zinc-800 text-white rounded-full font-bold transition-all shadow-[0_8px_30px_rgba(0,0,0,0.12)] text-sm"
+                  className="w-full h-12 bg-white hover:bg-zinc-200 text-black rounded-full font-bold transition-all text-sm"
                 >
                   {isSaving ? (
                     <>
@@ -489,8 +489,8 @@ export default function SettingsPage() {
               <div
                 className={`p-4 rounded-xl flex items-start gap-3 border animate-in fade-in duration-200 ${
                   testResult.success
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : "bg-red-50 border-red-200 text-red-800"
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                    : "bg-red-500/10 border-red-500/20 text-red-300"
                 }`}
               >
                 {testResult.success ? (
@@ -516,8 +516,8 @@ export default function SettingsPage() {
               <div
                 className={`p-4 rounded-xl flex items-center gap-3 border animate-in fade-in duration-200 ${
                   deleteResult.type === "success"
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : "bg-red-50 border-red-200 text-red-800"
+                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                    : "bg-red-500/10 border-red-500/20 text-red-300"
                 }`}
               >
                 {deleteResult.type === "success" ? (
@@ -529,10 +529,10 @@ export default function SettingsPage() {
               </div>
             )}
 
-            <Card className="border-zinc-200/85 shadow-sm bg-white rounded-2xl">
+            <Card className="border-white/10 shadow-sm bg-[#141416] rounded-2xl">
               <CardHeader>
                 <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  <Trash2 className="w-5 h-5 text-zinc-700" />
+                  <Trash2 className="w-5 h-5 text-zinc-300" />
                   Удаление заявок по статусу
                 </CardTitle>
                 <CardDescription>
@@ -553,7 +553,7 @@ export default function SettingsPage() {
                         setDeleteResult(null);
                         setShowConfirm(false);
                       }}
-                      className="w-full h-11 px-4 pr-10 text-sm bg-white border border-zinc-200 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-semibold text-zinc-800 shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] hover:bg-zinc-50/50 cursor-pointer appearance-none"
+                      className="w-full h-11 px-4 pr-10 text-sm bg-[#141416] border border-white/10 rounded-2xl outline-none focus:border-zinc-400 focus:ring-1 focus:ring-zinc-400 transition-all font-semibold text-zinc-200 shadow-[inset_0_2px_4px_rgba(0,0,0,0.01)] hover:bg-white/[0.04] cursor-pointer appearance-none"
                     >
                       <option value="">Выберите статус...</option>
                       {LEAD_STATUSES.map(s => (
@@ -578,7 +578,7 @@ export default function SettingsPage() {
                         setDeleteResult(null);
                         setShowConfirm(false);
                       }}
-                      className="h-11 px-4 text-sm border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl font-semibold"
+                      className="h-11 px-4 text-sm border-white/10 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl font-semibold"
                     />
                   </div>
                   <div className="space-y-2">
@@ -593,7 +593,7 @@ export default function SettingsPage() {
                         setDeleteResult(null);
                         setShowConfirm(false);
                       }}
-                      className="h-11 px-4 text-sm border-zinc-200 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl font-semibold"
+                      className="h-11 px-4 text-sm border-white/10 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl font-semibold"
                     />
                   </div>
                 </div>
@@ -611,11 +611,11 @@ export default function SettingsPage() {
                       Удалить заявки
                     </Button>
                   ) : (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-2xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="flex items-start gap-3">
                         <ShieldAlert className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="text-sm font-bold text-red-800">Подтвердите удаление</p>
+                          <p className="text-sm font-bold text-red-300">Подтвердите удаление</p>
                           <p className="text-xs text-red-600 mt-0.5">
                             Будут безвозвратно удалены все заявки со статусом <strong>«{selectedStatusLabel}»</strong> за период <strong>{cleanupDateFrom}</strong> — <strong>{cleanupDateTo}</strong>.
                           </p>
@@ -642,7 +642,7 @@ export default function SettingsPage() {
                           variant="outline"
                           disabled={isDeleting}
                           onClick={() => setShowConfirm(false)}
-                          className="flex-1 h-10 border-zinc-200 hover:bg-zinc-50 text-zinc-700 rounded-full font-semibold text-sm"
+                          className="flex-1 h-10 border-white/10 hover:bg-white/[0.06] text-zinc-300 rounded-full font-semibold text-sm"
                         >
                           Отмена
                         </Button>
