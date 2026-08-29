@@ -158,7 +158,7 @@ export function DayBoard({
     <AdsScroller className="h-full" contentClassName="pb-24">
       {groups.map((group) => (
         <section key={group.key} className="mb-2">
-          <div className="sticky top-0 z-10 bg-[#f5f5f7]/90 px-4 py-2 backdrop-blur">
+          <div className="sticky top-0 z-10 bg-[#0a0a0b]/90 px-4 py-2 backdrop-blur">
             <p className="text-[11px] font-semibold tracking-wide text-leads-muted uppercase">
               {group.label} <span className="text-leads-subtle">{group.items.length}</span>
             </p>
@@ -169,7 +169,7 @@ export function DayBoard({
                 <p className="px-4 py-1.5 text-[12px] font-semibold text-leads-ink md:px-5">
                   {sub.label} <span className="font-medium text-leads-subtle">{sub.items.length}</span>
                 </p>
-                <div className="divide-y divide-leads-line bg-white md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+                <div className="divide-y divide-leads-line bg-[#141416] md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
                   {sub.items.map((lead) => (
                     <LeadRow
                       key={lead.id}
@@ -186,7 +186,7 @@ export function DayBoard({
               </div>
             ))
           ) : (
-            <div className="divide-y divide-leads-line bg-white md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+            <div className="divide-y divide-leads-line bg-[#141416] md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
               {group.items.map((lead) => (
                 <LeadRow
                   key={lead.id}
