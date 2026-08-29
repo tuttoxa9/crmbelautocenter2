@@ -31,15 +31,15 @@ export function DeleteConfirmDialog({
   return (
     <div className="fixed inset-0 z-[200] flex items-end justify-center sm:items-center sm:p-4">
       <div className="absolute inset-0 bg-zinc-900/50 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative w-full max-w-sm rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl">
+      <div className="relative w-full max-w-sm rounded-t-3xl bg-[#141416] p-6 shadow-2xl sm:rounded-3xl">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-red-50">
+          <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-red-500/10">
             <AlertTriangle className="size-7 text-red-500" />
           </div>
-          <h3 className="mb-1.5 text-lg font-semibold text-zinc-900">{title}</h3>
+          <h3 className="mb-1.5 text-lg font-semibold text-zinc-100">{title}</h3>
           <p className="text-sm leading-relaxed text-zinc-500">{description}</p>
           {smmWarning ? (
-            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-left text-xs text-amber-800">
+            <p className="mt-3 rounded-xl bg-amber-500/10 px-3 py-2 text-left text-xs text-amber-200">
               Здесь лежит публичная загрузка SMM. Удаление бьёт по роликам на сайте и в форме.
             </p>
           ) : null}
@@ -49,7 +49,7 @@ export function DeleteConfirmDialog({
             ref={cancelRef}
             type="button"
             onClick={onCancel}
-            className="h-12 flex-1 rounded-2xl border border-zinc-200 text-sm font-medium text-zinc-700"
+            className="h-12 flex-1 rounded-2xl border border-white/10 text-sm font-medium text-zinc-300"
           >
             Отмена
           </button>
