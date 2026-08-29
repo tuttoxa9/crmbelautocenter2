@@ -434,7 +434,7 @@ function PeopleDesk({ onChanged, ping }: { onChanged: () => Promise<void> | void
         Новый SMM
       </PrimaryBtn>
       {people.length === 0 ? (
-        <p className="py-10 text-center text-sm text-ads-subtle">Пока никого. Заведите Сашу и Вику здесь — они получат логин и кабинет «Мои цели».</p>
+        <p className="py-10 text-center text-sm text-ads-subtle">Пока никого. Добавьте человека — он получит логин и кабинет «Мои цели».</p>
       ) : (
         <div className="overflow-hidden rounded-2xl bg-ads-card">
           {people.map((p, i) => (
