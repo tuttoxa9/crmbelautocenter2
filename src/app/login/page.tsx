@@ -3,10 +3,6 @@
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { AlertCircle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
@@ -18,23 +14,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
-  // The AuthContext will handle redirection if already logged in, 
-  // but just in case this page renders momentarily
-  if (user) {
-    return null;
-  }
+  if (user) return null;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     if (!auth) {
-      setError("Система авторизации не настроена. Пожалуйста, проверьте конфигурацию Firebase.");
+      setError("Система авторизации не настроена.");
       setLoading(false);
       return;
     }
-
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err: unknown) {
@@ -46,51 +36,43 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md shadow-lg border-gray-200">
-        <CardHeader className="space-y-1 pb-6">
-          <CardTitle className="text-2xl font-bold text-center tracking-tight">Белавтоцентр CRM</CardTitle>
-          <CardDescription className="text-center text-gray-500">
-            Вход для сотрудников
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            {error && (
-              <div className="p-3 bg-red-50 text-red-600 rounded-md text-sm flex items-center gap-2 border border-red-100">
-                <AlertCircle className="h-4 w-4" />
-                {error}
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Пароль</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full"
-              />
-            </div>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
-              {loading ? <Spinner size="sm" className="mr-2" /> : null}
-              {loading ? "Вход..." : "Войти"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <div className="flex min-h-screen items-center justify-center bg-black p-4">
+      <form onSubmit={handleLogin} className="w-full max-w-md rounded-[24px] bg-[#141416] p-8 shadow-[0_24px_80px_rgba(0,0,0,.6)] ring-1 ring-white/10">
+        <p className="text-center text-xl font-semibold tracking-tight text-zinc-100">Белавтоцентр</p>
+        <p className="mt-1 text-center text-sm text-zinc-500">Вход для сотрудников</p>
+        {error ? (
+          <div className="mt-5 flex items-center gap-2 rounded-2xl bg-red-500/10 px-3 py-2.5 text-sm text-red-300">
+            <AlertCircle className="size-4 shrink-0" strokeWidth={1.5} />
+            {error}
+          </div>
+        ) : null}
+        <label className="mt-6 block text-xs font-medium text-zinc-500">Email</label>
+        <input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="mt-1.5 h-11 w-full rounded-xl bg-black/40 px-3 text-sm text-zinc-100 outline-none ring-1 ring-white/10 focus:ring-white/25"
+        />
+        <label className="mt-4 block text-xs font-medium text-zinc-500">Пароль</label>
+        <input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="mt-1.5 h-11 w-full rounded-xl bg-black/40 px-3 text-sm text-zinc-100 outline-none ring-1 ring-white/10 focus:ring-white/25"
+        />
+        <button
+          type="submit"
+          disabled={loading}
+          className="mt-6 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-white text-sm font-semibold text-black disabled:opacity-40"
+        >
+          {loading ? <Spinner size="sm" /> : null}
+          {loading ? "Вход…" : "Войти"}
+        </button>
+      </form>
     </div>
   );
 }

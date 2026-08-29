@@ -1,28 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Sidebar } from "./Sidebar";
-import { Menu, X, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, Folder, Settings, Briefcase, Calculator, Megaphone, Target } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Menu, X, LogOut } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
+import { Sidebar } from "./Sidebar";
 import { Spinner } from "@/components/ui/spinner";
-
-const navItems = [
-  { name: "Лиды", href: "/leads", icon: ClipboardList, roles: ["admin"] },
-  { name: "Комиссия", href: "/commission", icon: Briefcase, roles: ["admin", "commission"] },
-  { name: "Реклама TikTok", href: "/ads", icon: Megaphone, roles: ["admin", "commission"] },
-  { name: "Контроль качества", href: "/quality", icon: Target, roles: ["admin"] },
-  { name: "Мои цели", href: "/goals", icon: Target, roles: ["smm"] },
-  { name: "Бюджет", href: "/budget", icon: Calculator, roles: ["admin"] },
-  { name: "Файлы", href: "/files", icon: Folder, roles: ["admin"] },
-  { name: "Настройки", href: "/settings", icon: Settings, roles: ["admin"] },
-];
+import { NAV_ITEMS } from "@/lib/nav";
+import { cn } from "@/lib/utils";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -31,15 +19,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
-         <Spinner size="lg" />
+      <div className="flex min-h-screen items-center justify-center bg-black">
+        <Spinner size="lg" />
       </div>
     );
   }
-
-  // If not logged in and not on login page, children shouldn't really render much anyway
-  // but AuthContext handles the redirect. Just to be safe we render children if not logged in
-  // on the login page (handled by App logic, but DashboardLayout is only used for auth pages).
 
   const handleLogout = async () => {
     if (!auth) return;
@@ -50,82 +34,65 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const items = NAV_ITEMS.filter((item) => item.roles.includes(userRole || "admin"));
+  const current = items.find((i) => pathname.startsWith(i.href))?.name || "Белавтоцентр";
+
   return (
-    <div className="flex h-[100dvh] bg-black overflow-hidden text-zinc-900 overflow-y-hidden">
+    <div className="flex h-[100dvh] overflow-hidden bg-black text-zinc-100">
       <Sidebar />
 
-      {/* Mobile Sidebar overlay */}
-      {mobileMenuOpen && (
+      {mobileMenuOpen ? (
         <div className="fixed inset-0 z-40 flex md:hidden">
-          <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div>
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-zinc-950 text-zinc-100 shadow-2xl">
-            <div className="absolute top-0 right-0 -mr-12 pt-2">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-md" onClick={() => setMobileMenuOpen(false)} />
+          <div className="relative flex h-full w-[80vw] max-w-xs flex-col rounded-r-3xl bg-[#070708] text-zinc-100 shadow-[0_24px_80px_rgba(0,0,0,.6)] ring-1 ring-white/10">
+            <div className="flex items-center justify-between px-5 pt-6 pb-4">
+              <p className="text-sm font-semibold tracking-tight">Белавтоцентр</p>
               <button
                 type="button"
-                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
                 onClick={() => setMobileMenuOpen(false)}
+                className="flex size-10 items-center justify-center rounded-full text-zinc-400 hover:text-white"
               >
-                <span className="sr-only">Закрыть меню</span>
-                <X className="h-6 w-6 text-white" aria-hidden="true" />
+                <X className="size-5" strokeWidth={1.5} />
               </button>
             </div>
-            <div className="flex-1 h-0 pt-6 pb-4 overflow-y-auto">
-              <div className="flex-shrink-0 flex items-center px-6">
-                <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
-              </div>
-              <nav className="mt-8 px-4 space-y-1">
-                {navItems.filter(item => item.roles.includes(userRole || 'admin')).map((item) => {
-                  const isActive = pathname.startsWith(item.href);
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "group flex items-center px-3 py-2.5 text-base font-medium rounded-md transition-colors",
-                        isActive ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100"
-                      )}
-                    >
-                      <item.icon className="mr-4 h-5 w-5" aria-hidden="true" />
-                      {item.name}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-            <div className="flex-shrink-0 flex border-t border-zinc-800 p-4">
-              <div className="flex items-center w-full justify-between">
-                <div className="text-sm font-medium text-zinc-400 truncate">
-                  {user?.email || "Пользователь"}
-                </div>
-                <Button variant="ghost" size="icon" onClick={handleLogout} className="text-zinc-400 hover:text-white hover:bg-zinc-800">
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </div>
+            <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
+              {items.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={cn(
+                      "flex h-12 items-center gap-3 rounded-2xl px-3 text-[15px] font-medium",
+                      isActive ? "bg-[#141416] text-white" : "text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100",
+                    )}
+                  >
+                    <item.icon className="size-5" strokeWidth={1.5} />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="flex items-center justify-between border-t border-white/10 px-4 py-4">
+              <span className="truncate text-sm text-zinc-500">{user?.email || "Пользователь"}</span>
+              <button type="button" onClick={() => void handleLogout()} className="flex size-10 items-center justify-center rounded-xl text-zinc-500 hover:text-white">
+                <LogOut className="size-5" strokeWidth={1.5} />
+              </button>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile header */}
-        <div className="md:hidden flex items-center justify-between bg-zinc-950 border-b border-zinc-800 px-4 py-3">
-          <h1 className="text-base font-semibold text-zinc-100 tracking-tight">
-            {navItems.find((i) => pathname.startsWith(i.href))?.name || "Белавтоцентр CRM"}
-          </h1>
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="text-zinc-400 hover:text-zinc-100 focus:outline-none"
-          >
-            <Menu className="h-6 w-6" />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden md:pl-[88px]">
+        <div className="flex items-center justify-between border-b border-white/10 bg-black px-4 py-3 md:hidden">
+          <h1 className="text-base font-semibold tracking-tight text-zinc-100">{current}</h1>
+          <button type="button" onClick={() => setMobileMenuOpen(true)} className="text-zinc-400 hover:text-zinc-100">
+            <Menu className="size-6" strokeWidth={1.5} />
           </button>
         </div>
-
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-hidden bg-black">
-          <div className="h-full w-full">
-            {children}
-          </div>
+        <main className="min-h-0 flex-1 overflow-hidden bg-black">
+          <div className="h-full w-full">{children}</div>
         </main>
       </div>
     </div>

@@ -1,28 +1,19 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { ClipboardList, Folder, Settings, LogOut, Briefcase, Calculator, Megaphone, Target } from "lucide-react";
-import { auth } from "@/lib/firebase";
+import { LogOut } from "lucide-react";
 import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-
-const navItems = [
-  { name: "Лиды", href: "/leads", icon: ClipboardList, roles: ["admin"] },
-  { name: "Комиссия", href: "/commission", icon: Briefcase, roles: ["admin", "commission"] },
-  { name: "Реклама TikTok", href: "/ads", icon: Megaphone, roles: ["admin", "commission"] },
-  { name: "Контроль качества", href: "/quality", icon: Target, roles: ["admin"] },
-  { name: "Мои цели", href: "/goals", icon: Target, roles: ["smm"] },
-  { name: "Бюджет", href: "/budget", icon: Calculator, roles: ["admin"] },
-  { name: "Файлы", href: "/files", icon: Folder, roles: ["admin"] },
-  { name: "Настройки", href: "/settings", icon: Settings, roles: ["admin"] },
-];
+import { NAV_ITEMS } from "@/lib/nav";
+import { cn } from "@/lib/utils";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user, userRole } = useAuth();
+  const leaveTimer = useRef<number | null>(null);
 
   const handleLogout = async () => {
     if (!auth) return;
@@ -33,41 +24,79 @@ export function Sidebar() {
     }
   };
 
-  return (
-    <div className="flex h-screen flex-col bg-zinc-950 border-r border-zinc-800 text-zinc-100 w-64 flex-shrink-0 hidden md:flex">
-      <div className="p-6 border-b border-zinc-800">
-        <h1 className="text-lg font-semibold tracking-tight">Белавтоцентр CRM</h1>
-      </div>
-      
-      <nav className="flex-1 px-3 py-6 space-y-1">
-        {navItems.filter(item => item.roles.includes(userRole || 'admin')).map((item) => {
-          const isActive = pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                isActive ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-100"
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.name}
-            </Link>
-          );
-        })}
-      </nav>
+  const items = NAV_ITEMS.filter((item) => item.roles.includes(userRole || "admin"));
+  const initial = (user?.email || "Б").slice(0, 1).toUpperCase();
 
-      <div className="p-4 border-t border-zinc-800">
-        <div className="flex items-center justify-between">
-          <div className="text-xs font-medium text-zinc-400 truncate pr-2">
+  const onEnter = () => {
+    if (leaveTimer.current) {
+      window.clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+  };
+
+  return (
+    <aside
+      onMouseEnter={onEnter}
+      onMouseLeave={() => {
+        /* collapse via CSS group */
+      }}
+      className="group/rail pointer-events-none fixed top-2 bottom-2 left-2 z-30 hidden md:block"
+    >
+      <div
+        className={cn(
+          "pointer-events-auto flex h-full w-[72px] flex-col overflow-hidden rounded-3xl bg-[#070708] text-zinc-100 shadow-[0_24px_80px_rgba(0,0,0,.55)] ring-1 ring-white/10",
+          "transition-[width] duration-150 ease-out motion-reduce:transition-none",
+          "hover:w-[240px] focus-within:w-[240px]",
+        )}
+      >
+        <div className="flex h-[72px] shrink-0 items-center gap-3 px-[16px]">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-semibold text-black">
+            Б
+          </span>
+          <span className="min-w-0 truncate text-sm font-semibold tracking-tight opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">
+            Белавтоцентр
+          </span>
+        </div>
+
+        <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 py-2">
+          {items.map((item) => {
+            const isActive = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.name}
+                className={cn(
+                  "flex h-11 items-center gap-3 rounded-2xl px-[10px] text-[13px] font-medium transition-colors",
+                  isActive ? "bg-[#141416] text-white" : "text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100",
+                )}
+              >
+                <item.icon className="size-5 shrink-0" strokeWidth={1.5} />
+                <span className="min-w-0 truncate opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">
+                  {item.name}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="flex h-[64px] shrink-0 items-center gap-2 px-3">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-[11px] font-medium">
+            {initial}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[11px] text-zinc-500 opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100 group-focus-within/rail:opacity-100">
             {user?.email || "Пользователь"}
-          </div>
-          <Button variant="ghost" size="icon" onClick={handleLogout} className="h-8 w-8 text-zinc-400 hover:text-white hover:bg-zinc-800" title="Выйти">
-            <LogOut className="h-4 w-4" />
-          </Button>
+          </span>
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
+            title="Выйти"
+            className="flex size-9 shrink-0 items-center justify-center rounded-xl text-zinc-500 hover:bg-white/[0.06] hover:text-white"
+          >
+            <LogOut className="size-4" strokeWidth={1.5} />
+          </button>
         </div>
       </div>
-    </div>
+    </aside>
   );
 }
