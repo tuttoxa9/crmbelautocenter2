@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const COMMISSION_ALLOWED = ["/commission", "/ads", "/login"];
+const SMM_ALLOWED = ["/goals", "/login"];
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, userRole, loading } = useAuth();
@@ -18,6 +19,10 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       if (userRole === "commission") {
         const allowed = COMMISSION_ALLOWED.some((p) => pathname.startsWith(p));
         if (!allowed) router.push("/commission");
+      }
+      if (userRole === "smm") {
+        const allowed = SMM_ALLOWED.some((p) => pathname.startsWith(p));
+        if (!allowed) router.push("/goals");
       }
     }
   }, [loading, user, userRole, pathname, router]);

@@ -102,7 +102,11 @@ export interface AdCar {
   videoUrl?: string; // Ссылка на загруженное видео без сжатия в S3/R2
   videoCoverUrl?: string; // Ссылка на обложку видео в S3/R2
   notes?: string;
-  lastAlertSentAt?: number | null; // Timestamp последней отправки TG алерта
+  lastAlertSentAt?: number | null;
+  plannedCampaign?: "rk1" | "rk2";
+  shotBy?: string;
+  shotByName?: string;
+  shotAt?: number;
   createdAt: number;
   updatedAt: number;
 }

@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -17,7 +16,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const { user } = useAuth();
 
   // The AuthContext will handle redirection if already logged in, 
@@ -39,7 +37,6 @@ export default function LoginPage() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push("/leads");
     } catch (err: unknown) {
       setError("Неверный email или пароль.");
       console.error(err);
