@@ -7,14 +7,14 @@ export interface StatusConfig {
 }
 
 export const LEAD_STATUSES: StatusConfig[] = [
-  { value: "new", label: "Новый", colorClass: "bg-blue-100 text-blue-700 border-blue-200" },
-  { value: "in_progress", label: "В работе", colorClass: "bg-amber-100 text-amber-700 border-amber-200" },
-  { value: "visit", label: "Приезд", colorClass: "bg-purple-100 text-purple-700 border-purple-200" },
-  { value: "success", label: "Оформился/купил", colorClass: "bg-emerald-100 text-emerald-700 border-emerald-200" },
-  { value: "no_answer", label: "Недозвон", colorClass: "bg-orange-100 text-orange-700 border-orange-200" },
-  { value: "refusal", label: "Отказ", colorClass: "bg-zinc-100 text-zinc-700 border-zinc-200" },
-  { value: "bank_refusal", label: "Отказ банка", colorClass: "bg-red-100 text-red-700 border-red-200" },
-  { value: "spam", label: "Брак/Тест", colorClass: "bg-zinc-100 text-zinc-500 border-zinc-200" },
-  { value: "thinking", label: "Думает", colorClass: "bg-indigo-100 text-indigo-700 border-indigo-200" },
-  { value: "callback", label: "Перезвонить", colorClass: "bg-yellow-100 text-yellow-700 border-yellow-200" },
+  { value: "new", label: "Новый", colorClass: "bg-white/5 text-zinc-200 border-white/10" },
+  { value: "in_progress", label: "В работе", colorClass: "bg-amber-500/10 text-amber-200 border-amber-500/20" },
+  { value: "visit", label: "Приезд", colorClass: "bg-violet-500/10 text-violet-200 border-violet-500/20" },
+  { value: "success", label: "Оформился/купил", colorClass: "bg-emerald-500/10 text-emerald-200 border-emerald-500/20" },
+  { value: "no_answer", label: "Недозвон", colorClass: "bg-orange-500/10 text-orange-200 border-orange-500/20" },
+  { value: "refusal", label: "Отказ", colorClass: "bg-white/5 text-zinc-400 border-white/10" },
+  { value: "bank_refusal", label: "Отказ банка", colorClass: "bg-red-500/10 text-red-300 border-red-500/20" },
+  { value: "spam", label: "Брак/Тест", colorClass: "bg-white/5 text-zinc-500 border-white/10" },
+  { value: "thinking", label: "Думает", colorClass: "bg-indigo-500/10 text-indigo-200 border-indigo-500/20" },
+  { value: "callback", label: "Перезвонить", colorClass: "bg-yellow-500/10 text-yellow-200 border-yellow-500/20" },
 ];

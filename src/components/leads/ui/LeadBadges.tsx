@@ -8,12 +8,12 @@ import { Globe, Search, PhoneCall, User, ShoppingBag } from "lucide-react";
 
 export const getStatusDotColor = (status: LeadStatus) => {
   const config: Record<LeadStatus, string> = {
-    new: "bg-blue-500",
+    new: "bg-blue-400",
     in_progress: "bg-amber-400",
-    visit: "bg-purple-500",
-    refusal: "bg-zinc-400",
-    bank_refusal: "bg-red-500",
-    success: "bg-emerald-500",
+    visit: "bg-violet-400",
+    refusal: "bg-zinc-500",
+    bank_refusal: "bg-red-400",
+    success: "bg-emerald-400",
     no_answer: "bg-orange-400",
     spam: "bg-zinc-300",
     thinking: "bg-indigo-400",
@@ -26,7 +26,7 @@ export const StatusBadge = ({ status, className }: { status: LeadStatus, classNa
   const dotColorClass = getStatusDotColor(status);
   return (
     <span className={cn(
-      "inline-flex items-center gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 bg-zinc-100 border border-zinc-200/60 rounded-md md:rounded-full text-zinc-700 font-medium text-[10px] md:text-[11px] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-colors hover:bg-zinc-200/60",
+      "inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-zinc-300 md:px-2.5 md:py-1 md:text-[11px]",
       className
     )}>
       <span className={cn("w-1.5 h-1.5 rounded-full shadow-sm", dotColorClass)} />
@@ -38,13 +38,13 @@ export const StatusBadge = ({ status, className }: { status: LeadStatus, classNa
 export const SourceIcon = ({ source, className }: { source: string, className?: string }) => {
   const iconClass = cn("w-4 h-4", className);
   switch (source) {
-    case 'instagram': return <InstagramIcon className={cn(iconClass, "text-pink-600")} />;
-    case 'tiktok': return <TikTokIcon className={cn(iconClass, "text-black")} />;
-    case 'telegram': return <TelegramIcon className={cn(iconClass, "text-sky-500")} />;
-    case 'site': return <Globe className={cn(iconClass, "text-blue-500")} />;
-    case 'call': return <PhoneCall className={cn(iconClass, "text-emerald-600")} />;
-    case 'walk_in': return <User className={cn(iconClass, "text-amber-600")} />;
-    case 'kufar': return <ShoppingBag className={cn(iconClass, "text-emerald-500")} />;
+    case 'instagram': return <InstagramIcon className={cn(iconClass, "text-pink-500")} />;
+    case 'tiktok': return <TikTokIcon className={cn(iconClass, "text-white")} />;
+    case 'telegram': return <TelegramIcon className={cn(iconClass, "text-sky-400")} />;
+    case 'site': return <Globe className={cn(iconClass, "text-blue-400")} />;
+    case 'call': return <PhoneCall className={cn(iconClass, "text-emerald-400")} />;
+    case 'walk_in': return <User className={cn(iconClass, "text-amber-400")} />;
+    case 'kufar': return <ShoppingBag className={cn(iconClass, "text-emerald-400")} />;
     default: return <Search className={cn(iconClass, "text-zinc-400")} />;
   }
 };
