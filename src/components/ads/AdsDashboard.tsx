@@ -16,7 +16,7 @@ import {
   getMinskDateKey,
   addDaysToDateKey,
 } from "@/lib/services/adsService";
-import { AdCar, AdCampaignType, AdsSettings } from "@/lib/types";
+import { AdCar, AdCampaignType, AdsSettings, TikTokDebt } from "@/lib/types";
 import { AddAdCarModal } from "./AddAdCarModal";
 import { AdsSettingsModal } from "./AdsSettingsModal";
 import { DailyTasksModal } from "./DailyTasksModal";
@@ -64,7 +64,8 @@ export function AdsDashboard() {
     offset: number;
     dateKey: string;
     cars: AdCar[];
-  }>({ isOpen: false, date: new Date(), offset: 0, dateKey: "", cars: [] });
+    debts: TikTokDebt[];
+  }>({ isOpen: false, date: new Date(), offset: 0, dateKey: "", cars: [], debts: [] });
 
   const [equalize, setEqualize] = useState<{
     open: boolean;
@@ -318,6 +319,15 @@ export function AdsDashboard() {
     showToast("Настройки сохранены");
   };
 
+  const handleSaveDebts = async (tiktokDebts: TikTokDebt[]) => {
+    await updateAdsSettings({ tiktokDebts });
+    setSettings((prev) => ({ ...prev, tiktokDebts }));
+    setSelectedDayTasks((prev) => {
+      if (!prev.isOpen) return prev;
+      return { ...prev, debts: tiktokDebts.filter((d) => d.dateKey === prev.dateKey) };
+    });
+  };
+
   const trackedIds = useMemo(() => {
     const idSet = new Set<string>();
     cars.forEach((c) => {
@@ -422,13 +432,14 @@ export function AdsDashboard() {
                 })
               }
               onOpenWarehouse={() => setWarehouseOpen(true)}
-              onDayClick={(offset, date, dayCars) =>
+              onDayClick={(offset, date, dayCars, dayDebts) =>
                 setSelectedDayTasks({
                   isOpen: true,
                   date,
                   offset,
                   dateKey: addDaysToDateKey(getMinskDateKey(Date.now()), offset),
                   cars: dayCars,
+                  debts: dayDebts || [],
                 })
               }
             />
@@ -478,6 +489,8 @@ export function AdsDashboard() {
         onSaveSettings={handleSaveSettings}
         airCount={airCount}
         totalCatalogCars={catalogCars.length}
+        warehouse={warehouse}
+        onSaveDebts={handleSaveDebts}
       />
       <DailyTasksModal
         isOpen={selectedDayTasks.isOpen}
@@ -485,6 +498,7 @@ export function AdsDashboard() {
         date={selectedDayTasks.date}
         offset={selectedDayTasks.offset}
         cars={selectedDayTasks.cars}
+        debts={selectedDayTasks.debts}
         busyIds={busyIds}
         onRotate={handleSwitchCampaign}
         onPostponeCar={(car) => {
@@ -508,6 +522,7 @@ export function AdsDashboard() {
             fromDateKey: selectedDayTasks.dateKey,
           })
         }
+        onRemoveDebt={(id) => void handleSaveDebts((settings.tiktokDebts || []).filter((d) => d.id !== id))}
       />
       <ConfirmSheet
         open={equalize.open}

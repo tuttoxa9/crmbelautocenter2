@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { type AdsSettings } from "@/lib/types";
+import { useEffect, useMemo, useState } from "react";
+import { Search, Trash2 } from "lucide-react";
+import { type AdsSettings, type TikTokDebt } from "@/lib/types";
+import { MONTHS_SHORT, addDaysToDateKey, getMinskDateKey } from "@/lib/services/adsService";
 import { AdsScroller, CloseBtn, GhostBtn, Overlay, PrimaryBtn, Spinner, Stepper } from "./chrome";
+import { CarThumb } from "./CarThumb";
+import type { WarehouseCar } from "./WarehouseDrawer";
 
 export function AdsSettingsModal({
   isOpen,
@@ -10,6 +14,8 @@ export function AdsSettingsModal({
   settings,
   onSaveSettings,
   airCount = 0,
+  warehouse = [],
+  onSaveDebts,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -17,6 +23,8 @@ export function AdsSettingsModal({
   onSaveSettings: (settings: Partial<AdsSettings>) => Promise<void>;
   airCount?: number;
   totalCatalogCars?: number;
+  warehouse?: WarehouseCar[];
+  onSaveDebts?: (debts: TikTokDebt[]) => Promise<void>;
 }) {
   const [rk1, setRk1] = useState(settings.rk1Days || 17);
   const [rk2, setRk2] = useState(settings.rk2Days || 14);
@@ -52,6 +60,7 @@ export function AdsSettingsModal({
         isActive: active,
         botToken: botToken.trim() || undefined,
         chatId: chatId.trim() || undefined,
+        tiktokDebts: settings.tiktokDebts || [],
       });
       onClose();
     } catch (err) {
@@ -159,6 +168,14 @@ export function AdsSettingsModal({
             </button>
           </label>
 
+          {onSaveDebts ? (
+            <DebtSection
+              debts={settings.tiktokDebts || []}
+              warehouse={warehouse}
+              onSave={onSaveDebts}
+            />
+          ) : null}
+
           <section className="rounded-2xl bg-ads-card px-4 py-4">
             <p className="text-sm font-medium text-ads-ink">Telegram</p>
             <p className="mt-0.5 text-xs text-ads-muted">Если пусто — используется общий бот CRM</p>
@@ -206,5 +223,185 @@ export function AdsSettingsModal({
         </footer>
       </div>
     </Overlay>
+  );
+}
+
+function fmtKey(key: string) {
+  const [, m, d] = key.split("-").map(Number);
+  return `${d} ${MONTHS_SHORT[(m || 1) - 1]}`;
+}
+
+function newId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function DebtSection({
+  debts,
+  warehouse,
+  onSave,
+}: {
+  debts: TikTokDebt[];
+  warehouse: WarehouseCar[];
+  onSave: (next: TikTokDebt[]) => Promise<void>;
+}) {
+  const todayKey = getMinskDateKey();
+  const yesterday = addDaysToDateKey(todayKey, -1);
+  const minKey = addDaysToDateKey(todayKey, -45);
+  const [open, setOpen] = useState(false);
+  const [dateKey, setDateKey] = useState(yesterday);
+  const [query, setQuery] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const list = useMemo(() => {
+    const q = query.toLowerCase().trim();
+    return warehouse.filter((c) => {
+      if (!q) return true;
+      return (
+        c.name.toLowerCase().includes(q) ||
+        String(c.year || "").includes(q) ||
+        String(c.priceUsd).includes(q)
+      );
+    });
+  }, [warehouse, query]);
+
+  const grouped = useMemo(() => {
+    const keys = [...new Set(debts.map((d) => d.dateKey))].sort().reverse();
+    return keys.map((key) => ({
+      key,
+      items: debts.filter((d) => d.dateKey === key),
+    }));
+  }, [debts]);
+
+  const persist = async (next: TikTokDebt[]) => {
+    setBusy(true);
+    try {
+      await onSave(next);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const addCar = async (car: WarehouseCar) => {
+    if (!dateKey || dateKey >= todayKey) return;
+    const next: TikTokDebt = {
+      id: newId(),
+      dateKey,
+      carId: car.id,
+      name: car.name,
+      year: car.year,
+      priceUsd: car.priceUsd,
+      photoUrl: car.photoUrl,
+      createdAt: Date.now(),
+    };
+    await persist([next, ...debts]);
+    setQuery("");
+    setOpen(false);
+  };
+
+  const remove = async (id: string) => {
+    await persist(debts.filter((d) => d.id !== id));
+  };
+
+  return (
+    <section className="rounded-2xl bg-ads-card px-4 py-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-ads-ink">Долг TikTok</p>
+          <p className="mt-0.5 text-xs text-ads-muted">
+            Вручную, со склада. Только метка в календаре — ротацию не трогает.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="inline-flex h-8 shrink-0 items-center rounded-lg bg-ads-bg px-2.5 text-xs font-medium text-ads-ink hover:bg-ads-surface"
+        >
+          {open ? "Скрыть" : "Добавить"}
+        </button>
+      </div>
+
+      {open ? (
+        <div className="mt-3 space-y-2 rounded-xl bg-ads-bg p-3">
+          <label className="block">
+            <span className="mb-1.5 block text-xs text-ads-muted">День (прошлые)</span>
+            <input
+              type="date"
+              value={dateKey}
+              min={minKey}
+              max={yesterday}
+              onChange={(e) => setDateKey(e.target.value)}
+              className="h-10 w-full rounded-xl bg-ads-card px-3 text-sm text-ads-ink outline-none"
+            />
+          </label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-ads-subtle" />
+            <input
+              type="text"
+              autoComplete="off"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Авто со склада"
+              className="h-10 w-full rounded-xl bg-ads-card pr-3 pl-9 text-sm text-ads-ink outline-none placeholder:text-ads-subtle"
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto rounded-xl bg-ads-card">
+            {list.length === 0 ? (
+              <p className="px-3 py-6 text-center text-xs text-ads-subtle">На складе пусто</p>
+            ) : (
+              list.slice(0, 40).map((car, i) => (
+                <button
+                  key={car.id}
+                  type="button"
+                  disabled={busy || !dateKey || dateKey >= todayKey}
+                  onClick={() => void addCar(car)}
+                  className={`flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-ads-surface disabled:opacity-40 ${
+                    i ? "border-t border-ads-line" : ""
+                  }`}
+                >
+                  <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-8 w-11" />
+                  <span className="min-w-0 flex-1 truncate text-sm text-ads-ink">{car.name}</span>
+                  <span className="shrink-0 text-xs text-ads-muted">
+                    {car.year ? `${car.year}` : ""}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {grouped.length === 0 ? (
+        <p className="mt-3 text-xs text-ads-subtle">Долга нет</p>
+      ) : (
+        <div className="mt-3 space-y-3">
+          {grouped.map((g) => (
+            <div key={g.key}>
+              <p className="mb-1 text-[11px] font-medium text-ads-warn">{fmtKey(g.key)}</p>
+              <div className="overflow-hidden rounded-xl bg-ads-bg">
+                {g.items.map((debt, i) => (
+                  <div
+                    key={debt.id}
+                    className={`flex items-center gap-2.5 px-2.5 py-2 ${i ? "border-t border-ads-line" : ""}`}
+                  >
+                    <CarThumb name={debt.name} photoUrl={debt.photoUrl} className="h-8 w-11" />
+                    <p className="min-w-0 flex-1 truncate text-sm text-ads-ink">{debt.name}</p>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void remove(debt.id)}
+                      className="flex size-8 items-center justify-center rounded-lg text-ads-subtle hover:bg-ads-surface hover:text-ads-danger disabled:opacity-40"
+                      title="Снять долг"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

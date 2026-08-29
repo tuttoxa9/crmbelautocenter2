@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, MoreHorizontal } from "lucide-react";
-import { type AdCampaignType, type AdCar, type AdsSettings } from "@/lib/types";
+import { type AdCampaignType, type AdCar, type AdsSettings, type TikTokDebt } from "@/lib/types";
 import { MONTHS_LONG, calculatePriceTier, getCalendarDaysLeft, getMinskDateKey, getPriceTierShort } from "@/lib/services/adsService";
 import { cn } from "@/lib/utils";
 import { WorkTask } from "./WorkTask";
@@ -41,7 +41,7 @@ export function TodayShift({
   onEqualize: () => void;
   onVacation: () => void;
   onOpenWarehouse: () => void;
-  onDayClick: (offset: number, date: Date, dayCars: AdCar[]) => void;
+  onDayClick: (offset: number, date: Date, dayCars: AdCar[], dayDebts?: TikTokDebt[]) => void;
 }) {
   const overdue = cars.filter((c) => isAir(c) && daysLeft(c) < 0);
   const dueToday = cars.filter((c) => isAir(c) && daysLeft(c) === 0);
@@ -196,7 +196,7 @@ export function TodayShift({
             </GhostBtn>
           </div>
         </div>
-        <RotationTimeline cars={cars} settings={settings} days={14} onDayClick={onDayClick} />
+        <RotationTimeline cars={cars} settings={settings} debts={settings.tiktokDebts} days={14} onDayClick={onDayClick} />
       </div>
       </AdsScroller>
     </div>

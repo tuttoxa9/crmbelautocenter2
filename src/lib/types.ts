@@ -111,6 +111,18 @@ export interface AdCar {
   updatedAt: number;
 }
 
+/** Информативный долг TikTok за прошлый день. Не влияет на ротацию. */
+export interface TikTokDebt {
+  id: string;
+  dateKey: string;
+  carId: string;
+  name: string;
+  year?: string | number;
+  priceUsd?: number;
+  photoUrl?: string;
+  createdAt: number;
+}
+
 export interface AdsSettings {
   rk1Days: number; // По умолчанию 17
   rk2Days: number; // По умолчанию 14
@@ -118,4 +130,5 @@ export interface AdsSettings {
   isActive?: boolean;
   chatId?: string;
   botToken?: string;
+  tiktokDebts?: TikTokDebt[];
 }
