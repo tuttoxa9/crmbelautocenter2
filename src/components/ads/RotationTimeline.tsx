@@ -30,15 +30,16 @@ export function RotationTimeline({
       if (!byOffset[left]) byOffset[left] = [];
       byOffset[left].push(car);
     });
-    return Array.from({ length: days }, (_, i) => {
-      const d = new Date(today.getTime());
-      d.setDate(d.getDate() + i);
-      const dayCars = byOffset[i] || [];
-      const count = dayCars.length;
-      const status: "good" | "empty" | "overload" =
-        count === 0 ? "empty" : count > targetPerDay ? "overload" : "good";
-      return { date: d, count, cars: dayCars, status, offset: i };
-    });
+      const lastWithCars = Math.max(-1, ...Object.keys(byOffset).map(Number));
+      return Array.from({ length: days }, (_, i) => {
+        const d = new Date(today.getTime());
+        d.setDate(d.getDate() + i);
+        const dayCars = byOffset[i] || [];
+        const count = dayCars.length;
+        const status: "good" | "empty" | "overload" | "off" =
+          count > targetPerDay ? "overload" : count > 0 ? "good" : i < lastWithCars ? "off" : "empty";
+        return { date: d, count, cars: dayCars, status, offset: i };
+      });
   }, [cars, targetPerDay, days]);
 
   return (
@@ -53,7 +54,7 @@ export function RotationTimeline({
                 type="button"
                 onClick={() => onDayClick?.(day.offset, day.date, day.cars)}
                 className="group flex min-w-8 flex-1 flex-col sm:min-w-9"
-                title={`${day.date.getDate()} ${MONTHS_SHORT[day.date.getMonth()]}: ${day.count}`}
+                title={`${day.date.getDate()} ${MONTHS_SHORT[day.date.getMonth()]}: ${day.status === "off" ? "выходной" : day.count}`}
               >
                 <div className="flex h-16 flex-col items-center justify-end gap-1 px-0.5 pb-1.5">
                   <span
@@ -61,7 +62,7 @@ export function RotationTimeline({
                       "font-mono text-xs font-medium tabular-nums leading-none",
                       day.status === "overload"
                         ? "text-ads-danger"
-                        : day.status === "empty"
+                        : day.status === "empty" || day.status === "off"
                           ? "text-ads-subtle"
                           : "text-ads-ink",
                     )}
@@ -74,14 +75,16 @@ export function RotationTimeline({
                         "w-full rounded-full transition-[height] duration-300",
                         day.status === "overload"
                           ? "bg-ads-danger"
-                          : day.status === "empty"
-                            ? "bg-ads-line-strong/60"
-                            : day.offset === 0
-                              ? "bg-ads-ink"
-                              : "bg-ads-ink/45",
+                          : day.status === "off"
+                            ? "bg-ads-line-strong/25"
+                            : day.status === "empty"
+                              ? "bg-ads-line-strong/60"
+                              : day.offset === 0
+                                ? "bg-ads-ink"
+                                : "bg-ads-ink/45",
                       )}
                       style={{
-                        height: `${day.status === "empty" ? 12 : Math.max(16, fill)}%`,
+                        height: `${day.status === "empty" || day.status === "off" ? 12 : Math.max(16, fill)}%`,
                       }}
                     />
                   </div>

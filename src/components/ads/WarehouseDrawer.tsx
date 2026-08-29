@@ -20,6 +20,7 @@ export function WarehouseDrawer({
   onClose,
   warehouse,
   addingId,
+  suggestedAir,
   onAdd,
   onManual,
 }: {
@@ -27,6 +28,7 @@ export function WarehouseDrawer({
   onClose: () => void;
   warehouse: WarehouseCar[];
   addingId: string | null;
+  suggestedAir?: AdCampaignType;
   onAdd: (car: WarehouseCar, campaign: AdCampaignType) => void;
   onManual?: () => void;
 }) {
@@ -93,6 +95,7 @@ export function WarehouseDrawer({
                 )}
               >
                 {label}
+                {suggestedAir === id ? " · меньше" : ""}
               </button>
             ))}
           </div>

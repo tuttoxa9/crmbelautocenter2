@@ -11,8 +11,10 @@ import {
   updateAdsSettings,
   calculatePriceTier,
   getCalendarDaysLeft,
-  rebalanceAdCars,
+  scheduleAdCars,
   DEFAULT_ADS_SETTINGS,
+  getMinskDateKey,
+  addDaysToDateKey,
 } from "@/lib/services/adsService";
 import { AdCar, AdCampaignType, AdsSettings } from "@/lib/types";
 import { AddAdCarModal } from "./AddAdCarModal";
@@ -21,6 +23,8 @@ import { DailyTasksModal } from "./DailyTasksModal";
 import { OnAirBoard } from "./OnAirBoard";
 import { TodayShift } from "./TodayShift";
 import { WarehouseDrawer, type WarehouseCar } from "./WarehouseDrawer";
+import { ConfirmSheet, PostponeSheet, nextAirDateLabel, type PreviewDay } from "./ScheduleSheets";
+import { chooseCampaignForNewCar } from "@/lib/services/adsSchedule";
 import { GhostBtn, PrimaryBtn, AdsScroller } from "./chrome";
 import { Plus, Settings } from "lucide-react";
 
@@ -58,8 +62,20 @@ export function AdsDashboard() {
     isOpen: boolean;
     date: Date;
     offset: number;
+    dateKey: string;
     cars: AdCar[];
-  }>({ isOpen: false, date: new Date(), offset: 0, cars: [] });
+  }>({ isOpen: false, date: new Date(), offset: 0, dateKey: "", cars: [] });
+
+  const [equalize, setEqualize] = useState<{
+    open: boolean;
+    message?: string;
+    days?: PreviewDay[];
+  }>({ open: false });
+  const [postpone, setPostpone] = useState<
+    | { open: false }
+    | { open: true; mode: "date"; title: string; hint?: string; minDateKey: string; carIds?: string[]; fromDateKey?: string }
+    | { open: true; mode: "vacation"; title: string; hint?: string; minDateKey: string }
+  >({ open: false });
 
   const carsRef = useRef<AdCar[]>([]);
   useEffect(() => {
@@ -111,19 +127,70 @@ export function AdsDashboard() {
     loadData();
   }, []);
 
-  const handleBalanceTimeline = async () => {
+  const applyScheduleCars = (next: AdCar[]) => {
+    carsRef.current = next;
+    setCars(next);
+    setSelectedDayTasks((prev) => {
+      if (!prev.isOpen) return prev;
+      const key = prev.dateKey;
+      const dayCars = next.filter((c) => {
+        if (c.campaign !== "rk1" && c.campaign !== "rk2") return false;
+        return c.targetRotationDate ? getMinskDateKey(c.targetRotationDate) === key : false;
+      });
+      return { ...prev, cars: dayCars };
+    });
+  };
+
+  const handleEqualizePreview = async () => {
     try {
       setIsBalancing(true);
-      const res = await rebalanceAdCars(Number(settings.targetCarsPerDay || 3));
+      const res = await scheduleAdCars({ action: "equalize", preview: true });
+      if (!res.success) {
+        showToast(res.error || "Не удалось посчитать график", "error");
+        return;
+      }
+      setEqualize({ open: true, message: res.message, days: res.days });
+    } catch {
+      showToast("Не удалось посчитать график", "error");
+    } finally {
+      setIsBalancing(false);
+    }
+  };
+
+  const handleEqualizeConfirm = async () => {
+    try {
+      setIsBalancing(true);
+      const res = await scheduleAdCars({ action: "equalize" });
       if (res.success && Array.isArray(res.cars)) {
-        carsRef.current = res.cars;
-        setCars(res.cars);
-        showToast(`Сбалансировано ${res.totalBalanced || res.cars.length} авто`);
+        applyScheduleCars(res.cars);
+        setEqualize({ open: false });
+        showToast(res.message || "График выровнен");
       } else {
-        showToast(res.error || "Ошибка при балансировке", "error");
+        showToast(res.error || "Ошибка при выравнивании", "error");
       }
     } catch {
-      showToast("Ошибка при балансировке", "error");
+      showToast("Ошибка при выравнивании", "error");
+    } finally {
+      setIsBalancing(false);
+    }
+  };
+
+  const runSchedule = async (
+    body: Parameters<typeof scheduleAdCars>[0],
+    okText: string,
+  ) => {
+    try {
+      setIsBalancing(true);
+      const res = await scheduleAdCars(body);
+      if (res.success && Array.isArray(res.cars)) {
+        applyScheduleCars(res.cars);
+        setPostpone({ open: false });
+        showToast(res.message || okText);
+      } else {
+        showToast(res.error || "Не удалось сдвинуть", "error");
+      }
+    } catch {
+      showToast("Не удалось сдвинуть", "error");
     } finally {
       setIsBalancing(false);
     }
@@ -174,16 +241,17 @@ export function AdsDashboard() {
       const updatedCars = await getAdCars();
       carsRef.current = updatedCars;
       setCars(updatedCars);
-      setSelectedDayTasks((prev) =>
-        prev.isOpen
-          ? {
-              ...prev,
-              cars: updatedCars
-                .filter((c) => prev.cars.some((x) => x.id === c.id) || c.id === car.id)
-                .filter((c) => c.campaign === "rk1" || c.campaign === "rk2"),
-            }
-          : prev,
-      );
+      setSelectedDayTasks((prev) => {
+        if (!prev.isOpen) return prev;
+        const key = prev.dateKey;
+        return {
+          ...prev,
+          cars: updatedCars.filter((c) => {
+            if (c.campaign !== "rk1" && c.campaign !== "rk2") return false;
+            return c.targetRotationDate ? getMinskDateKey(c.targetRotationDate) === key : false;
+          }),
+        };
+      });
       showToast(`${car.name} → ${PIPELINE.find((p) => p.id === targetCampaign)?.label}`);
     } catch {
       carsRef.current = snapshot;
@@ -340,12 +408,28 @@ export function AdsDashboard() {
               settings={settings}
               busyIds={busyIds}
               balancing={isBalancing}
+              nextDueLabel={nextAirDateLabel(cars)}
               onSwitch={handlers.onSwitch}
               onDelete={handlers.onDelete}
-              onBalance={() => void handleBalanceTimeline()}
+              onEqualize={() => void handleEqualizePreview()}
+              onVacation={() =>
+                setPostpone({
+                  open: true,
+                  mode: "vacation",
+                  title: "Каникулы",
+                  hint: "Весь график с сегодня уедет вперёд. Эти дни будут пустые.",
+                  minDateKey: getMinskDateKey(Date.now()),
+                })
+              }
               onOpenWarehouse={() => setWarehouseOpen(true)}
               onDayClick={(offset, date, dayCars) =>
-                setSelectedDayTasks({ isOpen: true, date, offset, cars: dayCars })
+                setSelectedDayTasks({
+                  isOpen: true,
+                  date,
+                  offset,
+                  dateKey: addDaysToDateKey(getMinskDateKey(Date.now()), offset),
+                  cars: dayCars,
+                })
               }
             />
             <OnAirBoard cars={cars} settings={settings} busyIds={busyIds} {...handlers} />
@@ -369,6 +453,10 @@ export function AdsDashboard() {
         onClose={() => setWarehouseOpen(false)}
         warehouse={warehouse}
         addingId={addingCarId}
+        suggestedAir={chooseCampaignForNewCar(
+          cars.filter((c) => c.campaign === "rk1").length,
+          cars.filter((c) => c.campaign === "rk2").length,
+        )}
         onAdd={(car, campaign) => void handleQuickAddWarehouseCar(car, campaign)}
         onManual={() => {
           setWarehouseOpen(false);
@@ -399,6 +487,65 @@ export function AdsDashboard() {
         cars={selectedDayTasks.cars}
         busyIds={busyIds}
         onRotate={handleSwitchCampaign}
+        onPostponeCar={(car) => {
+          if (!car.id) return;
+          setPostpone({
+            open: true,
+            mode: "date",
+            title: `Отложить ${car.name}`,
+            hint: "Встанет первой в выбранный день. Остальные чуть уедут вперёд.",
+            minDateKey: getMinskDateKey(Date.now()),
+            carIds: [car.id],
+          });
+        }}
+        onPostponeDay={() =>
+          setPostpone({
+            open: true,
+            mode: "date",
+            title: "Отложить день",
+            hint: "Все машины этого дня встанут в начало выбранной даты.",
+            minDateKey: selectedDayTasks.dateKey || getMinskDateKey(Date.now()),
+            fromDateKey: selectedDayTasks.dateKey,
+          })
+        }
+      />
+      <ConfirmSheet
+        open={equalize.open}
+        title="Выровнять к 50 / 50"
+        message={equalize.message}
+        days={equalize.days}
+        confirmLabel="Записать график"
+        busy={isBalancing}
+        onClose={() => setEqualize({ open: false })}
+        onConfirm={() => void handleEqualizeConfirm()}
+      />
+      <PostponeSheet
+        open={postpone.open}
+        title={postpone.open ? postpone.title : "Отложить"}
+        hint={postpone.open ? postpone.hint : undefined}
+        mode={postpone.open ? postpone.mode : "date"}
+        minDateKey={postpone.open ? postpone.minDateKey : getMinskDateKey(Date.now())}
+        busy={isBalancing}
+        onClose={() => setPostpone({ open: false })}
+        onPickDate={(toDateKey) => {
+          if (!postpone.open || postpone.mode !== "date") return;
+          if (postpone.carIds?.length) {
+            void runSchedule({ action: "postponeCars", carIds: postpone.carIds, toDateKey }, "Отложено");
+            return;
+          }
+          if (postpone.fromDateKey) {
+            void runSchedule(
+              { action: "postponeDay", fromDateKey: postpone.fromDateKey, toDateKey },
+              "День сдвинут",
+            );
+          }
+        }}
+        onPickDays={(days) => {
+          void runSchedule(
+            { action: "shift", days, fromDateKey: getMinskDateKey(Date.now()) },
+            "График сдвинут",
+          );
+        }}
       />
     </div>
   );

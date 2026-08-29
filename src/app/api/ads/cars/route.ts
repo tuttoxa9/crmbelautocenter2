@@ -5,9 +5,8 @@ import {
   getMinskDateKey,
   minskDateKeyToTimestamp,
   getDateKeyDiffDays,
-  collectSlotOccupancy,
-  pickOpenSlotDateKey,
 } from '@/lib/services/adsService';
+import { pickNextSlotDateKey, isAirCampaign } from '@/lib/services/adsSchedule';
 import crypto from 'crypto';
 
 async function getTargetPerDay(): Promise<number> {
@@ -106,9 +105,9 @@ export async function POST(request: Request) {
         const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
         return d;
       });
-      const { counts, earliestFutureKey } = collectSlotOccupancy(existing, todayKey);
       const targetPerDay = await getTargetPerDay();
-      const chosenDateKey = pickOpenSlotDateKey(counts, todayKey, targetPerDay, earliestFutureKey);
+      const incoming = isAirCampaign(campaign) ? campaign : 'rk1';
+      const chosenDateKey = pickNextSlotDateKey(existing, todayKey, targetPerDay, incoming, { allowToday: true });
       const daysLeftFromToday = Math.max(0, getDateKeyDiffDays(todayKey, chosenDateKey));
       targetRotationDate = minskDateKeyToTimestamp(chosenDateKey);
       if (!maxDays) maxDays = daysLeftFromToday;

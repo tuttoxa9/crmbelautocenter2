@@ -23,9 +23,11 @@ export function TodayShift({
   settings,
   busyIds,
   balancing,
+  nextDueLabel,
   onSwitch,
   onDelete,
-  onBalance,
+  onEqualize,
+  onVacation,
   onOpenWarehouse,
   onDayClick,
 }: {
@@ -33,9 +35,11 @@ export function TodayShift({
   settings: AdsSettings;
   busyIds: Set<string>;
   balancing: boolean;
+  nextDueLabel?: string | null;
   onSwitch: (car: AdCar, campaign: AdCampaignType) => void;
   onDelete: (car: AdCar) => void;
-  onBalance: () => void;
+  onEqualize: () => void;
+  onVacation: () => void;
   onOpenWarehouse: () => void;
   onDayClick: (offset: number, date: Date, dayCars: AdCar[]) => void;
 }) {
@@ -58,7 +62,9 @@ export function TodayShift({
         <h2 className="mt-0.5 text-xl leading-tight font-semibold tracking-tight text-ads-ink">{dateLabel}</h2>
         <p className="mt-1 text-sm text-ads-muted">
           {workCount === 0
-            ? "Ротировать некого. Можно снимать или взять авто со склада."
+            ? nextDueLabel
+              ? `Сегодня пусто. Ближайшие задачи — ${nextDueLabel}.`
+              : "Ротировать некого. Можно снимать или взять авто со склада."
             : `Закрыть день: ${workCount} ${plural(workCount, "машина", "машины", "машин")}.`}
         </p>
       </div>
@@ -69,7 +75,9 @@ export function TodayShift({
             <Check className="size-4 text-ads-ink" />
           </div>
           <p className="mt-3 text-sm font-medium text-ads-ink">Сегодня чисто</p>
-          <p className="mt-1 text-xs text-ads-muted">Ближайшие ротации — на графике нагрузки.</p>
+          <p className="mt-1 text-xs text-ads-muted">
+            {nextDueLabel ? `Следующая ротация ${nextDueLabel}.` : "Ближайшие ротации — на графике нагрузки."}
+          </p>
           <PrimaryBtn className="mt-4" onClick={onOpenWarehouse}>
             Взять со склада
           </PrimaryBtn>
@@ -180,10 +188,15 @@ export function TodayShift({
             <h3 className="text-sm font-medium text-ads-ink">Нагрузка</h3>
             <p className="text-xs text-ads-muted">Не больше {settings.targetCarsPerDay || 3} в день</p>
           </div>
-          <GhostBtn className="h-8 px-2.5 text-xs" onClick={onBalance} disabled={balancing}>
-            {balancing ? <Spinner /> : null}
-            {balancing ? "Раскладываю" : "Разложить"}
-          </GhostBtn>
+          <div className="flex items-center gap-1">
+            <GhostBtn className="h-8 px-2.5 text-xs" onClick={onVacation} disabled={balancing}>
+              Каникулы
+            </GhostBtn>
+            <GhostBtn className="h-8 px-2.5 text-xs" onClick={onEqualize} disabled={balancing}>
+              {balancing ? <Spinner /> : null}
+              {balancing ? "Считаю" : "50 / 50"}
+            </GhostBtn>
+          </div>
         </div>
         <RotationTimeline cars={cars} settings={settings} days={14} onDayClick={onDayClick} />
       </div>

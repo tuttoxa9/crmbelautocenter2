@@ -191,21 +191,38 @@ export function pickOpenSlotDateKey(
   return addDaysToDateKey(startKey, 90);
 }
 
-export const rebalanceAdCars = async (
-  targetCarsPerDay?: number
-): Promise<{ success: boolean; totalBalanced?: number; cars?: AdCar[]; error?: string }> => {
+export const scheduleAdCars = async (body: {
+  action: "equalize" | "compact" | "shift" | "postponeCars" | "postponeDay";
+  preview?: boolean;
+  days?: number;
+  fromDateKey?: string;
+  toDateKey?: string;
+  carIds?: string[];
+}): Promise<{
+  success: boolean;
+  cars?: AdCar[];
+  preview?: boolean;
+  message?: string;
+  need?: number;
+  daysToEven?: number;
+  current?: { rk1: number; rk2: number; total: number };
+  target?: { rk1: number; rk2: number };
+  days?: { dateKey: string; rk1: number; rk2: number; total: number; names: string[] }[];
+  total?: number;
+  error?: string;
+}> => {
   try {
-    const res = await fetch("/api/ads/rebalance", {
+    const res = await fetch("/api/ads/schedule", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ targetCarsPerDay }),
+      body: JSON.stringify(body),
     });
     return await res.json();
   } catch (err: any) {
-    console.error("Error rebalancing ad cars on server:", err);
-    return { success: false, error: err?.message || "Server rebalance failed" };
+    return { success: false, error: err?.message || "Не удалось пересчитать график" };
   }
 };
+
 
 export const getAdCars = async (): Promise<AdCar[]> => {
   try {

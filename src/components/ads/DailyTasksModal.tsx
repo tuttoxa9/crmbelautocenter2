@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { type AdCampaignType, type AdCar } from "@/lib/types";
 import { MONTHS_LONG } from "@/lib/services/adsService";
-import { AdsScroller, CloseBtn, Overlay, Spinner } from "./chrome";
+import { AdsScroller, CloseBtn, GhostBtn, Overlay, Spinner } from "./chrome";
 
 export function DailyTasksModal({
   isOpen,
@@ -13,6 +13,8 @@ export function DailyTasksModal({
   cars,
   busyIds,
   onRotate,
+  onPostponeCar,
+  onPostponeDay,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -21,6 +23,8 @@ export function DailyTasksModal({
   cars: AdCar[];
   busyIds?: Set<string>;
   onRotate?: (car: AdCar, campaign: AdCampaignType) => void;
+  onPostponeCar?: (car: AdCar) => void;
+  onPostponeDay?: () => void;
 }) {
   const rk1Cars = cars.filter((c) => c.campaign === "rk1");
   const rk2Cars = cars.filter((c) => c.campaign === "rk2");
@@ -40,12 +44,19 @@ export function DailyTasksModal({
         aria-modal="true"
         className="ads-enter relative flex max-h-[88dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-ads-bg shadow-ads-float sm:rounded-3xl"
       >
-        <header className="flex items-center justify-between px-5 pt-5 pb-3">
-          <div>
+        <header className="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
+          <div className="min-w-0">
             <h2 className="text-lg font-semibold tracking-tight text-ads-ink">{title}</h2>
             <p className="text-xs text-ads-muted">{cars.length} авто</p>
           </div>
-          <CloseBtn onClick={onClose} />
+          <div className="flex items-center gap-1">
+            {cars.length > 0 && onPostponeDay ? (
+              <GhostBtn className="h-8 px-2.5 text-xs" onClick={onPostponeDay}>
+                Отложить день
+              </GhostBtn>
+            ) : null}
+            <CloseBtn onClick={onClose} />
+          </div>
         </header>
         <AdsScroller className="min-h-0 flex-1" viewportClassName="space-y-4 px-5 pb-6">
           {cars.length === 0 ? (
@@ -53,10 +64,24 @@ export function DailyTasksModal({
           ) : (
             <>
               {rk1Cars.length > 0 && (
-                <Group title={`Из РК 1 · ${rk1Cars.length}`} cars={rk1Cars} next="rk2" busyIds={busyIds} onRotate={onRotate} />
+                <Group
+                  title={`Из РК 1 · ${rk1Cars.length}`}
+                  cars={rk1Cars}
+                  next="rk2"
+                  busyIds={busyIds}
+                  onRotate={onRotate}
+                  onPostpone={onPostponeCar}
+                />
               )}
               {rk2Cars.length > 0 && (
-                <Group title={`Из РК 2 · ${rk2Cars.length}`} cars={rk2Cars} next="rk1" busyIds={busyIds} onRotate={onRotate} />
+                <Group
+                  title={`Из РК 2 · ${rk2Cars.length}`}
+                  cars={rk2Cars}
+                  next="rk1"
+                  busyIds={busyIds}
+                  onRotate={onRotate}
+                  onPostpone={onPostponeCar}
+                />
               )}
             </>
           )}
@@ -72,12 +97,14 @@ function Group({
   next,
   busyIds,
   onRotate,
+  onPostpone,
 }: {
   title: string;
   cars: AdCar[];
   next: AdCampaignType;
   busyIds?: Set<string>;
   onRotate?: (car: AdCar, campaign: AdCampaignType) => void;
+  onPostpone?: (car: AdCar) => void;
 }) {
   return (
     <div className="space-y-2">
@@ -96,23 +123,35 @@ function Group({
                   ${Number(car.priceUsd).toLocaleString("ru-RU")}
                 </div>
               </div>
-              {onRotate && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => onRotate(car, next)}
-                  className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper disabled:opacity-40"
-                >
-                  {busy ? (
-                    <Spinner />
-                  ) : next === "rk2" ? (
-                    <ArrowRight className="size-3.5" />
-                  ) : (
-                    <ArrowLeft className="size-3.5" />
-                  )}
-                  {next === "rk2" ? "В РК 2" : "В РК 1"}
-                </button>
-              )}
+              <div className="flex shrink-0 items-center gap-1">
+                {onPostpone && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onPostpone(car)}
+                    className="inline-flex h-8 items-center rounded-lg px-2 text-xs font-medium text-ads-muted hover:bg-ads-surface hover:text-ads-ink disabled:opacity-40"
+                  >
+                    Отложить
+                  </button>
+                )}
+                {onRotate && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onRotate(car, next)}
+                    className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper disabled:opacity-40"
+                  >
+                    {busy ? (
+                      <Spinner />
+                    ) : next === "rk2" ? (
+                      <ArrowRight className="size-3.5" />
+                    ) : (
+                      <ArrowLeft className="size-3.5" />
+                    )}
+                    {next === "rk2" ? "В РК 2" : "В РК 1"}
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}

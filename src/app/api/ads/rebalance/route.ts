@@ -1,26 +1,10 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import {
-  getMinskDateKey,
-  minskDateKeyToTimestamp,
-  addDaysToDateKey,
-  getDateKeyDiffDays,
-} from '@/lib/services/adsService';
+import { getMinskDateKey } from '@/lib/services/adsService';
+import { planCompact, stampDate } from '@/lib/services/adsSchedule';
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
-    let customTargetPerDay: number | undefined;
-    let customStartDateKey: string | undefined;
-
-    try {
-      const body = await request.json();
-      if (body?.targetCarsPerDay) customTargetPerDay = Number(body.targetCarsPerDay);
-      if (body?.startDate) customStartDateKey = getMinskDateKey(Number(body.startDate));
-      if (body?.startDateKey) customStartDateKey = String(body.startDateKey);
-    } catch {
-      // Empty body is okay
-    }
-
     const settingsRows = await sql`
       SELECT data FROM settings WHERE id = 'ads' LIMIT 1
     `;
@@ -30,7 +14,7 @@ export async function POST(request: Request) {
       adsSettings = typeof raw === 'string' ? JSON.parse(raw) : raw;
     }
 
-    const targetCarsPerDay = Math.max(1, customTargetPerDay || Number(adsSettings?.targetCarsPerDay) || 3);
+    const targetCarsPerDay = Math.max(1, Number(adsSettings?.targetCarsPerDay) || 3);
     const todayKey = getMinskDateKey(Date.now());
     const nowIso = new Date().toISOString();
 
@@ -50,75 +34,32 @@ export async function POST(request: Request) {
       };
     });
 
-    const activeCars = allCars.filter((c: any) => c.campaign === 'rk1' || c.campaign === 'rk2');
+    const plan = planCompact(allCars, todayKey, targetCarsPerDay);
+    const stampMap = new Map(plan.stamps.map((s) => [s.id, s.dateKey]));
 
-    let startKey = todayKey;
-    if (customStartDateKey) {
-      startKey = customStartDateKey;
-    } else {
-      const futureDateKeys = activeCars
-        .map((c: any) => {
-          const t = Number(c.targetRotationDate);
-          return t ? getMinskDateKey(t) : null;
-        })
-        .filter((k: string | null): k is string => k !== null && k >= todayKey);
-
-      if (futureDateKeys.length > 0) {
-        startKey = futureDateKeys.sort()[0];
-      }
-    }
-
-    const sortedActive = [...activeCars].sort((a: any, b: any) => {
-      const startedA = Number(a.startedAt) || (Date.now() - 7 * 86400000);
-      const startedB = Number(b.startedAt) || (Date.now() - 7 * 86400000);
-      return startedA - startedB;
-    });
-
-    const updatedCarsMap = new Map<string, any>();
-
-    for (let i = 0; i < sortedActive.length; i++) {
-      const car = sortedActive[i];
-      const dayOffset = Math.floor(i / targetCarsPerDay);
-      const targetDateKey = addDaysToDateKey(startKey, dayOffset);
-      const targetRotationDate = minskDateKeyToTimestamp(targetDateKey);
-
-      const startedAt = Number(car.startedAt) || Date.now();
-      const daysIn = Math.max(0, Math.floor((Date.now() - startedAt) / 86400000));
-      const daysLeftFromToday = Math.max(0, getDateKeyDiffDays(todayKey, targetDateKey));
-      const maxDays = daysIn + daysLeftFromToday;
-
-      const updatedCarData = {
-        ...car,
-        targetRotationDate,
-        maxDays,
-        updatedAt: Date.now(),
-      };
-      delete updatedCarData.id;
-
-      updatedCarsMap.set(car.id, updatedCarData);
-    }
-
-    // Sequential writes — Neon pooler chokes on Promise.all bursts
-    for (const [id, data] of updatedCarsMap.entries()) {
+    for (const car of allCars) {
+      const dateKey = stampMap.get(car.id);
+      if (!dateKey) continue;
+      const data = stampDate(car, dateKey, todayKey);
+      const { id, createdAt, updatedAt, ...rest } = data as any;
       await sql`
         UPDATE ad_cars 
-        SET data = ${JSON.stringify(data)}, updated_at = ${nowIso}
+        SET data = ${JSON.stringify(rest)}, updated_at = ${nowIso}
         WHERE id = ${id}
       `;
     }
 
     const finalCars = allCars.map((c: any) => {
-      if (updatedCarsMap.has(c.id)) {
-        return { id: c.id, ...updatedCarsMap.get(c.id) };
-      }
-      return c;
+      const dateKey = stampMap.get(c.id);
+      if (!dateKey) return c;
+      return { ...stampDate(c, dateKey, todayKey), updatedAt: Date.now() };
     });
 
     return NextResponse.json({
       success: true,
-      totalBalanced: sortedActive.length,
+      totalBalanced: plan.stamps.length,
       targetCarsPerDay,
-      startKey,
+      startKey: todayKey,
       cars: finalCars,
     });
   } catch (error: any) {
