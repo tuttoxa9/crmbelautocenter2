@@ -43,8 +43,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       {mobileMenuOpen ? (
         <div className="fixed inset-0 z-40 flex md:hidden">
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-md" onClick={() => setMobileMenuOpen(false)} />
-          <div className="relative flex h-full w-[80vw] max-w-xs flex-col rounded-r-3xl bg-[#070708] text-zinc-100 shadow-[0_24px_80px_rgba(0,0,0,.6)] ring-1 ring-white/10">
+          <div className="fixed inset-0 bg-black/80" onClick={() => setMobileMenuOpen(false)} />
+          <div className="relative flex h-full w-[80vw] max-w-xs flex-col bg-black text-zinc-100 ring-1 ring-white/10">
             <div className="flex items-center justify-between px-5 pt-6 pb-4">
               <p className="text-sm font-semibold tracking-tight">Белавтоцентр</p>
               <button
@@ -64,8 +64,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      "flex h-12 items-center gap-3 rounded-2xl px-3 text-[15px] font-medium",
-                      isActive ? "bg-[#141416] text-white" : "text-zinc-400 hover:bg-white/[0.06] hover:text-zinc-100",
+                      "flex h-12 items-center gap-3 rounded-xl px-3 text-[15px] font-medium",
+                      isActive ? "bg-white/[0.08] text-white" : "text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-100",
                     )}
                   >
                     <item.icon className="size-5" strokeWidth={1.5} />
@@ -76,7 +76,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </nav>
             <div className="flex items-center justify-between border-t border-white/10 px-4 py-4">
               <span className="truncate text-sm text-zinc-500">{user?.email || "Пользователь"}</span>
-              <button type="button" onClick={() => void handleLogout()} className="flex size-10 items-center justify-center rounded-xl text-zinc-500 hover:text-white">
+              <button type="button" onClick={() => void handleLogout()} className="flex size-10 items-center justify-center rounded-xl text-zinc-400 hover:text-white">
                 <LogOut className="size-5" strokeWidth={1.5} />
               </button>
             </div>
@@ -84,7 +84,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden md:pl-[88px]">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden md:pl-[72px]">
         <div className="flex items-center justify-between border-b border-white/10 bg-black px-4 py-3 md:hidden">
           <h1 className="text-base font-semibold tracking-tight text-zinc-100">{current}</h1>
           <button type="button" onClick={() => setMobileMenuOpen(true)} className="text-zinc-400 hover:text-zinc-100">
