@@ -17,3 +17,13 @@ export function weekKeys(weekStart: string) {
 }
 
 export const WEEKDAY_SHORT = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
+
+export function fmtDay(key: string) {
+  const [, m, d] = key.split("-");
+  return `${Number(d)}.${m}`;
+}
+
+export function fmtWeekLabel(weekStart: string) {
+  const end = addDaysToDateKey(weekStart, 6);
+  return `${fmtDay(weekStart)} – ${fmtDay(end)}`;
+}

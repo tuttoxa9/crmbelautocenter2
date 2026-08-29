@@ -52,3 +52,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ui
 
   return NextResponse.json({ success: true, person: { uid, ...next } });
 }
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ uid: string }> }) {
+  const actor = await requireQualityActor(request);
+  if (isActorError(actor)) return actor;
+  if (actor.role !== "admin") {
+    return NextResponse.json({ success: false, error: "Нет доступа" }, { status: 403 });
+  }
+  const { uid } = await params;
+  if (uid === actor.uid) {
+    return NextResponse.json({ success: false, error: "Себя не отключаем" }, { status: 400 });
+  }
+  await adminDb.collection("users").doc(uid).set({ active: false }, { merge: true });
+  try {
+    await admin.auth().updateUser(uid, { disabled: true });
+  } catch {
+    // profile still off
+  }
+  return NextResponse.json({ success: true });
+}
