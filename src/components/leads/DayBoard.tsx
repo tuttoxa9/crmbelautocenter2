@@ -37,6 +37,7 @@ export function DayBoard({
   filterDate,
   search,
   selectedId,
+  highlightId,
   onOpen,
   onOpenCar,
 }: {
@@ -46,6 +47,7 @@ export function DayBoard({
   filterDate: Date;
   search: string;
   selectedId?: string | null;
+  highlightId?: string | null;
   onOpen: (lead: Lead) => void;
   onOpenCar?: (car: CatalogCar) => void;
 }) {
@@ -174,6 +176,7 @@ export function DayBoard({
                       lead={lead}
                       cars={cars}
                       selected={selectedId === lead.id}
+                      highlight={highlightId === lead.id}
                       showFullDate
                       onOpen={() => onOpen(lead)}
                       onOpenCar={onOpenCar}
@@ -190,6 +193,7 @@ export function DayBoard({
                   lead={lead}
                   cars={cars}
                   selected={selectedId === lead.id}
+                  highlight={highlightId === lead.id}
                   onOpen={() => onOpen(lead)}
                   onOpenCar={onOpenCar}
                 />

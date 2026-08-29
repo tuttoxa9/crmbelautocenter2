@@ -21,9 +21,10 @@ interface QuickAddLeadProps {
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
   onSuccess?: () => void;
+  onOpenDuplicate?: (lead: Lead) => void;
 }
 
-export function QuickAddLead({ cars, allLeads, presetCar, open: openProp, onOpenChange, hideTrigger, onSuccess }: QuickAddLeadProps) {
+export function QuickAddLead({ cars, allLeads, presetCar, open: openProp, onOpenChange, hideTrigger, onSuccess, onOpenDuplicate }: QuickAddLeadProps) {
   const { user } = useAuth();
   const [innerOpen, setInnerOpen] = useState(false);
   const open = openProp ?? innerOpen;
@@ -177,7 +178,15 @@ export function QuickAddLead({ cars, allLeads, presetCar, open: openProp, onOpen
               />
             </label>
           </div>
-          {dup ? <p className="text-[12px] text-amber-800">Номер уже есть: {dup.name || "без имени"}</p> : null}
+          {dup ? (
+            <button
+              type="button"
+              onClick={() => onOpenDuplicate?.(dup)}
+              className="w-full rounded-xl bg-amber-50 px-3 py-2 text-left text-[12px] text-amber-800 ring-1 ring-amber-200/80 hover:bg-amber-100"
+            >
+              Номер уже есть: {dup.name || "без имени"} · открыть
+            </button>
+          ) : null}
 
           <div>
             <div className="mb-1 flex items-center justify-between">

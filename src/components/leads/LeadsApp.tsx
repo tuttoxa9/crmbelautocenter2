@@ -45,6 +45,7 @@ export function LeadsApp() {
   const [hasMore, setHasMore] = useState(true);
   const [presetCar, setPresetCar] = useState<CatalogCar | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
   useEffect(() => {
     setMode(readMode());
@@ -139,6 +140,45 @@ export function LeadsApp() {
     setSearch("");
   };
 
+  const revealLead = (lead: Lead) => {
+    setAddOpen(false);
+    setPresetCar(null);
+    setDossier(null);
+    const tabId = DAY_TABS.some((t) => t.id === lead.status) ? (lead.status as DayTab) : null;
+    if (tabId) {
+      setMode("day");
+      setTab(tabId);
+      setMobileMenu(false);
+      setSearch("");
+      window.localStorage.setItem("leads.mode", "day");
+      window.localStorage.setItem("leads.tab", tabId);
+      if (tabId !== "new") {
+        const raw = lead.nextActionDate || lead.createdAt;
+        const due = startOfDay(new Date(raw));
+        const today = startOfDay(new Date());
+        setFilterDate(due.getTime() < today.getTime() ? today : due);
+      }
+    } else {
+      setMode("base");
+      window.localStorage.setItem("leads.mode", "base");
+      setSearch(lead.phone || "");
+    }
+    setSelected(lead);
+    setHighlightId(lead.id || null);
+  };
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const scroll = window.setTimeout(() => {
+      document.querySelector(`[data-lead-id="${highlightId}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 80);
+    const clear = window.setTimeout(() => setHighlightId(null), 3200);
+    return () => {
+      window.clearTimeout(scroll);
+      window.clearTimeout(clear);
+    };
+  }, [highlightId, tab, mode, filterDate]);
+
   return (
     <div className="leads-os ads-os flex h-full min-h-0 flex-col bg-leads-bg text-leads-ink">
       <header className="flex flex-col gap-3 border-b border-leads-line px-3 py-3 md:flex-row md:items-center md:px-5">
@@ -232,6 +272,7 @@ export function LeadsApp() {
                 filterDate={filterDate}
                 search={search}
                 selectedId={selected?.id}
+                highlightId={highlightId}
                 onOpen={setSelected}
                 onOpenCar={openCar}
               />
@@ -268,6 +309,7 @@ export function LeadsApp() {
                     lead={lead}
                     cars={cars}
                     selected={selected?.id === lead.id}
+                    highlight={highlightId === lead.id}
                     onOpen={() => setSelected(lead)}
                     onOpenCar={openCar}
                   />
@@ -316,6 +358,7 @@ export function LeadsApp() {
           setPresetCar(null);
           setAddOpen(false);
         }}
+        onOpenDuplicate={revealLead}
       />
 
       {selected ? (
@@ -326,6 +369,7 @@ export function LeadsApp() {
           onClose={() => setSelected(null)}
           onOpenCar={openCar}
           onDeleted={() => setSelected(null)}
+          onOpenDuplicate={revealLead}
         />
       ) : null}
     </div>

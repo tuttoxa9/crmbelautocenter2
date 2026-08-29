@@ -25,9 +25,10 @@ interface LeadFocusViewProps {
   onClose: () => void;
   onOpenCar?: (car: CatalogCar) => void;
   onDeleted?: () => void;
+  onOpenDuplicate?: (lead: Lead) => void;
 }
 
-export function LeadFocusView({ lead, cars, allLeads, onClose, onOpenCar, onDeleted }: LeadFocusViewProps) {
+export function LeadFocusView({ lead, cars, allLeads, onClose, onOpenCar, onDeleted, onOpenDuplicate }: LeadFocusViewProps) {
   const { user } = useAuth();
   const [form, setForm] = useState({
     name: lead.name || "",
@@ -190,9 +191,14 @@ export function LeadFocusView({ lead, cars, allLeads, onClose, onOpenCar, onDele
           </div>
 
           {duplicate ? (
-            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+            <button
+              type="button"
+              onClick={() => onOpenDuplicate?.(duplicate)}
+              className="mt-3 w-full rounded-xl bg-amber-50 px-3 py-2 text-left text-[12px] text-amber-900 ring-1 ring-amber-200/80 transition-colors hover:bg-amber-100"
+            >
               Этот номер уже есть: {duplicate.name || "без имени"} · {getStatusLabel(duplicate.status)}
-            </p>
+              <span className="mt-0.5 block text-[11px] text-amber-800/80">Открыть в {getStatusLabel(duplicate.status)}</span>
+            </button>
           ) : null}
 
           <div className="mt-8 grid gap-6 md:grid-cols-2">
@@ -323,6 +329,7 @@ export function LeadRow({
   lead,
   cars,
   selected,
+  highlight,
   onOpen,
   onOpenCar,
   showFullDate,
@@ -330,6 +337,7 @@ export function LeadRow({
   lead: Lead;
   cars: CatalogCar[];
   selected?: boolean;
+  highlight?: boolean;
   onOpen: () => void;
   onOpenCar?: (car: CatalogCar) => void;
   showFullDate?: boolean;
@@ -342,10 +350,11 @@ export function LeadRow({
   return (
     <button
       type="button"
+      data-lead-id={lead.id}
       onClick={onOpen}
       className={cn(
         "flex w-full items-center gap-3 px-3 py-3 text-left md:px-4",
-        selected ? "bg-zinc-100" : "hover:bg-zinc-50",
+        highlight ? "bg-amber-50 ring-2 ring-inset ring-amber-400" : selected ? "bg-zinc-100" : "hover:bg-zinc-50",
       )}
     >
       <SourceIcon source={lead.source} className="size-4 shrink-0 opacity-50" />
