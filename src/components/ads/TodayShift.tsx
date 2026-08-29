@@ -5,7 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, MoreHorizontal } from "lucide-react";
 import { type AdCampaignType, type AdCar, type AdsSettings } from "@/lib/types";
-import { MONTHS_LONG, getCalendarDaysLeft, getMinskDateKey } from "@/lib/services/adsService";
+import { MONTHS_LONG, calculatePriceTier, getCalendarDaysLeft, getMinskDateKey, getPriceTierShort } from "@/lib/services/adsService";
 import { cn } from "@/lib/utils";
 import { WorkTask } from "./WorkTask";
 import { RotationTimeline } from "./RotationTimeline";
@@ -146,7 +146,6 @@ export function TodayShift({
                   <ShootRow
                     key={car.id}
                     car={car}
-                    label="Ждёт ролик"
                     busy={busy}
                     primary={{
                       label: "Отснято",
@@ -165,7 +164,6 @@ export function TodayShift({
                 <ShootRow
                   key={car.id}
                   car={car}
-                  label="Готово к эфиру"
                   busy={busy}
                   menuLabel="Действия"
                   items={[
@@ -242,25 +240,32 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
 
 function ShootRow({
   car,
-  label,
   busy,
   primary,
   menuLabel,
   items,
 }: {
   car: AdCar;
-  label: string;
   busy: boolean;
   primary?: ActionItem;
   menuLabel: string;
   items: ActionItem[];
 }) {
+  const tier = car.priceTier || calculatePriceTier(car.priceUsd);
+  const price = Number(car.priceUsd) || 0;
   return (
     <div className="relative flex items-center gap-2.5 rounded-xl px-1 py-1.5">
       <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-9 w-12" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-ads-ink">{car.name}</p>
-        <p className="text-xs text-ads-muted">{label}</p>
+        <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-ads-muted">
+          <span className="inline-flex h-[18px] shrink-0 items-center rounded-md bg-ads-surface px-1.5 text-[11px] font-medium text-ads-ink">
+            {getPriceTierShort(tier)}
+          </span>
+          {price > 0 ? (
+            <span className="truncate font-mono tabular-nums">${price.toLocaleString("ru-RU")}</span>
+          ) : null}
+        </p>
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {primary ? (

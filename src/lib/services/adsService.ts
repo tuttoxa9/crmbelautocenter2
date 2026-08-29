@@ -30,6 +30,21 @@ export function getPriceTierLabel(tier: AdPriceTier): string {
   }
 }
 
+export function getPriceTierShort(tier: AdPriceTier): string {
+  switch (tier) {
+    case "tier_under_7k":
+      return "До $7k";
+    case "tier_7k_13k":
+      return "$7–13k";
+    case "tier_13k_20k":
+      return "$13–20k";
+    case "tier_20k_plus":
+      return "$20k+";
+    default:
+      return "—";
+  }
+}
+
 export function getCampaignLabel(campaign: AdCampaignType): string {
   switch (campaign) {
     case "rk1":
