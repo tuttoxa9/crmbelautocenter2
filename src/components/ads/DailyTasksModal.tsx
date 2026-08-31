@@ -2,7 +2,7 @@
 
 import { type AdCampaignType, type AdCar, type TikTokDebt } from "@/lib/types";
 import { MONTHS_LONG } from "@/lib/services/adsService";
-import { AdsScroller, CloseBtn, GhostBtn, Overlay, Spinner } from "./chrome";
+import { AdsScroller, CatalogLink, CloseBtn, GhostBtn, Overlay, Spinner } from "./chrome";
 import { CarThumb } from "./CarThumb";
 
 export function DailyTasksModal({
@@ -83,14 +83,16 @@ export function DailyTasksModal({
                         key={debt.id}
                         className={`flex items-center gap-3 px-3.5 py-3 ${i > 0 ? "border-t border-ads-line" : ""}`}
                       >
-                        <CarThumb name={debt.name} photoUrl={debt.photoUrl} className="h-9 w-12" />
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium text-ads-ink">{debt.name}</div>
-                          <div className="mt-0.5 text-xs text-ads-muted">
-                            {debt.year ? `${debt.year} · ` : ""}
-                            {debt.priceUsd != null ? `$${Number(debt.priceUsd).toLocaleString("ru-RU")}` : "доп. видео"}
+                        <CatalogLink carId={debt.carId} className="flex min-w-0 flex-1 items-center gap-3">
+                          <CarThumb name={debt.name} photoUrl={debt.photoUrl} className="h-9 w-12" />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-medium text-ads-ink">{debt.name}</div>
+                            <div className="mt-0.5 text-xs text-ads-muted">
+                              {debt.year ? `${debt.year} · ` : ""}
+                              {debt.priceUsd != null ? `$${Number(debt.priceUsd).toLocaleString("ru-RU")}` : "доп. видео"}
+                            </div>
                           </div>
-                        </div>
+                        </CatalogLink>
                         {onRemoveDebt ? (
                           <button
                             type="button"
@@ -155,12 +157,12 @@ function Group({
               key={car.id}
               className={`flex items-center justify-between gap-3 px-3.5 py-3 ${i > 0 ? "border-t border-ads-line" : ""}`}
             >
-              <div className="min-w-0">
+              <CatalogLink carId={car.carId} className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-ads-ink">{car.name}</div>
                 <div className="mt-0.5 text-xs text-ads-muted">
                   ${Number(car.priceUsd).toLocaleString("ru-RU")}
                 </div>
-              </div>
+              </CatalogLink>
               <div className="flex shrink-0 items-center gap-1">
                 {onPostpone && (
                   <button

@@ -3,7 +3,7 @@
 import { type AdCampaignType, type AdCar, type AdsSettings } from "@/lib/types";
 import { getAdBurn } from "@/lib/services/adsProgress";
 import { CarThumb } from "./CarThumb";
-import { BusyOverlay, BurnMeter, Spinner } from "./chrome";
+import { BusyOverlay, BurnMeter, CatalogLink, Spinner } from "./chrome";
 
 export function WorkTask({
   car,
@@ -22,19 +22,21 @@ export function WorkTask({
     <article className="relative px-4 py-3">
       <BusyOverlay show={busy} />
       <div className="flex items-start gap-3">
-        <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-10 w-14" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="truncate text-sm font-medium tracking-tight text-ads-ink">{car.name}</h3>
-            <span className="shrink-0 font-mono text-xs font-medium tabular-nums text-ads-muted">
-              ${Number(car.priceUsd).toLocaleString("ru-RU")}
-            </span>
+        <CatalogLink carId={car.carId} className="flex min-w-0 flex-1 items-start gap-3">
+          <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-10 w-14" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="truncate text-sm font-medium tracking-tight text-ads-ink">{car.name}</h3>
+              <span className="shrink-0 font-mono text-xs font-medium tabular-nums text-ads-muted">
+                ${Number(car.priceUsd).toLocaleString("ru-RU")}
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-ads-subtle">
+              {car.campaign === "rk1" ? "РК 1" : "РК 2"}
+              {car.year ? ` · ${car.year}` : ""}
+            </p>
           </div>
-          <p className="mt-0.5 text-xs text-ads-subtle">
-            {car.campaign === "rk1" ? "РК 1" : "РК 2"}
-            {car.year ? ` · ${car.year}` : ""}
-          </p>
-        </div>
+        </CatalogLink>
         <div className="flex shrink-0 items-center gap-1">
           <RotateBtn busy={busy} onClick={() => onSwitch(car, "rk1")}>
             РК 1

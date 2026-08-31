@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { WorkTask } from "./WorkTask";
 import { RotationTimeline } from "./RotationTimeline";
 import { CarThumb } from "./CarThumb";
-import { AdsScroller, GhostBtn, PrimaryBtn, Spinner } from "./chrome";
+import { AdsScroller, CatalogLink, GhostBtn, PrimaryBtn, Spinner } from "./chrome";
 
 type ActionItem = {
   label: string;
@@ -255,18 +255,20 @@ function ShootRow({
   const price = Number(car.priceUsd) || 0;
   return (
     <div className="relative flex items-center gap-2.5 rounded-xl px-1 py-1.5">
-      <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-9 w-12" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-ads-ink">{car.name}</p>
-        <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-ads-muted">
-          <span className="inline-flex h-[18px] shrink-0 items-center rounded-md bg-ads-surface px-1.5 text-[11px] font-medium text-ads-ink">
-            {getPriceTierShort(tier)}
-          </span>
-          {price > 0 ? (
-            <span className="truncate font-mono tabular-nums">${price.toLocaleString("ru-RU")}</span>
-          ) : null}
-        </p>
-      </div>
+      <CatalogLink carId={car.carId} className="flex min-w-0 flex-1 items-center gap-2.5">
+        <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-9 w-12" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-ads-ink">{car.name}</p>
+          <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-ads-muted">
+            <span className="inline-flex h-[18px] shrink-0 items-center rounded-md bg-ads-surface px-1.5 text-[11px] font-medium text-ads-ink">
+              {getPriceTierShort(tier)}
+            </span>
+            {price > 0 ? (
+              <span className="truncate font-mono tabular-nums">${price.toLocaleString("ru-RU")}</span>
+            ) : null}
+          </p>
+        </div>
+      </CatalogLink>
       <div className="flex shrink-0 items-center gap-1">
         {primary ? (
           <button

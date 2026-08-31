@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { type AdCampaignType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { CarThumb } from "./CarThumb";
-import { AdsScroller, CloseBtn, Overlay, Spinner } from "./chrome";
+import { AdsScroller, CatalogLink, CloseBtn, Overlay, Spinner } from "./chrome";
 
 export interface WarehouseCar {
   id: string;
@@ -113,13 +113,15 @@ export function WarehouseDrawer({
                     key={car.id}
                     className={cn("flex items-center gap-3 px-3 py-2.5", i > 0 && "border-t border-ads-line")}
                   >
-                    <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-9 w-12" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-ads-ink">{car.name}</p>
-                      <p className="text-xs text-ads-muted">
-                        {car.year ? `${car.year} · ` : ""}${Number(car.priceUsd).toLocaleString("ru-RU")}
-                      </p>
-                    </div>
+                    <CatalogLink carId={car.id} className="flex min-w-0 flex-1 items-center gap-3">
+                      <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-9 w-12" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-ads-ink">{car.name}</p>
+                        <p className="text-xs text-ads-muted">
+                          {car.year ? `${car.year} · ` : ""}${Number(car.priceUsd).toLocaleString("ru-RU")}
+                        </p>
+                      </div>
+                    </CatalogLink>
                     <button
                       type="button"
                       disabled={!!addingId}

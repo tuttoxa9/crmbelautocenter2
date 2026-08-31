@@ -7,7 +7,7 @@ import { getPriceTierLabel } from "@/lib/services/adsService";
 import { getAdBurn } from "@/lib/services/adsProgress";
 import { cn } from "@/lib/utils";
 import { CarThumb } from "./CarThumb";
-import { BusyOverlay, BurnMeter, GhostBtn, PrimaryBtn } from "./chrome";
+import { BusyOverlay, BurnMeter, CatalogLink, GhostBtn, PrimaryBtn } from "./chrome";
 
 const DAY_PRESETS = [7, 10, 14, 17, 21, 30];
 
@@ -37,19 +37,21 @@ export function AdsCarCard({
     <article className="relative min-w-0 px-4 py-3">
       <BusyOverlay show={busy} />
       <div className="flex items-start gap-3">
-        <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-10 w-14" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="truncate text-sm font-medium tracking-tight text-ads-ink">{car.name}</h3>
-            <span className="shrink-0 font-mono text-xs font-medium tabular-nums text-ads-muted">
-              ${Number(car.priceUsd).toLocaleString("ru-RU")}
-            </span>
+        <CatalogLink carId={car.carId} className="flex min-w-0 flex-1 items-start gap-3">
+          <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-10 w-14" />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <h3 className="truncate text-sm font-medium tracking-tight text-ads-ink">{car.name}</h3>
+              <span className="shrink-0 font-mono text-xs font-medium tabular-nums text-ads-muted">
+                ${Number(car.priceUsd).toLocaleString("ru-RU")}
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-ads-subtle">
+              {car.year ? `${car.year} · ` : ""}
+              {getPriceTierLabel(car.priceTier)}
+            </p>
           </div>
-          <p className="mt-0.5 text-xs text-ads-subtle">
-            {car.year ? `${car.year} · ` : ""}
-            {getPriceTierLabel(car.priceTier)}
-          </p>
-        </div>
+        </CatalogLink>
       </div>
 
       {burn.kind === "rotation" ? (

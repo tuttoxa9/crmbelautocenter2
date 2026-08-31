@@ -257,3 +257,32 @@ export function AdsScroller({
     </div>
   );
 }
+
+export function catalogPageUrl(carId?: string | null) {
+  const id = carId?.trim();
+  return id ? `https://belautocenter.by/catalog/${encodeURIComponent(id)}` : null;
+}
+
+export function CatalogLink({
+  carId,
+  className,
+  children,
+}: {
+  carId?: string | null;
+  className?: string;
+  children: ReactNode;
+}) {
+  const href = catalogPageUrl(carId);
+  if (!href) return <div className={className}>{children}</div>;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      title="Открыть в каталоге"
+      className={cn("min-w-0 cursor-pointer rounded-lg outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ads-accent/40", className)}
+    >
+      {children}
+    </a>
+  );
+}
