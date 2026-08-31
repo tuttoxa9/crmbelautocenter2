@@ -253,7 +253,12 @@ export function AdsDashboard() {
           }),
         };
       });
-      showToast(`${car.name} → ${PIPELINE.find((p) => p.id === targetCampaign)?.label}`);
+      const label = PIPELINE.find((p) => p.id === targetCampaign)?.label || targetCampaign;
+      showToast(
+        car.campaign === targetCampaign
+          ? `${car.name}: новая ротация в ${label}`
+          : `${car.name} → ${label}`,
+      );
     } catch {
       carsRef.current = snapshot;
       setCars(snapshot);

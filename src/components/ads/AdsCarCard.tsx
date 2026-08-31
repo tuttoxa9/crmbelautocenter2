@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, MoreHorizontal } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { type AdCampaignType, type AdCar, type AdsSettings } from "@/lib/types";
 import { getPriceTierLabel } from "@/lib/services/adsService";
 import { getAdBurn } from "@/lib/services/adsProgress";
@@ -32,7 +32,6 @@ export function AdsCarCard({
   const [menu, setMenu] = useState<"none" | "actions" | "days" | "reset" | "delete">("none");
   const [daysValue, setDaysValue] = useState(burn.limitDays || 14);
   const isActive = car.campaign === "rk1" || car.campaign === "rk2";
-  const next = car.campaign === "rk1" ? "rk2" : car.campaign === "rk2" ? "rk1" : null;
 
   return (
     <article className="relative min-w-0 px-4 py-3">
@@ -62,15 +61,23 @@ export function AdsCarCard({
       )}
 
       <div className="mt-2 flex items-center gap-1.5">
-        {next && (
-          <button
-            type="button"
-            onClick={() => onSwitch(car, next)}
-            className="inline-flex h-8 items-center gap-1 rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper hover:bg-ads-rail active:scale-[0.97]"
-          >
-            {next === "rk2" ? <ArrowRight className="size-3" /> : <ArrowLeft className="size-3" />}
-            {next === "rk2" ? "В РК 2" : "В РК 1"}
-          </button>
+        {isActive && (
+          <>
+            <button
+              type="button"
+              onClick={() => onSwitch(car, "rk1")}
+              className="inline-flex h-8 items-center rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper hover:bg-ads-rail active:scale-[0.97]"
+            >
+              В РК 1
+            </button>
+            <button
+              type="button"
+              onClick={() => onSwitch(car, "rk2")}
+              className="inline-flex h-8 items-center rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper hover:bg-ads-rail active:scale-[0.97]"
+            >
+              В РК 2
+            </button>
+          </>
         )}
         {car.campaign === "waiting_video" && (
           <Mini onClick={() => onSwitch(car, "ready_for_ads")}>Отснято</Mini>

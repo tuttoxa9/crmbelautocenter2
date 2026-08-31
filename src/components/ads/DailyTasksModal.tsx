@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { type AdCampaignType, type AdCar, type TikTokDebt } from "@/lib/types";
 import { MONTHS_LONG } from "@/lib/services/adsService";
 import { AdsScroller, CloseBtn, GhostBtn, Overlay, Spinner } from "./chrome";
@@ -110,7 +109,6 @@ export function DailyTasksModal({
                 <Group
                   title={`Из РК 1 · ${rk1Cars.length}`}
                   cars={rk1Cars}
-                  next="rk2"
                   busyIds={busyIds}
                   onRotate={onRotate}
                   onPostpone={onPostponeCar}
@@ -120,7 +118,6 @@ export function DailyTasksModal({
                 <Group
                   title={`Из РК 2 · ${rk2Cars.length}`}
                   cars={rk2Cars}
-                  next="rk1"
                   busyIds={busyIds}
                   onRotate={onRotate}
                   onPostpone={onPostponeCar}
@@ -137,14 +134,12 @@ export function DailyTasksModal({
 function Group({
   title,
   cars,
-  next,
   busyIds,
   onRotate,
   onPostpone,
 }: {
   title: string;
   cars: AdCar[];
-  next: AdCampaignType;
   busyIds?: Set<string>;
   onRotate?: (car: AdCar, campaign: AdCampaignType) => void;
   onPostpone?: (car: AdCar) => void;
@@ -178,21 +173,14 @@ function Group({
                   </button>
                 )}
                 {onRotate && (
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => onRotate(car, next)}
-                    className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper disabled:opacity-40"
-                  >
-                    {busy ? (
-                      <Spinner />
-                    ) : next === "rk2" ? (
-                      <ArrowRight className="size-3.5" />
-                    ) : (
-                      <ArrowLeft className="size-3.5" />
-                    )}
-                    {next === "rk2" ? "В РК 2" : "В РК 1"}
-                  </button>
+                  <>
+                    <RotateBtn busy={busy} onClick={() => onRotate(car, "rk1")}>
+                      РК 1
+                    </RotateBtn>
+                    <RotateBtn busy={busy} onClick={() => onRotate(car, "rk2")}>
+                      РК 2
+                    </RotateBtn>
+                  </>
                 )}
               </div>
             </div>
@@ -200,5 +188,26 @@ function Group({
         })}
       </div>
     </div>
+  );
+}
+
+function RotateBtn({
+  busy,
+  onClick,
+  children,
+}: {
+  busy?: boolean;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={onClick}
+      className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper hover:bg-ads-rail disabled:opacity-40"
+    >
+      {busy ? <Spinner /> : children}
+    </button>
   );
 }

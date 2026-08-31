@@ -383,6 +383,10 @@ export function runScheduleSelfCheck(): string[] {
   const slot = pickNextSlotDateKey(three, "2026-08-30", 3, "rk2", { allowToday: false });
   if (slot === "2026-08-30") err.push("rotation must not reuse today");
 
+  const sameRkOthers = three.filter((c) => c.id !== "p1");
+  const sameSlot = pickNextSlotDateKey(sameRkOthers, "2026-08-30", 3, "rk1", { allowToday: false });
+  if (sameSlot === "2026-08-30") err.push("same-rk rotation must not reuse today");
+
   if (chooseCampaignForNewCar(29, 29) !== "rk1") err.push("tie should rk1");
   if (chooseCampaignForNewCar(30, 29) !== "rk2") err.push("smaller should rk2");
 

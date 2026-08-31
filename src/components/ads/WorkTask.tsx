@@ -1,11 +1,9 @@
 "use client";
 
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { type AdCampaignType, type AdCar, type AdsSettings } from "@/lib/types";
-import { getPrimaryMove } from "@/lib/services/adsService";
 import { getAdBurn } from "@/lib/services/adsProgress";
 import { CarThumb } from "./CarThumb";
-import { BusyOverlay, BurnMeter } from "./chrome";
+import { BusyOverlay, BurnMeter, Spinner } from "./chrome";
 
 export function WorkTask({
   car,
@@ -19,7 +17,6 @@ export function WorkTask({
   onSwitch: (car: AdCar, campaign: AdCampaignType) => void;
 }) {
   const burn = getAdBurn(car, settings);
-  const move = getPrimaryMove(car.campaign);
 
   return (
     <article className="relative px-4 py-3">
@@ -38,18 +35,39 @@ export function WorkTask({
             {car.year ? ` · ${car.year}` : ""}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => onSwitch(car, move.target)}
-          className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper shadow-ads-pill transition-transform duration-150 hover:bg-ads-rail active:scale-[0.97]"
-        >
-          {move.target === "rk2" ? <ArrowRight className="size-3.5" /> : <ArrowLeft className="size-3.5" />}
-          {move.label}
-        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          <RotateBtn busy={busy} onClick={() => onSwitch(car, "rk1")}>
+            РК 1
+          </RotateBtn>
+          <RotateBtn busy={busy} onClick={() => onSwitch(car, "rk2")}>
+            РК 2
+          </RotateBtn>
+        </div>
       </div>
       <div className="mt-2">
         <BurnMeter label={burn.label} sublabel={burn.sublabel} percent={burn.percent} tone={burn.tone} />
       </div>
     </article>
+  );
+}
+
+function RotateBtn({
+  busy,
+  onClick,
+  children,
+}: {
+  busy?: boolean;
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={onClick}
+      className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper shadow-ads-pill transition-transform duration-150 hover:bg-ads-rail active:scale-[0.97] disabled:opacity-40"
+    >
+      {busy ? <Spinner /> : children}
+    </button>
   );
 }

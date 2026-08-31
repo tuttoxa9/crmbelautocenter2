@@ -59,12 +59,11 @@ export async function PUT(
 
     const todayKey = getMinskDateKey(Date.now());
 
-    const isCampaignSwitch =
-      body.campaign &&
-      (body.campaign === 'rk1' || body.campaign === 'rk2') &&
-      body.campaign !== currentData.campaign;
+    const isRotation =
+      (body.campaign === "rk1" || body.campaign === "rk2") &&
+      !body.targetRotationDate;
 
-    if (isCampaignSwitch && !body.targetRotationDate) {
+    if (isRotation) {
       const existingCarsRows = await sql`SELECT id, data FROM ad_cars WHERE id != ${id}`;
       const others = existingCarsRows.map((r: any) => {
         const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
