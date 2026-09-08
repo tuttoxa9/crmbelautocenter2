@@ -268,6 +268,29 @@ export function AdsDashboard() {
     }
   };
 
+  const handleMarkShot = async (car: AdCar) => {
+    if (!car.id) return;
+    const snapshot = carsRef.current;
+    markBusy(car.id, true);
+    try {
+      await updateAdCar(car.id, { campaign: "ready_for_ads" }, { notifyShot: true });
+      const updatedCars = await getAdCars();
+      carsRef.current = updatedCars;
+      setCars(updatedCars);
+      setSelectedDayTasks((prev) => {
+        if (!prev.isOpen) return prev;
+        return { ...prev, cars: prev.cars.filter((c) => c.id !== car.id) };
+      });
+      showToast(`${car.name} → Отснято · пуш отправлен`);
+    } catch {
+      carsRef.current = snapshot;
+      setCars(snapshot);
+      showToast("Не удалось перевести в «Отснято»", "error");
+    } finally {
+      markBusy(car.id, false);
+    }
+  };
+
   const handleSaveCarDays = async (car: AdCar, newDays: number) => {
     if (!car.id || !newDays || newDays <= 0) return;
     markBusy(car.id, true);
@@ -528,6 +551,7 @@ export function AdsDashboard() {
           })
         }
         onRemoveDebt={(id) => void handleSaveDebts((settings.tiktokDebts || []).filter((d) => d.id !== id))}
+        onMarkShot={(car) => void handleMarkShot(car)}
       />
       <ConfirmSheet
         open={equalize.open}

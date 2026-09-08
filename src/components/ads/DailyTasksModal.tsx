@@ -17,6 +17,7 @@ export function DailyTasksModal({
   onPostponeCar,
   onPostponeDay,
   onRemoveDebt,
+  onMarkShot,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -29,6 +30,7 @@ export function DailyTasksModal({
   onPostponeCar?: (car: AdCar) => void;
   onPostponeDay?: () => void;
   onRemoveDebt?: (id: string) => void;
+  onMarkShot?: (car: AdCar) => void;
 }) {
   const rk1Cars = cars.filter((c) => c.campaign === "rk1");
   const rk2Cars = cars.filter((c) => c.campaign === "rk2");
@@ -114,6 +116,7 @@ export function DailyTasksModal({
                   busyIds={busyIds}
                   onRotate={onRotate}
                   onPostpone={onPostponeCar}
+                  onMarkShot={onMarkShot}
                 />
               )}
               {rk2Cars.length > 0 && (
@@ -123,6 +126,7 @@ export function DailyTasksModal({
                   busyIds={busyIds}
                   onRotate={onRotate}
                   onPostpone={onPostponeCar}
+                  onMarkShot={onMarkShot}
                 />
               )}
             </>
@@ -139,12 +143,14 @@ function Group({
   busyIds,
   onRotate,
   onPostpone,
+  onMarkShot,
 }: {
   title: string;
   cars: AdCar[];
   busyIds?: Set<string>;
   onRotate?: (car: AdCar, campaign: AdCampaignType) => void;
   onPostpone?: (car: AdCar) => void;
+  onMarkShot?: (car: AdCar) => void;
 }) {
   return (
     <div className="space-y-2">
@@ -163,7 +169,12 @@ function Group({
                   ${Number(car.priceUsd).toLocaleString("ru-RU")}
                 </div>
               </CatalogLink>
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
+                {onMarkShot && (
+                  <RotateBtn busy={busy} onClick={() => onMarkShot(car)}>
+                    Отснято
+                  </RotateBtn>
+                )}
                 {onPostpone && (
                   <button
                     type="button"
