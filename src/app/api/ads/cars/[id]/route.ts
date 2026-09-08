@@ -6,8 +6,10 @@ import {
   minskDateKeyToTimestamp,
   addDaysToDateKey,
   getDateKeyDiffDays,
+  getPriceTierLabel,
 } from '@/lib/services/adsService';
 import { pickNextSlotDateKey, isAirCampaign } from '@/lib/services/adsSchedule';
+import { sendTelegramAdShotAlert } from '@/lib/telegram';
 
 async function getTargetPerDay(): Promise<number> {
   try {
@@ -31,6 +33,8 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
+    const notifyShot = Boolean(body.notifyShot);
+    delete body.notifyShot;
 
     const existing = await sql`
       SELECT id, data FROM ad_cars WHERE id = ${id} LIMIT 1
@@ -58,6 +62,7 @@ export async function PUT(
     }
 
     const todayKey = getMinskDateKey(Date.now());
+    const fromCampaign = currentData.campaign;
 
     const isRotation =
       (body.campaign === "rk1" || body.campaign === "rk2") &&
@@ -77,6 +82,11 @@ export async function PUT(
       updatedData.maxDays = daysLeftFromToday;
       updatedData.startedAt = Date.now();
       updatedData.lastAlertSentAt = null;
+    } else if (body.campaign === "ready_for_ads" || body.campaign === "waiting_video") {
+      updatedData.targetRotationDate = null;
+      if (body.campaign === "ready_for_ads") {
+        updatedData.shotAt = Date.now();
+      }
     } else if (body.maxDays && !body.targetRotationDate) {
       const startedAt = Number(updatedData.startedAt) || Date.now();
       const daysIn = Math.max(0, Math.floor((Date.now() - startedAt) / 86400000));
@@ -92,6 +102,21 @@ export async function PUT(
       SET data = ${JSON.stringify(updatedData)}, updated_at = ${now}
       WHERE id = ${id}
     `;
+
+    if (notifyShot && body.campaign === "ready_for_ads") {
+      try {
+        await sendTelegramAdShotAlert({
+          name: updatedData.name,
+          year: updatedData.year,
+          priceUsd: Number(updatedData.priceUsd) || 0,
+          priceTierLabel: getPriceTierLabel(updatedData.priceTier),
+          fromCampaign,
+          photoUrl: updatedData.photoUrl,
+        });
+      } catch (err) {
+        console.error("Shot telegram failed:", err);
+      }
+    }
 
     return NextResponse.json({
       success: true,

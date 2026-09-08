@@ -271,12 +271,13 @@ export const createAdCar = async (
 
 export const updateAdCar = async (
   id: string,
-  updates: Partial<Omit<AdCar, "id" | "createdAt">>
+  updates: Partial<Omit<AdCar, "id" | "createdAt">>,
+  opts?: { notifyShot?: boolean }
 ) => {
   const res = await fetch(`/api/ads/cars/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updates),
+    body: JSON.stringify({ ...updates, notifyShot: opts?.notifyShot || undefined }),
   });
 
   const data = await res.json();

@@ -245,3 +245,79 @@ export async function sendTelegramAdRotationAlert(data: AdRotationAlertData) {
     console.error("Error in sendTelegramAdRotationAlert:", error);
   }
 }
+
+export interface AdShotAlertData {
+  name: string;
+  year?: string | number;
+  priceUsd: number;
+  priceTierLabel: string;
+  fromCampaign?: "rk1" | "rk2" | string;
+  photoUrl?: string;
+}
+
+export async function sendTelegramAdShotAlert(data: AdShotAlertData) {
+  try {
+    let botToken = "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4";
+    let chatId = "-1002721193947";
+    let isActive = true;
+
+    try {
+      const { sql } = await import("./db");
+      const settingsRows = await sql`
+        SELECT id, data FROM settings WHERE id IN ('ads', 'telegram')
+      `;
+
+      for (const row of settingsRows) {
+        const d = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
+        if (d?.botToken) botToken = d.botToken;
+        if (d?.chatId) chatId = d.chatId;
+        if (row.id === "ads" && d?.isActive !== undefined) {
+          isActive = Boolean(d.isActive);
+        }
+      }
+    } catch (dbErr) {
+      console.warn("Could not load telegram settings from Neon DB, using defaults:", dbErr);
+    }
+
+    if (!isActive) {
+      console.log("Ad Telegram notifications are disabled in settings.");
+      return;
+    }
+
+    if (!botToken || !chatId) {
+      console.warn("Telegram botToken or chatId is missing.");
+      return;
+    }
+
+    const from =
+      data.fromCampaign === "rk1" ? "РК 1" : data.fromCampaign === "rk2" ? "РК 2" : data.fromCampaign || "ротации";
+    const formattedPrice = Number(data.priceUsd || 0).toLocaleString("ru-RU");
+    const yearStr = data.year ? ` ${data.year} г.` : "";
+
+    const message = [
+      `🎬 <b>ОТСНЯТО · TikTok реклама</b>\n`,
+      `🚗 <b>Автомобиль:</b> ${data.name}${yearStr} — $${formattedPrice}`,
+      `🎯 <b>Категория:</b> ${data.priceTierLabel}`,
+      `📦 <b>Было:</b> ${from}`,
+      `✅ <b>Сейчас:</b> Отснято — можно ставить в ротацию`,
+    ].join("\n");
+
+    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        parse_mode: "HTML",
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Failed to send Telegram ad shot alert:", errorData);
+    }
+  } catch (error) {
+    console.error("Error in sendTelegramAdShotAlert:", error);
+  }
+}
