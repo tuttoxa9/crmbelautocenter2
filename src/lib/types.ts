@@ -107,6 +107,17 @@ export interface AdCar {
   shotBy?: string;
   shotByName?: string;
   shotAt?: number;
+  shotNotifyStatus?: "sent" | "failed" | "skipped";
+  shotNotifyError?: string;
+  sold?: boolean;
+  source?: "catalog" | "manual";
+  history?: {
+    at: number;
+    kind: string;
+    from?: string;
+    to?: string;
+    by?: string;
+  }[];
   createdAt: number;
   updatedAt: number;
 }

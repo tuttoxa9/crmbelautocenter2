@@ -2,6 +2,7 @@
 
 import { type AdCampaignType, type AdCar, type TikTokDebt } from "@/lib/types";
 import { MONTHS_LONG } from "@/lib/services/adsService";
+import { otherAir, rotateLabel } from "@/lib/ads/copy";
 import { AdsScroller, CatalogLink, CloseBtn, GhostBtn, Overlay, Spinner } from "./chrome";
 import { CarThumb } from "./CarThumb";
 
@@ -56,7 +57,7 @@ export function DailyTasksModal({
             <h2 className="text-lg font-semibold tracking-tight text-ads-ink">{title}</h2>
             <p className="text-xs text-ads-muted">
               {cars.length ? `${cars.length} в ротации` : "Ротации нет"}
-              {debts.length ? ` · долг ${debts.length}` : ""}
+              {debts.length ? ` · доп. ролик ${debts.length}` : ""}
             </p>
           </div>
           <div className="flex items-center gap-1">
@@ -76,7 +77,7 @@ export function DailyTasksModal({
               {debts.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-baseline justify-between gap-2">
-                    <h3 className="text-xs font-medium text-ads-warn">Долг TikTok · {debts.length}</h3>
+                    <h3 className="text-xs font-medium text-ads-warn">Доп. ролик · {debts.length}</h3>
                     <span className="text-[10px] text-ads-subtle">напоминание</span>
                   </div>
                   <div className="overflow-hidden rounded-2xl bg-ads-card ring-1 ring-ads-warn/25">
@@ -111,7 +112,7 @@ export function DailyTasksModal({
               )}
               {rk1Cars.length > 0 && (
                 <Group
-                  title={`Из РК 1 · ${rk1Cars.length}`}
+                  title={`Кампания 1 · ${rk1Cars.length}`}
                   cars={rk1Cars}
                   busyIds={busyIds}
                   onRotate={onRotate}
@@ -121,7 +122,7 @@ export function DailyTasksModal({
               )}
               {rk2Cars.length > 0 && (
                 <Group
-                  title={`Из РК 2 · ${rk2Cars.length}`}
+                  title={`Кампания 2 · ${rk2Cars.length}`}
                   cars={rk2Cars}
                   busyIds={busyIds}
                   onRotate={onRotate}
@@ -186,14 +187,9 @@ function Group({
                   </button>
                 )}
                 {onRotate && (
-                  <>
-                    <RotateBtn busy={busy} onClick={() => onRotate(car, "rk1")}>
-                      РК 1
-                    </RotateBtn>
-                    <RotateBtn busy={busy} onClick={() => onRotate(car, "rk2")}>
-                      РК 2
-                    </RotateBtn>
-                  </>
+                  <RotateBtn busy={busy} onClick={() => onRotate(car, otherAir(car.campaign))}>
+                    {rotateLabel(car.campaign)}
+                  </RotateBtn>
                 )}
               </div>
             </div>

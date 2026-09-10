@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, Trash2 } from "lucide-react";
 import { type AdsSettings, type TikTokDebt } from "@/lib/types";
 import { MONTHS_SHORT, addDaysToDateKey, getMinskDateKey } from "@/lib/services/adsService";
+import { ADS_HINTS_KEY } from "@/lib/ads/copy";
 import { CloseBtn, GhostBtn, Overlay, PrimaryBtn, Spinner, Stepper } from "./chrome";
 import { CarThumb } from "./CarThumb";
 import type { WarehouseCar } from "./WarehouseDrawer";
@@ -108,7 +109,7 @@ export function AdsSettingsModal({
             <h2 id="ads-rules-title" className="text-xl font-semibold tracking-tight text-ads-ink">
               Правила
             </h2>
-            <p className="mt-0.5 text-sm text-ads-muted">Темп съёмки, цикл и Telegram</p>
+            <p className="mt-0.5 text-sm text-ads-muted">Сроки, лимит в день и Telegram</p>
           </div>
           <CloseBtn onClick={onClose} />
         </header>
@@ -119,8 +120,8 @@ export function AdsSettingsModal({
         >
           <div className="space-y-3">
             <section className="rounded-2xl bg-ads-card px-4 py-4">
-              <p className="text-sm font-medium text-ads-ink">Съёмочная смена</p>
-              <p className="mt-0.5 text-xs text-ads-muted">Сколько роликов команда закрывает за день</p>
+              <p className="text-sm font-medium text-ads-ink">Лимит в день</p>
+              <p className="mt-0.5 text-xs text-ads-muted">Сколько машин можно сменить за день, чтобы не сжечь съёмку</p>
               <div className="mt-3">
                 <Stepper value={perDay} onChange={setPerDay} min={1} max={12} />
               </div>
@@ -135,11 +136,11 @@ export function AdsSettingsModal({
               <p className="mt-0.5 text-xs text-ads-muted">Сколько живёт креатив в каждой кампании</p>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div>
-                  <p className="mb-2 text-xs text-ads-muted">РК 1</p>
+                  <p className="mb-2 text-xs text-ads-muted">Кампания 1</p>
                   <Stepper value={rk1} onChange={setRk1} min={5} max={40} />
                 </div>
                 <div>
-                  <p className="mb-2 text-xs text-ads-muted">РК 2</p>
+                  <p className="mb-2 text-xs text-ads-muted">Кампания 2</p>
                   <Stepper value={rk2} onChange={setRk2} min={5} max={40} />
                 </div>
               </div>
@@ -148,14 +149,14 @@ export function AdsSettingsModal({
                 <div className="bg-ads-ink/30" style={{ width: `${(rk2 / Math.max(1, cycle)) * 100}%` }} />
               </div>
               <p className="mt-3 text-sm text-ads-muted">
-                Полный круг {cycle} дней, потом снова РК 1 с новым роликом.
+                Полный круг {cycle} дней, потом снова Кампания 1 с новым роликом.
               </p>
             </section>
 
             <label className="flex items-center justify-between gap-4 rounded-2xl bg-ads-card px-4 py-4">
               <span>
                 <span className="block text-sm font-medium text-ads-ink">Напоминания</span>
-                <span className="mt-0.5 block text-xs text-ads-muted">Утром, если есть авто на ротацию</span>
+                <span className="mt-0.5 block text-xs text-ads-muted">Утром в Telegram, если кому-то пора сменить кампанию</span>
               </span>
               <button
                 type="button"
@@ -212,6 +213,21 @@ export function AdsSettingsModal({
               </button>
               {testResult && <p className="mt-2 text-xs text-ads-muted">{testResult}</p>}
             </section>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.removeItem(ADS_HINTS_KEY);
+                } catch {
+                  // ignore
+                }
+                onClose();
+                window.dispatchEvent(new Event("ads-hints-reset"));
+              }}
+              className="w-full rounded-2xl bg-ads-card px-4 py-4 text-left text-sm font-medium text-ads-ink hover:bg-ads-surface"
+            >
+              Показать подсказки снова
+            </button>
           </div>
         </div>
 
@@ -308,7 +324,7 @@ function DebtSection({
     <section className="rounded-2xl bg-ads-card px-4 py-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-ads-ink">Долг TikTok</p>
+          <p className="text-sm font-medium text-ads-ink">Доп. ролики</p>
           <p className="mt-0.5 text-xs text-ads-muted">
             Напоминание о доп. видео. Любая машина, любой день — ротацию не трогает.
           </p>
@@ -371,7 +387,7 @@ function DebtSection({
       ) : null}
 
       {grouped.length === 0 ? (
-        <p className="mt-3 text-xs text-ads-subtle">Долга нет</p>
+        <p className="mt-3 text-xs text-ads-subtle">Напоминаний нет</p>
       ) : (
         <div className="mt-3 space-y-3">
           {grouped.map((g) => (
@@ -390,7 +406,7 @@ function DebtSection({
                       disabled={busy}
                       onClick={() => void remove(debt.id)}
                       className="flex size-8 items-center justify-center rounded-lg text-ads-subtle hover:bg-ads-surface hover:text-ads-danger disabled:opacity-40"
-                      title="Снять долг"
+                      title="Ролик готов"
                     >
                       <Trash2 className="size-3.5" />
                     </button>

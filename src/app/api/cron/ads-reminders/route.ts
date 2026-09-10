@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 import { sendTelegramAdRotationAlert } from '@/lib/telegram';
 import { getPriceTierLabel, getMinskDateKey, getCalendarDaysLeft } from '@/lib/services/adsService';
+import { collectSoldIds } from '@/lib/ads/sold';
 
 export async function GET(request: Request) {
   try {
@@ -37,11 +38,17 @@ export async function GET(request: Request) {
     const carRows = await sql`
       SELECT id, data FROM ad_cars
     `;
+    const catalogRows = await sql`SELECT id, data FROM cars`;
+    const soldCarIds = collectSoldIds(catalogRows as { id: string; data: unknown }[]);
 
     const cars = carRows.map((r: any) => {
       const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
       return { id: r.id, ...d };
-    }).filter((c: any) => c.campaign === 'rk1' || c.campaign === 'rk2');
+    }).filter((c: any) => {
+      if (c.campaign !== 'rk1' && c.campaign !== 'rk2') return false;
+      if (c.carId && soldCarIds.has(c.carId)) return false;
+      return true;
+    });
 
     const now = Date.now();
     const todayKey = getMinskDateKey(now);

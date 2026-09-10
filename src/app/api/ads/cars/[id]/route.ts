@@ -6,10 +6,9 @@ import {
   minskDateKeyToTimestamp,
   addDaysToDateKey,
   getDateKeyDiffDays,
-  getPriceTierLabel,
 } from '@/lib/services/adsService';
 import { pickNextSlotDateKey, isAirCampaign } from '@/lib/services/adsSchedule';
-import { sendTelegramAdShotAlert } from '@/lib/telegram';
+import { appendHistory, notifyShotAndStamp } from '@/lib/ads/mutate';
 
 async function getTargetPerDay(): Promise<number> {
   try {
@@ -33,7 +32,6 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const notifyShot = Boolean(body.notifyShot);
     delete body.notifyShot;
 
     const existing = await sql`
@@ -42,7 +40,7 @@ export async function PUT(
 
     if (existing.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Ad car not found' },
+        { success: false, error: 'Машина не найдена' },
         { status: 404 }
       );
     }
@@ -56,19 +54,19 @@ export async function PUT(
       }
     }
 
+    const fromCampaign = currentData.campaign as string | undefined;
     const updatedData = { ...currentData, ...body };
     if (body.priceUsd !== undefined && !body.priceTier) {
       updatedData.priceTier = calculatePriceTier(Number(body.priceUsd));
     }
 
     const todayKey = getMinskDateKey(Date.now());
-    const fromCampaign = currentData.campaign;
-
-    const isRotation =
+    const becameReady = body.campaign === "ready_for_ads" && fromCampaign !== "ready_for_ads";
+    const becameAir =
       (body.campaign === "rk1" || body.campaign === "rk2") &&
       !body.targetRotationDate;
 
-    if (isRotation) {
+    if (becameAir) {
       const existingCarsRows = await sql`SELECT id, data FROM ad_cars WHERE id != ${id}`;
       const others = existingCarsRows.map((r: any) => {
         const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
@@ -82,10 +80,18 @@ export async function PUT(
       updatedData.maxDays = daysLeftFromToday;
       updatedData.startedAt = Date.now();
       updatedData.lastAlertSentAt = null;
+      appendHistory(updatedData, {
+        kind: fromCampaign === "rk1" || fromCampaign === "rk2" ? "rotate" : "air",
+        from: fromCampaign,
+        to: body.campaign,
+      });
     } else if (body.campaign === "ready_for_ads" || body.campaign === "waiting_video") {
       updatedData.targetRotationDate = null;
-      if (body.campaign === "ready_for_ads") {
+      if (becameReady) {
         updatedData.shotAt = Date.now();
+        appendHistory(updatedData, { kind: "shot", from: fromCampaign, to: "ready_for_ads" });
+      } else if (body.campaign === "waiting_video" && fromCampaign !== "waiting_video") {
+        appendHistory(updatedData, { kind: "reset", from: fromCampaign, to: "waiting_video" });
       }
     } else if (body.maxDays && !body.targetRotationDate) {
       const startedAt = Number(updatedData.startedAt) || Date.now();
@@ -93,6 +99,10 @@ export async function PUT(
       const daysLeft = Math.max(0, Number(body.maxDays) - daysIn);
       const targetKey = addDaysToDateKey(todayKey, daysLeft);
       updatedData.targetRotationDate = minskDateKeyToTimestamp(targetKey);
+    }
+
+    if (becameReady) {
+      await notifyShotAndStamp(updatedData, fromCampaign);
     }
 
     const now = new Date().toISOString();
@@ -103,29 +113,15 @@ export async function PUT(
       WHERE id = ${id}
     `;
 
-    if (notifyShot && body.campaign === "ready_for_ads") {
-      try {
-        await sendTelegramAdShotAlert({
-          name: updatedData.name,
-          year: updatedData.year,
-          priceUsd: Number(updatedData.priceUsd) || 0,
-          priceTierLabel: getPriceTierLabel(updatedData.priceTier),
-          fromCampaign,
-          photoUrl: updatedData.photoUrl,
-        });
-      } catch (err) {
-        console.error("Shot telegram failed:", err);
-      }
-    }
-
     return NextResponse.json({
       success: true,
       car: { id, ...updatedData },
+      shotNotifyStatus: updatedData.shotNotifyStatus || null,
     });
   } catch (error: any) {
     console.error('Error updating ad car in Neon DB:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to update ad car' },
+      { success: false, error: error.message || 'Не получилось сохранить' },
       { status: 500 }
     );
   }
@@ -146,7 +142,7 @@ export async function DELETE(
   } catch (error: any) {
     console.error('Error deleting ad car from Neon DB:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to delete ad car' },
+      { success: false, error: error.message || 'Не получилось убрать машину' },
       { status: 500 }
     );
   }

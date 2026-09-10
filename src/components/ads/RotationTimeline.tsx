@@ -79,7 +79,7 @@ export function RotationTimeline({
                 type="button"
                 onClick={() => onDayClick?.(day.offset, day.date, day.cars, day.debts)}
                 className="group flex min-w-8 flex-1 flex-col sm:min-w-9"
-                title={`${day.date.getDate()} ${MONTHS_SHORT[day.date.getMonth()]}: ${day.status === "off" ? "выходной" : day.count}${debtN ? ` · долг ${debtN}` : ""}`}
+                title={`${day.date.getDate()} ${MONTHS_SHORT[day.date.getMonth()]}: ${day.status === "off" ? "выходной" : day.count}${debtN ? ` · доп. ${debtN}` : ""}`}
               >
                 <div className="flex h-16 flex-col items-center justify-end gap-1 px-0.5 pb-1.5">
                   <span

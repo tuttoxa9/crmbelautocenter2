@@ -74,8 +74,8 @@ export function emptyDay(off = false): DayPlan {
 }
 
 export function laneLabel(lane: SmmLane) {
-  if (lane === "rk1") return "РК 1";
-  if (lane === "rk2") return "РК 2";
+  if (lane === "rk1") return "Кампания 1";
+  if (lane === "rk2") return "Кампания 2";
   if (lane === "both") return "Обе РК";
   return "Без съёмки";
 }

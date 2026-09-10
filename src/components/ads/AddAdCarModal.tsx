@@ -72,7 +72,7 @@ export function AddAdCarModal({
   const [name, setName] = useState("");
   const [year, setYear] = useState("");
   const [priceUsd, setPriceUsd] = useState<number | "">("");
-  const [campaign, setCampaign] = useState<AdCampaignType>("rk1");
+  const [campaign, setCampaign] = useState<AdCampaignType>("waiting_video");
   const [photoUrl, setPhotoUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [customDays, setCustomDays] = useState<number | "">("");
@@ -379,7 +379,7 @@ export function AddAdCarModal({
                   }`}
                 >
                   <div className={`text-xs font-semibold ${campaign === "rk1" ? "text-black" : "text-zinc-100"}`}>
-                    РК 1
+                    Кампания 1
                   </div>
                   <div className={`text-[11px] mt-0.5 ${campaign === "rk1" ? "text-zinc-600" : "text-zinc-500"}`}>
                     Лимит {defaultRk1Days} дн.
@@ -396,7 +396,7 @@ export function AddAdCarModal({
                   }`}
                 >
                   <div className={`text-xs font-semibold ${campaign === "rk2" ? "text-black" : "text-zinc-100"}`}>
-                    РК 2
+                    Кампания 2
                   </div>
                   <div className={`text-[11px] mt-0.5 ${campaign === "rk2" ? "text-zinc-600" : "text-zinc-500"}`}>
                     Лимит {defaultRk2Days} дн.
@@ -413,7 +413,7 @@ export function AddAdCarModal({
                   }`}
                 >
                   <div className={`text-xs font-semibold ${campaign === "waiting_video" ? "text-black" : "text-zinc-100"}`}>
-                    Ожидает съёмки
+                    На съёмку
                   </div>
                   <div className={`text-[11px] mt-0.5 ${campaign === "waiting_video" ? "text-zinc-600" : "text-zinc-500"}`}>
                     В очередь

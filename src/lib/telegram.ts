@@ -208,8 +208,8 @@ export async function sendTelegramAdRotationAlert(data: AdRotationAlertData) {
       return;
     }
 
-    const currentCampaignLabel = data.currentCampaign === 'rk1' ? 'РК 1' : 'РК 2';
-    const targetCampaignLabel = data.targetCampaign === 'rk1' ? 'РК 1' : 'РК 2';
+    const currentCampaignLabel = data.currentCampaign === "rk1" ? "Кампания 1" : "Кампания 2";
+    const targetCampaignLabel = data.targetCampaign === "rk1" ? "Кампания 1" : "Кампания 2";
 
     const formattedPrice = Number(data.priceUsd || 0).toLocaleString('ru-RU');
     const yearStr = data.year ? ` ${data.year} г.` : '';
@@ -253,6 +253,7 @@ export interface AdShotAlertData {
   priceTierLabel: string;
   fromCampaign?: "rk1" | "rk2" | string;
   photoUrl?: string;
+  shotByName?: string;
 }
 
 export async function sendTelegramAdShotAlert(data: AdShotAlertData) {
@@ -290,17 +291,28 @@ export async function sendTelegramAdShotAlert(data: AdShotAlertData) {
     }
 
     const from =
-      data.fromCampaign === "rk1" ? "РК 1" : data.fromCampaign === "rk2" ? "РК 2" : data.fromCampaign || "ротации";
+      data.fromCampaign === "rk1"
+        ? "Кампания 1"
+        : data.fromCampaign === "rk2"
+          ? "Кампания 2"
+          : data.fromCampaign === "waiting_video"
+            ? "На съёмку"
+            : data.fromCampaign === "ready_for_ads"
+              ? "Отснято"
+              : data.fromCampaign || "очереди";
     const formattedPrice = Number(data.priceUsd || 0).toLocaleString("ru-RU");
     const yearStr = data.year ? ` ${data.year} г.` : "";
 
     const message = [
-      `🎬 <b>ОТСНЯТО · TikTok реклама</b>\n`,
+      `🎬 <b>ОТСНЯТО · TikTok</b>\n`,
       `🚗 <b>Автомобиль:</b> ${data.name}${yearStr} — $${formattedPrice}`,
       `🎯 <b>Категория:</b> ${data.priceTierLabel}`,
       `📦 <b>Было:</b> ${from}`,
-      `✅ <b>Сейчас:</b> Отснято — можно ставить в ротацию`,
-    ].join("\n");
+      `✅ <b>Сейчас:</b> Отснято — можно ставить в рекламу`,
+      data.shotByName ? `👤 <b>Кто:</b> ${data.shotByName}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     const response = await fetch(url, {

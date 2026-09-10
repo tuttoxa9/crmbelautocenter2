@@ -237,8 +237,16 @@
 .ads-hide-bar::-webkit-scrollbar, .ads-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
 .ads-scroll { -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; }
 
+@keyframes ads-card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.ads-card-in {
+  animation: ads-card-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .ads-burn-pulse, .ads-spin, .ads-spin-lg { animation: none; transition: none; }
+  .ads-burn-pulse, .ads-spin, .ads-spin-lg, .ads-card-in { animation: none; transition: none; }
 }
 
 .files-os {

@@ -48,11 +48,11 @@ export function getPriceTierShort(tier: AdPriceTier): string {
 export function getCampaignLabel(campaign: AdCampaignType): string {
   switch (campaign) {
     case "rk1":
-      return "РК 1";
+      return "Кампания 1";
     case "rk2":
-      return "РК 2";
+      return "Кампания 2";
     case "waiting_video":
-      return "Ожидают съёмки";
+      return "На съёмку";
     case "ready_for_ads":
       return "Отснято";
     default:
@@ -66,15 +66,15 @@ export function getPrimaryMove(campaign: AdCampaignType): {
 } {
   switch (campaign) {
     case "rk1":
-      return { target: "rk2", label: "В РК 2" };
+      return { target: "rk2", label: "В кампанию 2" };
     case "rk2":
-      return { target: "rk1", label: "В РК 1" };
+      return { target: "rk1", label: "В кампанию 1" };
     case "waiting_video":
       return { target: "ready_for_ads", label: "Отснято" };
     case "ready_for_ads":
-      return { target: "rk1", label: "В РК 1" };
+      return { target: "rk1", label: "В эфир" };
     default:
-      return { target: "rk1", label: "В РК 1" };
+      return { target: "rk1", label: "В кампанию 1" };
   }
 }
 
@@ -263,7 +263,7 @@ export const createAdCar = async (
 
   const data = await res.json();
   if (!data.success) {
-    throw new Error(data.error || "Failed to create ad car");
+    throw new Error(data.error || "Не получилось добавить машину");
   }
 
   return data.car;
@@ -272,17 +272,16 @@ export const createAdCar = async (
 export const updateAdCar = async (
   id: string,
   updates: Partial<Omit<AdCar, "id" | "createdAt">>,
-  opts?: { notifyShot?: boolean }
 ) => {
   const res = await fetch(`/api/ads/cars/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...updates, notifyShot: opts?.notifyShot || undefined }),
+    body: JSON.stringify(updates),
   });
 
   const data = await res.json();
   if (!data.success) {
-    throw new Error(data.error || "Failed to update ad car");
+    throw new Error(data.error || "Не получилось сохранить");
   }
   return data.car as AdCar | undefined;
 };
@@ -319,7 +318,7 @@ export const deleteAdCar = async (id: string) => {
 
   const data = await res.json();
   if (!data.success) {
-    throw new Error(data.error || "Failed to delete ad car");
+    throw new Error(data.error || "Не получилось убрать машину");
   }
 };
 
@@ -345,6 +344,6 @@ export const updateAdsSettings = async (settings: Partial<AdsSettings>) => {
 
   const data = await res.json();
   if (!data.success) {
-    throw new Error(data.error || "Failed to save ads settings");
+    throw new Error(data.error || "Не получилось сохранить правила");
   }
 };
