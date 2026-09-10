@@ -3,8 +3,8 @@
 import type { ReactNode } from "react";
 import { Check, Plus } from "lucide-react";
 import { type AdCampaignType, type AdCar, type AdsSettings, type TikTokDebt } from "@/lib/types";
-import { MONTHS_LONG, getCalendarDaysLeft, getMinskDateKey } from "@/lib/services/adsService";
-import { otherAir, pluralCars, rotateLabel } from "@/lib/ads/copy";
+import { MONTHS_LONG, calculatePriceTier, getCalendarDaysLeft, getMinskDateKey, getPriceTierShort } from "@/lib/services/adsService";
+import { carFacts, otherAir, pluralCars, rotateLabel } from "@/lib/ads/copy";
 import { cn } from "@/lib/utils";
 import { CarThumb } from "./CarThumb";
 import { CampaignBadge } from "./CampaignBadge";
@@ -149,37 +149,22 @@ export function TodayQueue({
         )}
 
         {ready.length > 0 && (
-          <div className="mx-4 mb-3 rounded-2xl bg-ads-bg px-3.5 py-3">
-            <p className="text-sm font-medium text-ads-ink">Отснято · {ready.length}</p>
-            <p className="mt-0.5 text-xs text-ads-muted">Ролик есть. Поставьте в кампанию.</p>
-            <div className="mt-2 space-y-1">
-              {ready.slice(0, 4).map((car) => (
-                <div key={car.id} className="flex items-center gap-2">
-                  <p className="min-w-0 flex-1 truncate text-sm text-ads-ink">{car.name}</p>
-                  <button
-                    type="button"
-                    disabled={busy(car, busyIds)}
-                    onClick={() => onAir(car, "rk1")}
-                    className="h-8 rounded-lg bg-ads-ink px-2 text-xs font-medium text-ads-paper disabled:opacity-40"
-                  >
-                    В К1
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busy(car, busyIds)}
-                    onClick={() => onAir(car, "rk2")}
-                    className="h-8 rounded-lg px-2 text-xs font-medium text-ads-ink ring-1 ring-ads-line-strong disabled:opacity-40"
-                  >
-                    В К2
-                  </button>
-                </div>
+          <div className="mx-4 mb-3 overflow-hidden rounded-2xl bg-ads-bg">
+            <div className="px-3.5 pt-3 pb-1">
+              <p className="text-sm font-medium text-ads-ink">Отснято · {ready.length}</p>
+              <p className="mt-0.5 text-xs text-ads-muted">Ролик есть. Поставьте в кампанию.</p>
+            </div>
+            <div className="divide-y divide-ads-line/70">
+              {ready.map((car) => (
+                <ReadyRow
+                  key={car.id}
+                  car={car}
+                  busy={busy(car, busyIds)}
+                  onK1={() => onAir(car, "rk1")}
+                  onK2={() => onAir(car, "rk2")}
+                />
               ))}
             </div>
-            {ready.length > 4 ? (
-              <button type="button" onClick={onOpenShoot} className="mt-2 text-xs font-medium text-ads-muted hover:text-ads-ink">
-                Все отснятые
-              </button>
-            ) : null}
           </div>
         )}
 
@@ -237,7 +222,9 @@ function TaskRow({
               <h3 className="truncate text-sm font-medium tracking-tight text-ads-ink">{car.name}</h3>
               <CampaignBadge campaign={car.campaign} sold={car.sold} />
             </div>
-            <p className="mt-0.5 text-xs text-ads-muted">{hint}</p>
+            <p className="mt-0.5 truncate text-xs text-ads-muted">
+              {[carFacts(car), hint].filter(Boolean).join(" · ")}
+            </p>
           </div>
         </CatalogLink>
         <button
@@ -248,6 +235,60 @@ function TaskRow({
         >
           {busy ? <Spinner /> : primary.label}
         </button>
+      </div>
+    </article>
+  );
+}
+
+function ReadyRow({
+  car,
+  busy,
+  onK1,
+  onK2,
+}: {
+  car: AdCar;
+  busy: boolean;
+  onK1: () => void;
+  onK2: () => void;
+}) {
+  const tier = car.priceTier || calculatePriceTier(car.priceUsd);
+  const facts = carFacts(car);
+  return (
+    <article className={cn("px-3 py-2.5", busy && "opacity-60")}>
+      <div className="flex items-start gap-3">
+        <CatalogLink carId={car.carId} className="flex min-w-0 flex-1 items-start gap-3">
+          <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-12 w-[4.25rem]" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium tracking-tight text-ads-ink">{car.name}</p>
+            <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-ads-muted">
+              <span className="inline-flex h-[18px] shrink-0 items-center rounded-md bg-ads-surface px-1.5 text-[11px] font-medium text-ads-ink">
+                {getPriceTierShort(tier)}
+              </span>
+              {facts ? <span className="truncate font-mono tabular-nums">{facts}</span> : null}
+            </p>
+            {car.shotByName ? (
+              <p className="mt-0.5 truncate text-[11px] text-ads-subtle">Снял {car.shotByName}</p>
+            ) : null}
+          </div>
+        </CatalogLink>
+        <div className="flex shrink-0 flex-col gap-1">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onK1}
+            className="inline-flex h-8 items-center justify-center rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper disabled:opacity-40"
+          >
+            {busy ? <Spinner /> : "В К1"}
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onK2}
+            className="inline-flex h-8 items-center justify-center rounded-lg px-2.5 text-xs font-medium text-ads-ink ring-1 ring-ads-line-strong disabled:opacity-40"
+          >
+            В К2
+          </button>
+        </div>
       </div>
     </article>
   );

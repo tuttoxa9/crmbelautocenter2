@@ -1,6 +1,8 @@
 "use client";
 
 import { type AdCampaignType, type AdCar } from "@/lib/types";
+import { calculatePriceTier, getPriceTierShort } from "@/lib/services/adsService";
+import { carFacts } from "@/lib/ads/copy";
 import { AdsScroller, CatalogLink, Spinner } from "./chrome";
 import { CarThumb } from "./CarThumb";
 import { CampaignBadge } from "./CampaignBadge";
@@ -106,17 +108,25 @@ function Row({
   extra?: { label: string; onSelect: () => void };
   secondary: { label: string; danger?: boolean; onSelect: () => void }[];
 }) {
+  const facts = carFacts(car);
+  const tier = car.priceTier || calculatePriceTier(car.priceUsd);
   return (
     <article className="ads-card-in px-4 py-3">
       <div className="flex items-start gap-3">
         <CatalogLink carId={car.carId} className="flex min-w-0 flex-1 items-start gap-3">
-          <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-10 w-14" />
+          <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-12 w-[4.25rem]" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
               <p className="truncate text-sm font-medium text-ads-ink">{car.name}</p>
               <CampaignBadge campaign={car.campaign} sold={car.sold} />
             </div>
-            <p className="mt-0.5 text-xs text-ads-muted">{hint}</p>
+            <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5 text-xs text-ads-muted">
+              <span className="inline-flex h-[18px] shrink-0 items-center rounded-md bg-ads-surface px-1.5 text-[11px] font-medium text-ads-ink">
+                {getPriceTierShort(tier)}
+              </span>
+              {facts ? <span className="truncate font-mono tabular-nums">{facts}</span> : null}
+            </p>
+            <p className="mt-0.5 truncate text-[11px] text-ads-subtle">{hint}</p>
           </div>
         </CatalogLink>
         <div className="flex shrink-0 flex-wrap justify-end gap-1">
