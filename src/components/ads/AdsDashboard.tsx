@@ -27,7 +27,7 @@ import { SchedulePane } from "./SchedulePane";
 import { WarehouseDrawer, type WarehouseCar } from "./WarehouseDrawer";
 import { ConfirmSheet, PostponeSheet, nextAirDateLabel, type PreviewDay } from "./ScheduleSheets";
 import { chooseCampaignForNewCar } from "@/lib/services/adsSchedule";
-import { GhostBtn, PrimaryBtn, AdsScroller } from "./chrome";
+import { GhostBtn, PrimaryBtn } from "./chrome";
 import { ADS_HINTS_KEY, CAMPAIGN_LABEL, HINTS, humanError } from "@/lib/ads/copy";
 import { CalendarDays, Clapperboard, Plus, Radio, Settings, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -119,8 +119,8 @@ export function AdsDashboard() {
   const loadData = async () => {
     setLoadError(null);
     try {
-      const [fetchedCars, fetchedSettings, catalogRes] = await Promise.all([
-        getAdCars(),
+      const fetchedCars = await getAdCars();
+      const [fetchedSettings, catalogRes] = await Promise.all([
         getAdsSettings(),
         fetch("/api/catalog/cars").then((r) => r.json()).catch(() => ({ cars: [] })),
       ]);
@@ -462,8 +462,8 @@ export function AdsDashboard() {
         </div>
       </header>
 
-      <AdsScroller className="min-h-0 flex-1" contentClassName="min-h-full lg:h-full">
-      <div className="mx-auto flex min-h-0 w-full max-w-[92rem] flex-col px-4 py-5 pb-24 sm:px-6 sm:py-6 lg:h-full lg:pb-6">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain lg:overflow-hidden">
+      <div className="mx-auto flex min-h-0 w-full max-w-[92rem] flex-col px-4 py-5 pb-24 sm:px-6 sm:py-6 lg:h-full lg:min-h-0 lg:overflow-hidden lg:pb-6">
         {loadError && (
           <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl bg-ads-danger-soft px-4 py-3">
             <p className="text-sm text-ads-danger">{loadError}</p>
@@ -485,8 +485,8 @@ export function AdsDashboard() {
             <div className="ads-skeleton h-[32rem] rounded-[22px]" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 items-start gap-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(300px,380px)_1fr] lg:items-stretch">
-            <div className={cn(scene !== "today" && "max-lg:hidden")}>
+          <div className="grid grid-cols-1 gap-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(300px,380px)_1fr] lg:overflow-hidden">
+            <div className={cn("min-h-0 lg:h-full lg:overflow-hidden", scene !== "today" && "max-lg:hidden")}>
               <TodayQueue
                 cars={cars}
                 settings={settings}
@@ -496,14 +496,13 @@ export function AdsDashboard() {
                 onRotate={handleSwitchCampaign}
                 onMarkShot={handleMarkShot}
                 onAir={handleSwitchCampaign}
-                onDelete={executeDeleteCar}
                 onClearDebt={(id) => void handleSaveDebts((settings.tiktokDebts || []).filter((d) => d.id !== id))}
                 onOpenWarehouse={() => setWarehouseOpen(true)}
                 onOpenAir={() => setScene("air")}
                 onOpenShoot={() => setScene("shoot")}
               />
             </div>
-            <div className={cn("flex min-h-0 flex-col", scene === "today" && "max-lg:hidden")}>
+            <div className={cn("flex min-h-0 flex-col lg:h-full lg:overflow-hidden", scene === "today" && "max-lg:hidden")}>
               <div className="mb-3 hidden gap-1 lg:flex">
                 {(
                   [
@@ -573,7 +572,7 @@ export function AdsDashboard() {
           </div>
         )}
       </div>
-      </AdsScroller>
+      </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ads-line bg-ads-bg/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
         <div className="grid grid-cols-4 px-2 py-1.5">

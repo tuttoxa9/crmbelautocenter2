@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 import type { BurnTone } from "@/lib/services/adsProgress";
 import { cn } from "@/lib/utils";
@@ -240,13 +240,39 @@ export function AdsScroller({
   side?: "left" | "right";
   nested?: boolean;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) < 1) return;
+      if (el.scrollHeight <= el.clientHeight + 1) return;
+      const up = e.deltaY < 0;
+      if (up && el.scrollTop <= 0) return;
+      if (!up && el.scrollTop + el.clientHeight >= el.scrollHeight - 1) return;
+      el.scrollTop += e.deltaY;
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
   return (
-    <div className={cn("relative min-h-0", nested && "max-lg:contents", className)}>
+    <div
+      className={cn(
+        "relative min-h-0",
+        nested && "max-lg:contents lg:flex lg:h-full lg:min-h-0 lg:flex-1 lg:flex-col",
+        className,
+      )}
+    >
       <div
+        ref={ref}
         className={cn(
           "ads-hide-bar min-h-0",
           nested
-            ? "max-lg:h-auto max-lg:overflow-visible lg:h-full lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain"
+            ? "max-lg:h-auto max-lg:overflow-visible lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain"
             : "h-full overflow-x-hidden overflow-y-auto overscroll-contain [touch-action:pan-y]",
           viewportClassName,
         )}

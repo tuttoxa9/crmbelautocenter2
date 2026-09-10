@@ -10,6 +10,7 @@ import {
   stampDate,
   type TapeCar,
 } from "@/lib/services/adsSchedule";
+import { sweepSoldAdCars } from "@/lib/ads/sold";
 
 async function getTargetPerDay(): Promise<number> {
   try {
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
     const preview = Boolean(body.preview);
     const todayKey = getMinskDateKey(Date.now());
     const perDay = await getTargetPerDay();
+    await sweepSoldAdCars();
     const rows = await loadCars();
     const tape = toTape(rows);
 

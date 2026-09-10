@@ -9,6 +9,7 @@ import {
 } from '@/lib/services/adsService';
 import { pickNextSlotDateKey, isAirCampaign } from '@/lib/services/adsSchedule';
 import { appendHistory, notifyShotAndStamp } from '@/lib/ads/mutate';
+import { sweepSoldAdCars } from '@/lib/ads/sold';
 
 async function getTargetPerDay(): Promise<number> {
   try {
@@ -67,6 +68,7 @@ export async function PUT(
       !body.targetRotationDate;
 
     if (becameAir) {
+      await sweepSoldAdCars();
       const existingCarsRows = await sql`SELECT id, data FROM ad_cars WHERE id != ${id}`;
       const others = existingCarsRows.map((r: any) => {
         const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;

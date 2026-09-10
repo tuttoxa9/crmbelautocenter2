@@ -30,7 +30,7 @@ export function OnAirBoard({
   const [tier, setTier] = useState<AdPriceTier | "all">("all");
 
   const air = useMemo(
-    () => cars.filter((c) => c.campaign === "rk1" || c.campaign === "rk2"),
+    () => cars.filter((c) => (c.campaign === "rk1" || c.campaign === "rk2") && !c.sold),
     [cars],
   );
 
