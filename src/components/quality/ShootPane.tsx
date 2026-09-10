@@ -15,15 +15,15 @@ export function ShootPane({
 }) {
   const groups = [
     { id: "none", title: "Без линии", items: board.waiting.filter((c) => !c.plannedCampaign) },
-    { id: "rk1", title: "РК 1", items: board.waiting.filter((c) => c.plannedCampaign === "rk1") },
-    { id: "rk2", title: "РК 2", items: board.waiting.filter((c) => c.plannedCampaign === "rk2") },
+    { id: "rk1", title: "Кампания 1", items: board.waiting.filter((c) => c.plannedCampaign === "rk1") },
+    { id: "rk2", title: "Кампания 2", items: board.waiting.filter((c) => c.plannedCampaign === "rk2") },
   ];
   const readyToday = board.ready || [];
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 pb-8">
       <p className="text-sm text-ads-muted">
-        Назначьте линию здесь — человек с этой РК увидит машину в своих целях и нажмёт «Снял». В рекламу ходить не нужно.
+        Назначьте линию здесь — человек с этой кампании увидит машину в целях и нажмёт «Снял». Пуш «Отснято» уйдёт сам.
       </p>
       {groups.map((g) => (
         <section key={g.id}>
@@ -38,10 +38,10 @@ export function ShootPane({
                 <CarLine key={car.id} car={car} border={i > 0}>
                   <div className="flex gap-1">
                     <LaneChip active={car.plannedCampaign === "rk1"} disabled={busy} onClick={() => onPlan(car.id, car.plannedCampaign === "rk1" ? null : "rk1")}>
-                      РК 1
+                      К1
                     </LaneChip>
                     <LaneChip active={car.plannedCampaign === "rk2"} disabled={busy} onClick={() => onPlan(car.id, car.plannedCampaign === "rk2" ? null : "rk2")}>
-                      РК 2
+                      К2
                     </LaneChip>
                   </div>
                 </CarLine>

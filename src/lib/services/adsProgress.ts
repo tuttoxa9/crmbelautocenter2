@@ -33,11 +33,11 @@ export function getAdBurn(car: AdCar, settings: AdsSettings): AdBurn {
       daysLeft: null,
       limitDays: 0,
       tone: "queue",
-      label: car.campaign === "waiting_video" ? "Ожидает съёмки" : "Готово к запуску",
+      label: car.campaign === "waiting_video" ? "На съёмку" : "Отснято",
       sublabel:
         car.campaign === "waiting_video"
-          ? "Таймер ротации не идёт"
-          : "Можно ставить в эфир",
+          ? "Ролика ещё нет"
+          : "Можно ставить в рекламу",
       rotationDateLabel: null,
     };
   }
@@ -82,8 +82,8 @@ export function getAdBurn(car: AdCar, settings: AdsSettings): AdBurn {
     label: overdue
       ? `Просрочено ${Math.abs(daysLeft)} дн.`
       : daysLeft === 0
-        ? "Ротация сегодня"
-        : `Осталось ${daysLeft} дн.`,
+        ? "Сменить сегодня"
+        : `Сменить до ${rotationDateLabel || `${daysLeft} дн.`}`,
     sublabel: `${daysIn} из ${limitDays} дн. в эфире`,
     rotationDateLabel,
   };

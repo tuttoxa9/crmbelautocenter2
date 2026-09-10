@@ -52,13 +52,13 @@ export function WarehouseDrawer({
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label="Склад"
+        aria-label="Не в рекламе"
         className="ads-sheet relative flex h-full w-full flex-col bg-ads-bg shadow-ads-float"
       >
         <header className="flex items-center justify-between px-5 pt-5 pb-3">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight text-ads-ink">Склад</h2>
-            <p className="text-xs text-ads-muted">{warehouse.length} свободных авто</p>
+            <h2 className="text-lg font-semibold tracking-tight text-ads-ink">Не в рекламе</h2>
+            <p className="text-xs text-ads-muted">{warehouse.length} машин с сайта</p>
           </div>
           <CloseBtn onClick={onClose} />
         </header>
@@ -80,9 +80,9 @@ export function WarehouseDrawer({
           <div className="grid grid-cols-3 gap-0.5 rounded-xl bg-ads-surface p-0.5">
             {(
               [
-                ["waiting_video", "Съёмка"],
-                ["rk1", "РК 1"],
-                ["rk2", "РК 2"],
+                ["waiting_video", "На съёмку"],
+                ["rk1", "К1"],
+                ["rk2", "К2"],
               ] as const
             ).map(([id, label]) => (
               <button
@@ -103,7 +103,9 @@ export function WarehouseDrawer({
 
         <AdsScroller className="min-h-0 flex-1" viewportClassName="px-3 pb-8">
           {list.length === 0 ? (
-            <p className="px-2 py-10 text-center text-sm text-ads-subtle">Ничего не найдено</p>
+          <p className="px-2 py-10 text-center text-sm text-ads-subtle">
+            {query ? "Ничего не найдено" : "Все машины с сайта уже на доске"}
+          </p>
           ) : (
             <div className="overflow-hidden rounded-2xl bg-ads-card">
               {list.map((car, i) => {
@@ -141,7 +143,7 @@ export function WarehouseDrawer({
               onClick={onManual}
               className="mt-3 w-full rounded-xl py-2.5 text-center text-xs font-medium text-ads-muted hover:text-ads-ink"
             >
-              Добавить вручную
+              Добавить вручную — нет в каталоге
             </button>
           )}
         </AdsScroller>

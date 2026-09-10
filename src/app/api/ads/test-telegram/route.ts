@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { calculateDaysInAd, getPriceTierLabel } from '@/lib/services/adsService';
 
 export async function POST(request: Request) {
   try {
@@ -37,48 +36,10 @@ export async function POST(request: Request) {
     botToken = botToken || "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4";
     chatId = chatId || "-1002721193947";
 
-    // Получаем реальный автомобиль из вашей базы рекламы или со склада
-    let realCar: any = null;
-    try {
-      const adCarRows = await sql`SELECT id, data FROM ad_cars LIMIT 1`;
-      if (adCarRows.length > 0) {
-        const raw = adCarRows[0].data;
-        realCar = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      }
-      if (!realCar) {
-        const catalogRows = await sql`SELECT id, data FROM cars LIMIT 1`;
-        if (catalogRows.length > 0) {
-          const d = typeof catalogRows[0].data === 'string' ? JSON.parse(catalogRows[0].data) : catalogRows[0].data;
-          const make = d?.make || d?.brand || '';
-          const model = d?.model || '';
-          const name = `${make} ${model}`.trim() || d?.name || 'Автомобиль со склада';
-          realCar = {
-            name,
-            year: d?.year,
-            priceUsd: Number(d?.priceUsd || d?.priceUSD || d?.price || 0),
-            campaign: 'rk1',
-          };
-        }
-      }
-    } catch (dbErr) {
-      console.warn("Could not fetch car from DB for test message:", dbErr);
-    }
-
-    const carName = realCar?.name || "Автомобиль из каталога";
-    const carYear = realCar?.year ? ` ${realCar.year} г.` : "";
-    const carPrice = realCar?.priceUsd ? ` — $${Number(realCar.priceUsd).toLocaleString('ru-RU')}` : "";
-    const tierLabel = realCar?.priceTier ? getPriceTierLabel(realCar.priceTier) : "TikTok Реклама";
-    const currentCamp = realCar?.campaign === "rk2" ? "РК 2" : "РК 1";
-    const targetCamp = currentCamp === "РК 1" ? "РК 2" : "РК 1";
-    const daysInAd = realCar?.startedAt ? calculateDaysInAd(realCar.startedAt) : 14;
-
     const message = [
-      `🔄 <b>ТЕСТ РОТАЦИИ РЕКЛАМЫ TikTok</b>\n`,
-      `🚗 <b>Автомобиль:</b> ${carName}${carYear}${carPrice}`,
-      `🎯 <b>Категория:</b> ${tierLabel}`,
-      `⏱ <b>Срок:</b> ${daysInAd}-й день в <b>${currentCamp}</b>\n`,
-      `⚠️ <b>Действие:</b> Перенести авто из <b>${currentCamp}</b> в <b>${targetCamp}</b>`
-    ].join('\n');
+      `✅ <b>Проверка: реклама TikTok</b>\n`,
+      `Связь с ботом работает. Сюда будут приходить «Отснято» и напоминания сменить кампанию.`,
+    ].join("\n");
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     const response = await fetch(url, {

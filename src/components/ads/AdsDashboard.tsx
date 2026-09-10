@@ -21,12 +21,18 @@ import { AddAdCarModal } from "./AddAdCarModal";
 import { AdsSettingsModal } from "./AdsSettingsModal";
 import { DailyTasksModal } from "./DailyTasksModal";
 import { OnAirBoard } from "./OnAirBoard";
-import { TodayShift } from "./TodayShift";
+import { TodayQueue } from "./TodayQueue";
+import { ShootBoard } from "./ShootBoard";
+import { SchedulePane } from "./SchedulePane";
 import { WarehouseDrawer, type WarehouseCar } from "./WarehouseDrawer";
 import { ConfirmSheet, PostponeSheet, nextAirDateLabel, type PreviewDay } from "./ScheduleSheets";
 import { chooseCampaignForNewCar } from "@/lib/services/adsSchedule";
 import { GhostBtn, PrimaryBtn, AdsScroller } from "./chrome";
-import { Plus, Settings } from "lucide-react";
+import { ADS_HINTS_KEY, CAMPAIGN_LABEL, HINTS, humanError } from "@/lib/ads/copy";
+import { CalendarDays, Clapperboard, Plus, Radio, Settings, Sun } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type Scene = "today" | "shoot" | "air" | "schedule";
 
 interface CatalogCar {
   id: string;
@@ -37,13 +43,6 @@ interface CatalogCar {
   createdAt?: string | number;
 }
 
-const PIPELINE: { id: AdCampaignType; label: string }[] = [
-  { id: "waiting_video", label: "Съёмка" },
-  { id: "ready_for_ads", label: "Отснято" },
-  { id: "rk1", label: "РК 1" },
-  { id: "rk2", label: "РК 2" },
-];
-
 export function AdsDashboard() {
   const [cars, setCars] = useState<AdCar[]>([]);
   const [catalogCars, setCatalogCars] = useState<CatalogCar[]>([]);
@@ -53,7 +52,10 @@ export function AdsDashboard() {
   const [addingCarId, setAddingCarId] = useState<string | null>(null);
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [isBalancing, setIsBalancing] = useState(false);
-  const [toast, setToast] = useState<{ text: string; type: "error" | "success" } | null>(null);
+  const [toast, setToast] = useState<{ text: string; type: "error" | "success"; undo?: () => void } | null>(null);
+  const [scene, setScene] = useState<Scene>("today");
+  const [hints, setHints] = useState(false);
+  const [hintStep, setHintStep] = useState(0);
 
   const [warehouseOpen, setWarehouseOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -83,11 +85,25 @@ export function AdsDashboard() {
     carsRef.current = cars;
   }, [cars]);
 
-  const showToast = (text: string, type: "error" | "success" = "success") => {
-    setToast({ text, type });
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(ADS_HINTS_KEY)) setHints(true);
+    } catch {
+      // ignore
+    }
+    const onHints = () => {
+      setHintStep(0);
+      setHints(true);
+    };
+    window.addEventListener("ads-hints-reset", onHints);
+    return () => window.removeEventListener("ads-hints-reset", onHints);
+  }, []);
+
+  const showToast = (text: string, type: "error" | "success" = "success", undo?: () => void) => {
+    setToast({ text, type, undo });
     window.setTimeout(() => {
       setToast((prev) => (prev?.text === text ? null : prev));
-    }, 3500);
+    }, undo ? 5000 : 3500);
   };
 
   const markBusy = (id: string | undefined, on: boolean) => {
@@ -202,7 +218,7 @@ export function AdsDashboard() {
     const next = [newCar, ...carsRef.current];
     carsRef.current = next;
     setCars(next);
-    showToast(`«${carData.name}» добавлен в рекламу`);
+    showToast(`«${carData.name}» добавлен`);
   };
 
   const handleQuickAddWarehouseCar = async (
@@ -225,9 +241,9 @@ export function AdsDashboard() {
       const next = [newCar, ...carsRef.current];
       carsRef.current = next;
       setCars(next);
-      showToast(`«${catalogCar.name}» добавлен`);
+      showToast(`«${catalogCar.name}» → ${CAMPAIGN_LABEL[targetCampaign]}`);
     } catch (err: any) {
-      showToast(err?.message || "Ошибка при добавлении авто", "error");
+      showToast(humanError(err?.message), "error");
     } finally {
       setAddingCarId(null);
     }
@@ -253,16 +269,22 @@ export function AdsDashboard() {
           }),
         };
       });
-      const label = PIPELINE.find((p) => p.id === targetCampaign)?.label || targetCampaign;
-      showToast(
-        car.campaign === targetCampaign
-          ? `${car.name}: новая ротация в ${label}`
-          : `${car.name} → ${label}`,
-      );
+      const label = CAMPAIGN_LABEL[targetCampaign];
+      showToast(`${car.name} → ${label}`, "success", async () => {
+        await updateAdCar(car.id!, {
+          campaign: car.campaign,
+          targetRotationDate: car.targetRotationDate,
+          startedAt: car.startedAt,
+          maxDays: car.maxDays,
+        });
+        const restored = await getAdCars();
+        carsRef.current = restored;
+        setCars(restored);
+      });
     } catch {
       carsRef.current = snapshot;
       setCars(snapshot);
-      showToast("Не удалось переключить кампанию", "error");
+      showToast("Не получилось переключить кампанию", "error");
     } finally {
       markBusy(car.id, false);
     }
@@ -273,7 +295,7 @@ export function AdsDashboard() {
     const snapshot = carsRef.current;
     markBusy(car.id, true);
     try {
-      await updateAdCar(car.id, { campaign: "ready_for_ads" }, { notifyShot: true });
+      const updated = await updateAdCar(car.id, { campaign: "ready_for_ads" });
       const updatedCars = await getAdCars();
       carsRef.current = updatedCars;
       setCars(updatedCars);
@@ -281,11 +303,23 @@ export function AdsDashboard() {
         if (!prev.isOpen) return prev;
         return { ...prev, cars: prev.cars.filter((c) => c.id !== car.id) };
       });
-      showToast(`${car.name} → Отснято · пуш отправлен`);
+      const notify = updated?.shotNotifyStatus;
+      showToast(
+        notify === "failed"
+          ? `${car.name} → Отснято. Пуш не ушёл`
+          : `${car.name} → Отснято`,
+        notify === "failed" ? "error" : "success",
+        async () => {
+          await updateAdCar(car.id!, { campaign: car.campaign, targetRotationDate: car.targetRotationDate });
+          const restored = await getAdCars();
+          carsRef.current = restored;
+          setCars(restored);
+        },
+      );
     } catch {
       carsRef.current = snapshot;
       setCars(snapshot);
-      showToast("Не удалось перевести в «Отснято»", "error");
+      showToast("Не получилось перевести в «Отснято»", "error");
     } finally {
       markBusy(car.id, false);
     }
@@ -301,7 +335,7 @@ export function AdsDashboard() {
       setCars(updated);
       showToast(`Срок для «${car.name}»: ${newDays} дн.`);
     } catch {
-      showToast("Не удалось сохранить срок", "error");
+      showToast("Не получилось сохранить срок", "error");
     } finally {
       markBusy(car.id, false);
     }
@@ -315,9 +349,9 @@ export function AdsDashboard() {
       const updated = await getAdCars();
       carsRef.current = updated;
       setCars(updated);
-      showToast(`Таймер сброшен: ${car.name}`);
+      showToast(`Срок заново: ${car.name}`);
     } catch {
-      showToast("Не удалось сбросить таймер", "error");
+      showToast("Не получилось сбросить срок", "error");
     } finally {
       markBusy(car.id, false);
     }
@@ -335,7 +369,7 @@ export function AdsDashboard() {
     } catch {
       carsRef.current = snapshot;
       setCars(snapshot);
-      showToast("Не удалось удалить авто", "error");
+      showToast("Не получилось убрать машину", "error");
     } finally {
       markBusy(car.id, false);
     }
@@ -344,7 +378,7 @@ export function AdsDashboard() {
   const handleSaveSettings = async (newSettings: Partial<AdsSettings>) => {
     await updateAdsSettings(newSettings);
     setSettings((prev) => ({ ...prev, ...newSettings }));
-    showToast("Настройки сохранены");
+    showToast("Правила сохранены");
   };
 
   const handleSaveDebts = async (tiktokDebts: TikTokDebt[]) => {
@@ -373,12 +407,14 @@ export function AdsDashboard() {
   const workCount = useMemo(
     () =>
       cars.filter((c) => {
+        if (c.sold) return false;
         if (c.campaign !== "rk1" && c.campaign !== "rk2") return false;
         return getCalendarDaysLeft(c.targetRotationDate, c.startedAt, c.maxDays) <= 0;
       }).length,
     [cars],
   );
-  const airCount = cars.filter((c) => c.campaign === "rk1" || c.campaign === "rk2").length;
+  const airCount = cars.filter((c) => (c.campaign === "rk1" || c.campaign === "rk2") && !c.sold).length;
+  const waitingCount = cars.filter((c) => c.campaign === "waiting_video").length;
 
   const handlers = {
     onSwitch: handleSwitchCampaign,
@@ -387,13 +423,22 @@ export function AdsDashboard() {
     onDelete: executeDeleteCar,
   };
 
+  const closeHints = () => {
+    try {
+      localStorage.setItem(ADS_HINTS_KEY, "1");
+    } catch {
+      // ignore
+    }
+    setHints(false);
+  };
+
   return (
     <div className="ads-os flex h-full min-h-0 flex-col text-ads-ink">
       <header className="shrink-0 border-b border-ads-line/70 bg-ads-bg/72 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-[92rem] items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
           <div className="min-w-0">
-            <h1 className="truncate text-lg leading-none font-semibold tracking-tight text-ads-ink">Ротация</h1>
-            <p className="mt-0.5 truncate text-xs text-ads-subtle">TikTok · Белавтоцентр</p>
+            <h1 className="truncate text-lg leading-none font-semibold tracking-tight text-ads-ink">Реклама TikTok</h1>
+            <p className="mt-0.5 truncate text-xs text-ads-subtle">Съёмка → эфир → смена кампании</p>
           </div>
           <div className="flex items-center gap-1">
             {workCount > 0 && (
@@ -418,7 +463,7 @@ export function AdsDashboard() {
       </header>
 
       <AdsScroller className="min-h-0 flex-1" contentClassName="min-h-full lg:h-full">
-      <div className="mx-auto flex min-h-0 w-full max-w-[92rem] flex-col px-4 py-5 sm:px-6 sm:py-6 lg:h-full">
+      <div className="mx-auto flex min-h-0 w-full max-w-[92rem] flex-col px-4 py-5 pb-24 sm:px-6 sm:py-6 lg:h-full lg:pb-6">
         {loadError && (
           <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl bg-ads-danger-soft px-4 py-3">
             <p className="text-sm text-ads-danger">{loadError}</p>
@@ -441,51 +486,176 @@ export function AdsDashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 items-start gap-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(300px,380px)_1fr] lg:items-stretch">
-            <TodayShift
-              cars={cars}
-              settings={settings}
-              busyIds={busyIds}
-              balancing={isBalancing}
-              nextDueLabel={nextAirDateLabel(cars)}
-              onSwitch={handlers.onSwitch}
-              onDelete={handlers.onDelete}
-              onEqualize={() => void handleEqualizePreview()}
-              onVacation={() =>
-                setPostpone({
-                  open: true,
-                  mode: "vacation",
-                  title: "Каникулы",
-                  hint: "Весь график с сегодня уедет вперёд. Эти дни будут пустые.",
-                  minDateKey: getMinskDateKey(Date.now()),
-                })
-              }
-              onOpenWarehouse={() => setWarehouseOpen(true)}
-              onDayClick={(offset, date, dayCars, dayDebts) =>
-                setSelectedDayTasks({
-                  isOpen: true,
-                  date,
-                  offset,
-                  dateKey: addDaysToDateKey(getMinskDateKey(Date.now()), offset),
-                  cars: dayCars,
-                  debts: dayDebts || [],
-                })
-              }
-            />
-            <OnAirBoard cars={cars} settings={settings} busyIds={busyIds} {...handlers} />
+            <div className={cn(scene !== "today" && "max-lg:hidden")}>
+              <TodayQueue
+                cars={cars}
+                settings={settings}
+                debts={settings.tiktokDebts || []}
+                busyIds={busyIds}
+                nextDueLabel={nextAirDateLabel(cars)}
+                onRotate={handleSwitchCampaign}
+                onMarkShot={handleMarkShot}
+                onAir={handleSwitchCampaign}
+                onDelete={executeDeleteCar}
+                onClearDebt={(id) => void handleSaveDebts((settings.tiktokDebts || []).filter((d) => d.id !== id))}
+                onOpenWarehouse={() => setWarehouseOpen(true)}
+                onOpenAir={() => setScene("air")}
+                onOpenShoot={() => setScene("shoot")}
+              />
+            </div>
+            <div className={cn("flex min-h-0 flex-col", scene === "today" && "max-lg:hidden")}>
+              <div className="mb-3 hidden gap-1 lg:flex">
+                {(
+                  [
+                    ["air", "Эфир"],
+                    ["shoot", "Съёмка"],
+                    ["schedule", "График"],
+                  ] as const
+                ).map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setScene(id)}
+                    className={cn(
+                      "h-8 rounded-full px-3 text-xs font-medium",
+                      (scene === id || (scene === "today" && id === "air"))
+                        ? "bg-ads-ink text-ads-paper"
+                        : "bg-ads-surface text-ads-muted hover:text-ads-ink",
+                    )}
+                  >
+                    {label}
+                    {id === "shoot" && waitingCount ? ` · ${waitingCount}` : ""}
+                    {id === "air" && airCount ? ` · ${airCount}` : ""}
+                  </button>
+                ))}
+              </div>
+              {(scene === "air" || scene === "today") && (
+                <OnAirBoard cars={cars} settings={settings} busyIds={busyIds} {...handlers} />
+              )}
+              {scene === "shoot" && (
+                <ShootBoard
+                  cars={cars}
+                  busyIds={busyIds}
+                  onMarkShot={handleMarkShot}
+                  onAir={handleSwitchCampaign}
+                  onWaiting={(car) => void handleSwitchCampaign(car, "waiting_video")}
+                  onDelete={executeDeleteCar}
+                />
+              )}
+              {scene === "schedule" && (
+                <SchedulePane
+                  cars={cars}
+                  settings={settings}
+                  balancing={isBalancing}
+                  onEqualize={() => void handleEqualizePreview()}
+                  onVacation={() =>
+                    setPostpone({
+                      open: true,
+                      mode: "vacation",
+                      title: "Пауза графика",
+                      hint: "Все ближайшие смены уедут вперёд. Эти дни будут пустые.",
+                      minDateKey: getMinskDateKey(Date.now()),
+                    })
+                  }
+                  onDayClick={(offset, date, dayCars, dayDebts) =>
+                    setSelectedDayTasks({
+                      isOpen: true,
+                      date,
+                      offset,
+                      dateKey: addDaysToDateKey(getMinskDateKey(Date.now()), offset),
+                      cars: dayCars,
+                      debts: dayDebts || [],
+                    })
+                  }
+                />
+              )}
+            </div>
           </div>
         )}
       </div>
       </AdsScroller>
 
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ads-line bg-ads-bg/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
+        <div className="grid grid-cols-4 px-2 py-1.5">
+          {(
+            [
+              ["today", "Сегодня", Sun, workCount],
+              ["shoot", "Съёмка", Clapperboard, waitingCount],
+              ["air", "Эфир", Radio, airCount],
+              ["schedule", "График", CalendarDays, 0],
+            ] as const
+          ).map(([id, label, Icon, count]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setScene(id)}
+              className={cn(
+                "flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-2xl text-[10px] font-medium",
+                scene === id ? "text-ads-ink" : "text-ads-subtle",
+              )}
+            >
+              <span className="relative">
+                <Icon className="size-5" strokeWidth={1.5} />
+                {count > 0 ? (
+                  <span className="absolute -top-1 -right-2 min-w-4 rounded-full bg-ads-danger px-1 text-[9px] font-semibold text-white">
+                    {count}
+                  </span>
+                ) : null}
+              </span>
+              {label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
       {toast && (
         <div
-          className={`fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full px-4 py-2.5 text-sm font-medium text-ads-paper shadow-ads-float ${
+          className={`fixed bottom-20 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-ads-paper shadow-ads-float lg:bottom-6 ${
             toast.type === "error" ? "bg-ads-danger" : "bg-ads-ink"
           }`}
         >
-          {toast.text}
+          <span>{toast.text}</span>
+          {toast.undo ? (
+            <button
+              type="button"
+              className="text-xs font-semibold underline"
+              onClick={() => {
+                toast.undo?.();
+                setToast(null);
+              }}
+            >
+              Отменить
+            </button>
+          ) : null}
         </div>
       )}
+
+      {hints ? (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
+          <button type="button" className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={closeHints} aria-label="Закрыть" />
+          <div className="ads-enter relative m-4 w-full max-w-md rounded-3xl bg-ads-card p-6 shadow-ads-float">
+            <p className="text-xs font-medium text-ads-subtle">
+              {hintStep + 1} / {HINTS.length}
+            </p>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight text-ads-ink">{HINTS[hintStep].title}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-ads-muted">{HINTS[hintStep].text}</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <GhostBtn className="h-9 px-3 text-xs" onClick={closeHints}>
+                Пропустить
+              </GhostBtn>
+              <PrimaryBtn
+                className="h-9 px-4"
+                onClick={() => {
+                  if (hintStep >= HINTS.length - 1) closeHints();
+                  else setHintStep((s) => s + 1);
+                }}
+              >
+                {hintStep >= HINTS.length - 1 ? "Понятно" : "Дальше"}
+              </PrimaryBtn>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <WarehouseDrawer
         open={warehouseOpen}
@@ -555,7 +725,7 @@ export function AdsDashboard() {
       />
       <ConfirmSheet
         open={equalize.open}
-        title="Выровнять к 50 / 50"
+        title="Выровнять К1 и К2"
         message={equalize.message}
         days={equalize.days}
         confirmLabel="Записать график"

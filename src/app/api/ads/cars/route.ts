@@ -7,6 +7,8 @@ import {
   getDateKeyDiffDays,
 } from '@/lib/services/adsService';
 import { pickNextSlotDateKey, isAirCampaign } from '@/lib/services/adsSchedule';
+import { appendHistory } from '@/lib/ads/mutate';
+import { collectSoldIds } from '@/lib/ads/sold';
 import crypto from 'crypto';
 
 async function getTargetPerDay(): Promise<number> {
@@ -33,19 +35,10 @@ export async function GET() {
     `;
 
     const catalogRows = await sql`SELECT id, data FROM cars`;
-    const soldCarIds = new Set<string>();
-    for (const row of catalogRows) {
-      let d = row.data;
-      if (typeof d === 'string') {
-        try { d = JSON.parse(d); } catch { d = {}; }
-      }
-      if (!d || typeof d !== 'object') d = {};
-      const isSold = d.status === 'sold' || d.isAvailable === false || d.is_available === false;
-      if (isSold) soldCarIds.add(row.id);
-    }
+    const soldCarIds = collectSoldIds(catalogRows as { id: string; data: unknown }[]);
 
     const cars: any[] = [];
-    const hiddenSold: string[] = [];
+    let soldCount = 0;
 
     for (const row of rows) {
       let d = row.data;
@@ -53,25 +46,23 @@ export async function GET() {
         try { d = JSON.parse(d); } catch { d = {}; }
       }
 
-      const carData = {
+      const sold = Boolean(d.carId && soldCarIds.has(d.carId));
+      if (sold) soldCount += 1;
+
+      cars.push({
         id: row.id,
         ...d,
+        sold,
         createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
         updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
-      };
-
-      if (carData.carId && soldCarIds.has(carData.carId)) {
-        hiddenSold.push(row.id);
-        continue;
-      }
-      cars.push(carData);
+      });
     }
 
-    return NextResponse.json({ success: true, cars, hiddenSoldCount: hiddenSold.length });
+    return NextResponse.json({ success: true, cars, soldCount });
   } catch (error: any) {
     console.error('Error fetching ad cars from Neon DB:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch ad cars' },
+      { success: false, error: error.message || 'Не получилось загрузить доску' },
       { status: 500 }
     );
   }
@@ -82,16 +73,32 @@ export async function POST(request: Request) {
     const body = await request.json();
     if (!body.name || !body.priceUsd) {
       return NextResponse.json(
-        { success: false, error: 'Name and priceUsd are required' },
+        { success: false, error: 'Нужны название и цена' },
         { status: 400 }
       );
+    }
+
+    if (body.carId) {
+      const existingRows = await sql`SELECT id, data FROM ad_cars`;
+      for (const row of existingRows) {
+        let d = row.data;
+        if (typeof d === "string") {
+          try { d = JSON.parse(d); } catch { d = {}; }
+        }
+        if (d?.carId && String(d.carId) === String(body.carId)) {
+          return NextResponse.json(
+            { success: false, error: "Эта машина уже на доске" },
+            { status: 409 }
+          );
+        }
+      }
     }
 
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     const numericPrice = Number(body.priceUsd);
     const priceTier = body.priceTier || calculatePriceTier(numericPrice);
-    const campaign = body.campaign || 'rk1';
+    const campaign = body.campaign || 'waiting_video';
     const startedAt = body.startedAt || Date.now();
 
     const todayKey = getMinskDateKey(Date.now());
@@ -119,6 +126,7 @@ export async function POST(request: Request) {
       priceTier,
       campaign,
       startedAt,
+      source: body.carId ? "catalog" : "manual",
     };
 
     if (targetRotationDate) carData.targetRotationDate = targetRotationDate;
@@ -129,6 +137,7 @@ export async function POST(request: Request) {
     if (body.videoUrl) carData.videoUrl = String(body.videoUrl).trim();
     if (body.videoCoverUrl) carData.videoCoverUrl = String(body.videoCoverUrl).trim();
     if (body.notes) carData.notes = String(body.notes).trim();
+    appendHistory(carData, { kind: "add", to: campaign });
 
     await sql`
       INSERT INTO ad_cars (id, data, created_at, updated_at)
@@ -147,7 +156,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Error creating ad car in Neon DB:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to create ad car' },
+      { success: false, error: error.message || 'Не получилось добавить машину' },
       { status: 500 }
     );
   }

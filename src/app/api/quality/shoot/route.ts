@@ -61,15 +61,25 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: "Это не ваша линия" }, { status: 403 });
       }
     }
+    const fromCampaign = car.campaign;
     const next = {
       ...car,
       campaign: "ready_for_ads",
       shotBy: actor.uid,
       shotByName: actor.person?.name || actor.email,
       shotAt: Date.now(),
+      targetRotationDate: null,
     };
     if (typeof body.videoUrl === "string" && body.videoUrl) next.videoUrl = body.videoUrl;
     delete (next as any).id;
+    const { appendHistory, notifyShotAndStamp } = await import("@/lib/ads/mutate");
+    appendHistory(next, {
+      kind: "shot",
+      from: fromCampaign,
+      to: "ready_for_ads",
+      by: next.shotByName,
+    });
+    await notifyShotAndStamp(next, fromCampaign);
     await sql`UPDATE ad_cars SET data = ${JSON.stringify(next)}, updated_at = ${nowIso} WHERE id = ${carId}`;
     return NextResponse.json({ success: true, car: { id: carId, ...next } });
   }

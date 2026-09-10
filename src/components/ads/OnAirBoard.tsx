@@ -118,9 +118,9 @@ export function OnAirBoard({
 
       <AdsScroller nested className="min-h-0 flex-1">
       <div className="grid grid-cols-1 divide-y divide-ads-line xl:grid-cols-2 xl:divide-x xl:divide-y-0">
-        <Column title="РК 1" hint="Первый цикл" count={rk1.length}>
+        <Column title="Кампания 1" hint="Первый заход ролика" count={rk1.length}>
           {rk1.length === 0 ? (
-            <Empty text={query || tier !== "all" ? "Ничего по фильтру" : "Пусто"} />
+            <Empty text={query || tier !== "all" ? "Ничего по фильтру" : "Пусто. Поставьте машину из «Отснято»."} />
           ) : (
             rk1.map((car) => (
               <AdsCarCard
@@ -133,9 +133,9 @@ export function OnAirBoard({
             ))
           )}
         </Column>
-        <Column title="РК 2" hint="Второй цикл" count={rk2.length}>
+        <Column title="Кампания 2" hint="Второй заход ролика" count={rk2.length}>
           {rk2.length === 0 ? (
-            <Empty text={query || tier !== "all" ? "Ничего по фильтру" : "Пусто"} />
+            <Empty text={query || tier !== "all" ? "Ничего по фильтру" : "Пусто. Поставьте машину из «Отснято»."} />
           ) : (
             rk2.map((car) => (
               <AdsCarCard

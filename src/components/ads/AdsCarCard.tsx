@@ -5,8 +5,10 @@ import { MoreHorizontal } from "lucide-react";
 import { type AdCampaignType, type AdCar, type AdsSettings } from "@/lib/types";
 import { getPriceTierLabel } from "@/lib/services/adsService";
 import { getAdBurn } from "@/lib/services/adsProgress";
+import { otherAir, rotateLabel } from "@/lib/ads/copy";
 import { cn } from "@/lib/utils";
 import { CarThumb } from "./CarThumb";
+import { CampaignBadge } from "./CampaignBadge";
 import { BusyOverlay, BurnMeter, CatalogLink, GhostBtn, PrimaryBtn } from "./chrome";
 
 const DAY_PRESETS = [7, 10, 14, 17, 21, 30];
@@ -41,7 +43,10 @@ export function AdsCarCard({
           <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-10 w-14" />
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="truncate text-sm font-medium tracking-tight text-ads-ink">{car.name}</h3>
+              <div className="flex min-w-0 items-center gap-1.5">
+                <h3 className="truncate text-sm font-medium tracking-tight text-ads-ink">{car.name}</h3>
+                <CampaignBadge campaign={car.campaign} sold={car.sold} />
+              </div>
               <span className="shrink-0 font-mono text-xs font-medium tabular-nums text-ads-muted">
                 ${Number(car.priceUsd).toLocaleString("ru-RU")}
               </span>
@@ -64,30 +69,21 @@ export function AdsCarCard({
 
       <div className="mt-2 flex items-center gap-1.5">
         {isActive && (
-          <>
-            <button
-              type="button"
-              onClick={() => onSwitch(car, "rk1")}
-              className="inline-flex h-8 items-center rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper hover:bg-ads-rail active:scale-[0.97]"
-            >
-              В РК 1
-            </button>
-            <button
-              type="button"
-              onClick={() => onSwitch(car, "rk2")}
-              className="inline-flex h-8 items-center rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper hover:bg-ads-rail active:scale-[0.97]"
-            >
-              В РК 2
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={() => onSwitch(car, otherAir(car.campaign))}
+            className="inline-flex h-8 items-center rounded-lg bg-ads-ink px-2.5 text-xs font-medium text-ads-paper hover:bg-ads-rail active:scale-[0.97]"
+          >
+            {rotateLabel(car.campaign)}
+          </button>
         )}
         {car.campaign === "waiting_video" && (
           <Mini onClick={() => onSwitch(car, "ready_for_ads")}>Отснято</Mini>
         )}
         {car.campaign === "ready_for_ads" && (
           <>
-            <Mini onClick={() => onSwitch(car, "rk1")}>В РК 1</Mini>
-            <Mini onClick={() => onSwitch(car, "rk2")}>В РК 2</Mini>
+            <Mini onClick={() => onSwitch(car, "rk1")}>В К1</Mini>
+            <Mini onClick={() => onSwitch(car, "rk2")}>В К2</Mini>
           </>
         )}
         <span className="ml-auto">
@@ -116,7 +112,7 @@ export function AdsCarCard({
                   Срок
                 </MenuItem>
               )}
-              {isActive && <MenuItem onClick={() => setMenu("reset")}>Сбросить таймер</MenuItem>}
+              {isActive && <MenuItem onClick={() => setMenu("reset")}>Считать срок заново</MenuItem>}
               <MenuItem danger onClick={() => setMenu("delete")}>
                 Убрать из рекламы
               </MenuItem>
@@ -158,8 +154,8 @@ export function AdsCarCard({
           )}
           {menu === "reset" && (
             <Confirm
-              title="Сбросить таймер?"
-              body="Отсчёт с сегодня, слот пересчитается."
+              title="Считать срок заново?"
+              body="Смена отодвинется, как будто машину только что поставили в эту кампанию."
               confirm="Сбросить"
               onCancel={() => setMenu("none")}
               onConfirm={() => {
