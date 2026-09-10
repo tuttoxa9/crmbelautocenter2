@@ -38,6 +38,17 @@ export function rotateLabel(from: string): string {
   return from === "rk1" ? "В кампанию 2" : "В кампанию 1";
 }
 
+export function carFacts(car: {
+  year?: string | number;
+  priceUsd?: number;
+}): string {
+  const bits: string[] = [];
+  if (car.year) bits.push(String(car.year));
+  const price = Number(car.priceUsd) || 0;
+  if (price > 0) bits.push(`$${price.toLocaleString("ru-RU")}`);
+  return bits.join(" · ");
+}
+
 export const HINTS = [
   {
     title: "Две кампании TikTok",

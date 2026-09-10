@@ -15,7 +15,11 @@ export function CarLine({ car, border, children }: { car: any; border?: boolean;
         <p className="truncate text-sm font-medium">{car.name}</p>
         <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-ads-muted">
           <span className="rounded-md bg-ads-surface px-1.5 py-0.5 font-medium text-ads-ink">{getPriceTierShort(tier)}</span>
-          <span>{car.plannedCampaign === "rk1" ? "РК 1" : car.plannedCampaign === "rk2" ? "РК 2" : "без линии"}</span>
+          {car.year ? <span>{car.year}</span> : null}
+          {Number(car.priceUsd) > 0 ? (
+            <span className="font-mono tabular-nums">${Number(car.priceUsd).toLocaleString("ru-RU")}</span>
+          ) : null}
+          <span>{car.plannedCampaign === "rk1" ? "К1" : car.plannedCampaign === "rk2" ? "К2" : "без линии"}</span>
           {car.shotByName ? <span>· {car.shotByName}</span> : null}
         </p>
       </div>
