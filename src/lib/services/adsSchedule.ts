@@ -51,7 +51,7 @@ export function carDateKey(car: TapeCar): string | null {
 
 export function airCars(cars: TapeCar[]): DatedCar[] {
   return cars
-    .filter((c) => isAirCampaign(c.campaign))
+    .filter((c) => isAirCampaign(c.campaign) && !(c as { sold?: boolean }).sold)
     .map((c) => ({
       ...c,
       id: String(c.id || ""),

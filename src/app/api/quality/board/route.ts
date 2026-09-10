@@ -6,6 +6,7 @@ import { isActorError, requireQualityActor } from "@/lib/quality/auth";
 import { mondayKey, qualityTodayKey, weekKeys } from "@/lib/quality/dates";
 import { defaultDay, weekTotals, type CrmPerson, type OrganicKind, type SmmLane } from "@/lib/quality/types";
 import { hydratePersonWeek } from "@/lib/quality/weekFill";
+import { sweepSoldAdCars } from "@/lib/ads/sold";
 
 function parseCar(row: any) {
   let d = row.data;
@@ -74,6 +75,7 @@ export async function GET(request: Request) {
     };
   });
 
+  await sweepSoldAdCars();
   const carRows = await sql`SELECT id, data FROM ad_cars`;
   const cars = carRows.map(parseCar);
   const waiting = cars.filter((c) => c.campaign === "waiting_video");

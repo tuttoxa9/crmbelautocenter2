@@ -8,7 +8,7 @@ import {
 } from '@/lib/services/adsService';
 import { pickNextSlotDateKey, isAirCampaign } from '@/lib/services/adsSchedule';
 import { appendHistory } from '@/lib/ads/mutate';
-import { collectSoldIds } from '@/lib/ads/sold';
+import { sweepSoldAdCars } from '@/lib/ads/sold';
 import crypto from 'crypto';
 
 async function getTargetPerDay(): Promise<number> {
@@ -28,17 +28,15 @@ async function getTargetPerDay(): Promise<number> {
 
 export async function GET() {
   try {
+    await sweepSoldAdCars();
+
     const rows = await sql`
       SELECT id, data, created_at, updated_at 
       FROM ad_cars 
       ORDER BY created_at DESC
     `;
 
-    const catalogRows = await sql`SELECT id, data FROM cars`;
-    const soldCarIds = collectSoldIds(catalogRows as { id: string; data: unknown }[]);
-
     const cars: any[] = [];
-    let soldCount = 0;
 
     for (const row of rows) {
       let d = row.data;
@@ -46,19 +44,15 @@ export async function GET() {
         try { d = JSON.parse(d); } catch { d = {}; }
       }
 
-      const sold = Boolean(d.carId && soldCarIds.has(d.carId));
-      if (sold) soldCount += 1;
-
       cars.push({
         id: row.id,
         ...d,
-        sold,
         createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
         updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
       });
     }
 
-    return NextResponse.json({ success: true, cars, soldCount });
+    return NextResponse.json({ success: true, cars });
   } catch (error: any) {
     console.error('Error fetching ad cars from Neon DB:', error);
     return NextResponse.json(
@@ -107,6 +101,7 @@ export async function POST(request: Request) {
     let maxDays = body.maxDays ? Number(body.maxDays) : undefined;
 
     if ((campaign === 'rk1' || campaign === 'rk2') && !targetRotationDate) {
+      await sweepSoldAdCars();
       const existingCarsRows = await sql`SELECT data FROM ad_cars`;
       const existing = existingCarsRows.map((r: any) => {
         const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;

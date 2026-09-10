@@ -19,7 +19,6 @@ export function TodayQueue({
   onRotate,
   onMarkShot,
   onAir,
-  onDelete,
   onClearDebt,
   onOpenWarehouse,
   onOpenAir,
@@ -33,7 +32,6 @@ export function TodayQueue({
   onRotate: (car: AdCar, campaign: AdCampaignType) => void;
   onMarkShot: (car: AdCar) => void;
   onAir: (car: AdCar, campaign: AdCampaignType) => void;
-  onDelete: (car: AdCar) => void;
   onClearDebt: (id: string) => void;
   onOpenWarehouse: () => void;
   onOpenAir: () => void;
@@ -42,17 +40,16 @@ export function TodayQueue({
   const todayKey = getMinskDateKey();
   const [, m, d] = todayKey.split("-").map(Number);
   const dateLabel = `${d} ${MONTHS_LONG[(m || 1) - 1]}`;
-  const overdue = cars.filter((c) => isAir(c) && !c.sold && daysLeft(c) < 0);
-  const dueToday = cars.filter((c) => isAir(c) && !c.sold && daysLeft(c) === 0);
-  const waiting = cars.filter((c) => c.campaign === "waiting_video" && !c.sold);
-  const ready = cars.filter((c) => c.campaign === "ready_for_ads" && !c.sold);
-  const soldAir = cars.filter((c) => c.sold && isAir(c));
+  const overdue = cars.filter((c) => isAir(c) && daysLeft(c) < 0);
+  const dueToday = cars.filter((c) => isAir(c) && daysLeft(c) === 0);
+  const waiting = cars.filter((c) => c.campaign === "waiting_video");
+  const ready = cars.filter((c) => c.campaign === "ready_for_ads");
   const todayDebts = debts.filter((d) => d.dateKey === todayKey);
   const workCount = overdue.length + dueToday.length + Math.min(waiting.length, 6) + todayDebts.length;
-  const airCount = cars.filter((c) => isAir(c) && !c.sold).length;
+  const airCount = cars.filter((c) => isAir(c)).length;
 
   return (
-    <div className="ads-pane ads-shift flex min-h-0 flex-col">
+    <div className="ads-pane flex h-auto min-h-0 flex-col overflow-visible lg:h-full lg:overflow-hidden">
       <AdsScroller nested className="min-h-0 flex-1">
         <div className="px-5 pt-5 pb-3">
           <p className="text-xs font-medium text-ads-subtle">Сегодня</p>
@@ -66,16 +63,7 @@ export function TodayQueue({
           </p>
         </div>
 
-        {soldAir.length > 0 && (
-          <div className="mx-4 mb-3 rounded-2xl bg-ads-danger-soft px-3.5 py-3">
-            <p className="text-sm font-medium text-ads-danger">
-              {soldAir.length} {pluralCars(soldAir.length)} в эфире уже проданы
-            </p>
-            <p className="mt-0.5 text-xs text-ads-muted">Уберите с доски, чтобы не мешали графику.</p>
-          </div>
-        )}
-
-        {workCount === 0 && soldAir.length === 0 ? (
+        {workCount === 0 ? (
           <div className="mx-4 mb-4 rounded-2xl bg-ads-bg px-4 py-8 text-center">
             <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-ads-card shadow-ads-pill">
               <Check className="size-4 text-ads-ink" />
@@ -157,23 +145,6 @@ export function TodayQueue({
                 ))}
               </Group>
             )}
-            {soldAir.map((car) => (
-              <div key={car.id} className="flex items-center gap-3 px-4 py-3">
-                <CarThumb name={car.name} photoUrl={car.photoUrl} className="h-10 w-14" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-ads-ink">{car.name}</p>
-                  <CampaignBadge sold />
-                </div>
-                <button
-                  type="button"
-                  disabled={busy(car, busyIds)}
-                  onClick={() => onDelete(car)}
-                  className="inline-flex h-9 items-center rounded-lg bg-ads-danger-soft px-2.5 text-xs font-medium text-ads-danger"
-                >
-                  Убрать
-                </button>
-              </div>
-            ))}
           </div>
         )}
 
