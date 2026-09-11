@@ -6,25 +6,11 @@ import {
   minskDateKeyToTimestamp,
   getDateKeyDiffDays,
 } from '@/lib/services/adsService';
-import { pickNextSlotDateKey, isAirCampaign } from '@/lib/services/adsSchedule';
+import { pickFairRotationDateKey, isAirCampaign } from '@/lib/services/adsSchedule';
 import { appendHistory } from '@/lib/ads/mutate';
 import { sweepSoldAdCars } from '@/lib/ads/sold';
+import { loadAdsRules } from '@/lib/ads/rules';
 import crypto from 'crypto';
-
-async function getTargetPerDay(): Promise<number> {
-  try {
-    const settingsRows = await sql`SELECT data FROM settings WHERE id = 'ads' LIMIT 1`;
-    if (settingsRows.length > 0) {
-      const raw = settingsRows[0].data;
-      const d = typeof raw === 'string' ? JSON.parse(raw) : raw;
-      const n = Number(d?.targetCarsPerDay);
-      if (n > 0) return n;
-    }
-  } catch {
-    // fall through
-  }
-  return 3;
-}
 
 export async function GET() {
   try {
@@ -107,9 +93,9 @@ export async function POST(request: Request) {
         const d = typeof r.data === 'string' ? JSON.parse(r.data) : r.data;
         return d;
       });
-      const targetPerDay = await getTargetPerDay();
+      const rules = await loadAdsRules();
       const incoming = isAirCampaign(campaign) ? campaign : 'rk1';
-      const chosenDateKey = pickNextSlotDateKey(existing, todayKey, targetPerDay, incoming, { allowToday: true });
+      const chosenDateKey = pickFairRotationDateKey(existing, todayKey, incoming, rules);
       const daysLeftFromToday = Math.max(0, getDateKeyDiffDays(todayKey, chosenDateKey));
       targetRotationDate = minskDateKeyToTimestamp(chosenDateKey);
       if (!maxDays) maxDays = daysLeftFromToday;

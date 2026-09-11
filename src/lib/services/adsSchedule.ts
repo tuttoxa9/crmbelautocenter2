@@ -64,6 +64,25 @@ export function chooseCampaignForNewCar(rk1: number, rk2: number): AirCampaign {
   return rk1 <= rk2 ? "rk1" : "rk2";
 }
 
+export function campaignFairDays(
+  campaign: string,
+  rules: { rk1Days?: number; rk2Days?: number },
+): number {
+  if (campaign === "rk2") return Math.max(1, Number(rules.rk2Days) || 14);
+  return Math.max(1, Number(rules.rk1Days) || 17);
+}
+
+export function calendarDaysInCampaign(car: TapeCar, todayKey: string): number {
+  if (!car.startedAt) return 0;
+  const startKey = getMinskDateKey(Number(car.startedAt));
+  return Math.max(0, getDateKeyDiffDays(startKey, todayKey));
+}
+
+export function minFairDateKey(car: TapeCar, todayKey: string, fairDays: number): string {
+  const left = Math.max(0, Math.max(1, fairDays) - calendarDaysInCampaign(car, todayKey));
+  return addDaysToDateKey(todayKey, left);
+}
+
 export function defaultScheduleStart(todayKey: string, cars: TapeCar[]): string {
   const anyoneToday = airCars(cars).some((c) => c.dateKey === todayKey);
   return anyoneToday ? todayKey : addDaysToDateKey(todayKey, 1);
@@ -117,6 +136,7 @@ export function planEqualize(
   cars: TapeCar[],
   todayKey: string,
   perDayInput?: number,
+  fair?: { rk1Days?: number; rk2Days?: number },
 ): EqualizePlan {
   const perDay = Math.max(1, Number(perDayInput) || 3);
   const air = airCars(cars);
@@ -141,10 +161,28 @@ export function planEqualize(
     slot++;
   }
 
+  const byId = new Map(air.map((c) => [c.id, c]));
+  for (const item of assigned) {
+    const car = byId.get(item.id);
+    if (!car) continue;
+    const minKey = minFairDateKey(car, todayKey, campaignFairDays(car.campaign, fair || {}));
+    if (item.dateKey < minKey) item.dateKey = minKey;
+  }
+
+  const groups = new Map<string, DatedCar[]>();
+  for (const item of assigned) {
+    const car = byId.get(item.id);
+    if (!car) continue;
+    const row: DatedCar = { ...car, dateKey: item.dateKey, campaign: item.campaign };
+    groups.set(item.dateKey, [...(groups.get(item.dateKey) || []), row]);
+  }
+  spillForward(groups, startKey, perDay);
+  const final = flattenGroups(groups);
+
   const daysToEven = need === 0 ? 0 : Math.ceil(need / perDay);
   const message =
     need === 0
-      ? `Сток уже ${rk1.length} / ${rk2.length}. Лента станет чередованием ${perDay} в день.`
+      ? `Сток уже ${rk1.length} / ${rk2.length}. Смены по правилам, не больше ${perDay} в день.`
       : `Если крутить по графику, через ${daysToEven} раб. дн. станет ${targetRk1} / ${targetRk2}. Сейчас ${rk1.length} / ${rk2.length}.`;
 
   return {
@@ -155,8 +193,8 @@ export function planEqualize(
     current: { rk1: rk1.length, rk2: rk2.length, total },
     target: { rk1: targetRk1, rk2: targetRk2 },
     daysToEven,
-    days: buildDays(assigned),
-    stamps: assigned.map(({ id, dateKey }) => ({ id, dateKey })),
+    days: buildDays(final),
+    stamps: final.map((c) => ({ id: c.id, dateKey: c.dateKey })),
     message,
   };
 }
@@ -275,29 +313,78 @@ export function pickNextSlotDateKey(
 ): string {
   const perDay = Math.max(1, Number(perDayInput) || 3);
   const startKey = opts?.allowToday ? todayKey : addDaysToDateKey(todayKey, 1);
-  const air = airCars(others);
-  const counts: Record<string, number> = {};
-  const mix: Record<string, { rk1: number; rk2: number }> = {};
-  for (const c of air) {
-    counts[c.dateKey] = (counts[c.dateKey] || 0) + 1;
-    if (!mix[c.dateKey]) mix[c.dateKey] = { rk1: 0, rk2: 0 };
-    mix[c.dateKey][c.campaign]++;
-  }
+  const occupancy = occupancyFrom(others, todayKey);
   let fallback: string | null = null;
   for (let i = 0; i <= 90; i++) {
     const key = addDaysToDateKey(startKey, i);
-    const n = counts[key] || 0;
+    const n = occupancy.counts[key] || 0;
     if (n >= perDay) continue;
     if (!fallback) fallback = key;
-    const same = mix[key]?.[incomingCampaign] || 0;
+    const same = occupancy.mix[key]?.[incomingCampaign] || 0;
     const other = n - same;
     if (same <= other) return key;
   }
   return fallback || addDaysToDateKey(startKey, 90);
 }
 
+function occupancyFrom(others: TapeCar[], todayKey: string) {
+  const counts: Record<string, number> = {};
+  const mix: Record<string, { rk1: number; rk2: number }> = {};
+  for (const c of airCars(others)) {
+    if (c.dateKey < todayKey) continue;
+    counts[c.dateKey] = (counts[c.dateKey] || 0) + 1;
+    if (!mix[c.dateKey]) mix[c.dateKey] = { rk1: 0, rk2: 0 };
+    mix[c.dateKey][c.campaign]++;
+  }
+  return { counts, mix };
+}
+
+/**
+ * Срок в кампании по правилам, а не первая дырка в календаре.
+ *
+ * 1. Полный срок К1 / К2.
+ * 2. Не больше N машин в день.
+ * 3. Ближние дырки не затыкаем новой машиной.
+ * 4. В окне +0…+7 дней — менее загруженный день и ровный микс К1/К2.
+ * 5. Если окно забито — идём вперёд, пока не найдётся место.
+ */
+export function pickFairRotationDateKey(
+  others: TapeCar[],
+  todayKey: string,
+  incomingCampaign: AirCampaign,
+  rules: { perDay?: number; rk1Days?: number; rk2Days?: number },
+): string {
+  const perDay = Math.max(1, Number(rules.perDay) || 3);
+  const fair = campaignFairDays(incomingCampaign, rules);
+  const ideal = addDaysToDateKey(todayKey, fair);
+  const { counts, mix } = occupancyFrom(others, todayKey);
+  const slack = 7;
+
+  let bestKey: string | null = null;
+  let bestScore = Infinity;
+  for (let offset = 0; offset <= slack; offset++) {
+    const key = addDaysToDateKey(ideal, offset);
+    const n = counts[key] || 0;
+    if (n >= perDay) continue;
+    const same = mix[key]?.[incomingCampaign] || 0;
+    const other = n - same;
+    const score = offset * 20 + n * 10 + (same > other ? 8 : 0);
+    if (score < bestScore) {
+      bestScore = score;
+      bestKey = key;
+    }
+  }
+  if (bestKey) return bestKey;
+
+  for (let i = slack + 1; i <= 90; i++) {
+    const key = addDaysToDateKey(ideal, i);
+    if ((counts[key] || 0) < perDay) return key;
+  }
+  return addDaysToDateKey(ideal, 90);
+}
+
 export function stampDate<T extends TapeCar>(car: T, dateKey: string, todayKey: string): T {
-  const daysIn = Math.max(0, Math.floor((Date.now() - Number(car.startedAt || Date.now())) / 86400000));
+  const daysIn = calendarDaysInCampaign(car, todayKey);
   const left = Math.max(0, getDateKeyDiffDays(todayKey, dateKey));
   return {
     ...car,
@@ -389,6 +476,58 @@ export function runScheduleSelfCheck(): string[] {
 
   if (chooseCampaignForNewCar(29, 29) !== "rk1") err.push("tie should rk1");
   if (chooseCampaignForNewCar(30, 29) !== "rk2") err.push("smaller should rk2");
+
+  const todayJ = "2026-09-11";
+  const rules = { perDay: 3, rk1Days: 17, rk2Days: 14 };
+  const mkJ = (id: string, campaign: AirCampaign, dateKey: string): TapeCar => ({
+    id,
+    name: id,
+    campaign,
+    startedAt: 1,
+    targetRotationDate: minskDateKeyToTimestamp(dateKey),
+  });
+  const aroundHole = [
+    mkJ("s1", "rk1", "2026-09-12"),
+    mkJ("s2", "rk2", "2026-09-12"),
+    mkJ("s3", "rk1", "2026-09-12"),
+    mkJ("s4", "rk1", "2026-09-13"),
+    mkJ("s5", "rk2", "2026-09-13"),
+  ];
+  const greedyHole = pickNextSlotDateKey(aroundHole, todayJ, 3, "rk2", { allowToday: false });
+  if (greedyHole !== "2026-09-13") err.push(`greedy expected 13 Sep hole, got ${greedyHole}`);
+
+  const fairPick = pickFairRotationDateKey(aroundHole, todayJ, "rk2", rules);
+  if (fairPick < addDaysToDateKey(todayJ, 14)) {
+    err.push(`fair plugged nearby hole ${fairPick}`);
+  }
+  if (fairPick !== "2026-09-25") err.push(`rk2 fair ${fairPick} != 2026-09-25`);
+
+  const rk1Fair = pickFairRotationDateKey([], todayJ, "rk1", rules);
+  if (rk1Fair !== "2026-09-28") err.push(`rk1 fair ${rk1Fair} != 2026-09-28`);
+  if (rk1Fair === todayJ || fairPick === todayJ) err.push("fair reused today");
+
+  const fullFairDay = [
+    ...aroundHole,
+    mkJ("f1", "rk1", "2026-09-25"),
+    mkJ("f2", "rk2", "2026-09-25"),
+    mkJ("f3", "rk1", "2026-09-25"),
+  ];
+  const afterFull = pickFairRotationDateKey(fullFairDay, todayJ, "rk2", rules);
+  if (afterFull !== "2026-09-26") err.push(`full fair day ${afterFull} != 2026-09-26`);
+
+  const juke: TapeCar = {
+    id: "juke",
+    name: "juke",
+    campaign: "rk2",
+    startedAt: minskDateKeyToTimestamp(todayJ),
+    targetRotationDate: minskDateKeyToTimestamp("2026-09-13"),
+  };
+  const eqFresh = planEqualize([...aroundHole, juke], todayJ, 3, rules);
+  const jukeStamp = eqFresh.stamps.find((s) => s.id === "juke");
+  if (!jukeStamp || jukeStamp.dateKey < "2026-09-25") {
+    err.push(`equalize shortened juke to ${jukeStamp?.dateKey}`);
+  }
+  if (!maxPerDay(eqFresh.days, 3)) err.push("equalize+fair day overflow");
 
   return err;
 }

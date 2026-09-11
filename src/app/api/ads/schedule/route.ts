@@ -11,21 +11,7 @@ import {
   type TapeCar,
 } from "@/lib/services/adsSchedule";
 import { sweepSoldAdCars } from "@/lib/ads/sold";
-
-async function getTargetPerDay(): Promise<number> {
-  try {
-    const settingsRows = await sql`SELECT data FROM settings WHERE id = 'ads' LIMIT 1`;
-    if (settingsRows.length > 0) {
-      const raw = settingsRows[0].data;
-      const d = typeof raw === "string" ? JSON.parse(raw) : raw;
-      const n = Number(d?.targetCarsPerDay);
-      if (n > 0) return n;
-    }
-  } catch {
-    // default
-  }
-  return 3;
-}
+import { loadAdsRules } from "@/lib/ads/rules";
 
 async function loadCars(): Promise<{ id: string; data: any; created_at: any; updated_at: any }[]> {
   const rows = await sql`SELECT id, data, created_at, updated_at FROM ad_cars`;
@@ -83,7 +69,8 @@ export async function POST(request: Request) {
     const action = String(body.action || "");
     const preview = Boolean(body.preview);
     const todayKey = getMinskDateKey(Date.now());
-    const perDay = await getTargetPerDay();
+    const rules = await loadAdsRules();
+    const perDay = rules.perDay;
     await sweepSoldAdCars();
     const rows = await loadCars();
     const tape = toTape(rows);
@@ -92,7 +79,7 @@ export async function POST(request: Request) {
     let extra: Record<string, unknown> = {};
 
     if (action === "equalize") {
-      const plan = planEqualize(tape, todayKey, perDay);
+      const plan = planEqualize(tape, todayKey, perDay, rules);
       stamps = plan.stamps;
       extra = {
         message: plan.message,
