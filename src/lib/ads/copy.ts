@@ -38,6 +38,18 @@ export function rotateLabel(from: string): string {
   return from === "rk1" ? "В кампанию 2" : "В кампанию 1";
 }
 
+export function rotatePath(from: string): string {
+  if (from === "rk1") return "К1 → К2";
+  if (from === "rk2") return "К2 → К1";
+  return rotateLabel(from);
+}
+
+export function rotateFromTo(from: string): string {
+  if (from === "rk1") return "Из К1 в К2";
+  if (from === "rk2") return "Из К2 в К1";
+  return rotateLabel(from);
+}
+
 export function carFacts(car: {
   year?: string | number;
   priceUsd?: number;

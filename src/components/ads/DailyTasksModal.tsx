@@ -2,9 +2,10 @@
 
 import { type AdCampaignType, type AdCar, type TikTokDebt } from "@/lib/types";
 import { MONTHS_LONG } from "@/lib/services/adsService";
-import { otherAir, rotateLabel } from "@/lib/ads/copy";
+import { carFacts, otherAir, rotateFromTo, rotatePath } from "@/lib/ads/copy";
 import { AdsScroller, CatalogLink, CloseBtn, GhostBtn, Overlay, Spinner } from "./chrome";
 import { CarThumb } from "./CarThumb";
+import { CampaignBadge } from "./CampaignBadge";
 
 export function DailyTasksModal({
   isOpen,
@@ -112,7 +113,7 @@ export function DailyTasksModal({
               )}
               {rk1Cars.length > 0 && (
                 <Group
-                  title={`Кампания 1 · ${rk1Cars.length}`}
+                  title={`Из К1 в К2 · ${rk1Cars.length}`}
                   cars={rk1Cars}
                   busyIds={busyIds}
                   onRotate={onRotate}
@@ -122,7 +123,7 @@ export function DailyTasksModal({
               )}
               {rk2Cars.length > 0 && (
                 <Group
-                  title={`Кампания 2 · ${rk2Cars.length}`}
+                  title={`Из К2 в К1 · ${rk2Cars.length}`}
                   cars={rk2Cars}
                   busyIds={busyIds}
                   onRotate={onRotate}
@@ -159,6 +160,7 @@ function Group({
       <div className="overflow-hidden rounded-2xl bg-ads-card">
         {cars.map((car, i) => {
           const busy = !!car.id && busyIds?.has(car.id);
+          const facts = carFacts(car);
           return (
             <div
               key={car.id}
@@ -166,9 +168,15 @@ function Group({
             >
               <CatalogLink carId={car.carId} className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium text-ads-ink">{car.name}</div>
-                <div className="mt-0.5 text-xs text-ads-muted">
-                  ${Number(car.priceUsd).toLocaleString("ru-RU")}
+                <div className="mt-1 flex min-w-0 items-center gap-1.5">
+                  <CampaignBadge campaign={car.campaign} />
+                  <span className="text-[10px] text-ads-subtle" aria-hidden>
+                    →
+                  </span>
+                  <CampaignBadge campaign={otherAir(car.campaign)} />
+                  {facts ? <span className="truncate text-xs text-ads-muted">· {facts}</span> : null}
                 </div>
+                <span className="sr-only">{rotateFromTo(car.campaign)}</span>
               </CatalogLink>
               <div className="flex shrink-0 flex-wrap items-center justify-end gap-1">
                 {onMarkShot && (
@@ -188,7 +196,7 @@ function Group({
                 )}
                 {onRotate && (
                   <RotateBtn busy={busy} onClick={() => onRotate(car, otherAir(car.campaign))}>
-                    {rotateLabel(car.campaign)}
+                    {rotatePath(car.campaign)}
                   </RotateBtn>
                 )}
               </div>
