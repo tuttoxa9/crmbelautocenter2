@@ -37,11 +37,22 @@ export function parseJson(raw: unknown) {
   return raw && typeof raw === "object" ? raw : {};
 }
 
-/** Проданные из каталога сразу снимаются с доски и из графика. */
+/** Машина с привязкой к каталогу снимается, если её нет в `cars` или она продана. Ручные без carId остаются. */
+export function shouldSweepAdCar(
+  carId: string | undefined | null,
+  liveIds: Set<string>,
+  soldIds: Set<string>,
+): boolean {
+  if (!carId) return false;
+  return !liveIds.has(carId) || soldIds.has(carId);
+}
+
+/** Проданные и удалённые из каталога сразу снимаются с доски и из графика. */
 export async function sweepSoldAdCars(): Promise<{ removed: number; names: string[] }> {
   const catalogRows = await sql`SELECT id, data FROM cars`;
-  const soldCarIds = collectSoldIds(catalogRows as { id: string; data: unknown }[]);
-  if (soldCarIds.size === 0) return { removed: 0, names: [] };
+  const typed = catalogRows as { id: string; data: unknown }[];
+  const liveIds = new Set(typed.map((row) => String(row.id)));
+  const soldCarIds = collectSoldIds(typed);
 
   const adRows = await sql`SELECT id, data FROM ad_cars`;
   const names: string[] = [];
@@ -50,30 +61,33 @@ export async function sweepSoldAdCars(): Promise<{ removed: number; names: strin
   for (const row of adRows as { id: string; data: unknown }[]) {
     const d = parseJson(row.data) as Record<string, unknown>;
     const carId = d.carId ? String(d.carId) : "";
-    if (!carId || !soldCarIds.has(carId)) continue;
+    if (!shouldSweepAdCar(carId, liveIds, soldCarIds)) continue;
     names.push(String(d.name || carId));
     debtCarIds.add(carId);
     await sql`DELETE FROM ad_cars WHERE id = ${row.id}`;
   }
 
-  if (debtCarIds.size > 0) {
-    try {
-      const settingsRows = await sql`SELECT data FROM settings WHERE id = 'ads' LIMIT 1`;
-      if (settingsRows.length) {
-        const d = parseJson(settingsRows[0].data) as Record<string, unknown>;
-        const debts = Array.isArray(d.tiktokDebts) ? d.tiktokDebts : [];
-        const next = debts.filter((item: any) => !item?.carId || !debtCarIds.has(String(item.carId)));
-        if (next.length !== debts.length) {
-          await sql`
-            INSERT INTO settings (id, data, created_at)
-            VALUES ('ads', ${JSON.stringify({ ...d, tiktokDebts: next })}, ${new Date().toISOString()})
-            ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify({ ...d, tiktokDebts: next })}
-          `;
-        }
+  try {
+    const settingsRows = await sql`SELECT data FROM settings WHERE id = 'ads' LIMIT 1`;
+    if (settingsRows.length) {
+      const d = parseJson(settingsRows[0].data) as Record<string, unknown>;
+      const debts = Array.isArray(d.tiktokDebts) ? d.tiktokDebts : [];
+      const next = debts.filter((item: any) => {
+        const id = item?.carId ? String(item.carId) : "";
+        if (!id) return true;
+        if (debtCarIds.has(id)) return false;
+        return liveIds.has(id) && !soldCarIds.has(id);
+      });
+      if (next.length !== debts.length) {
+        await sql`
+          INSERT INTO settings (id, data, created_at)
+          VALUES ('ads', ${JSON.stringify({ ...d, tiktokDebts: next })}, ${new Date().toISOString()})
+          ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify({ ...d, tiktokDebts: next })}
+        `;
       }
-    } catch (err) {
-      console.warn("sweepSoldAdCars: debts", err);
     }
+  } catch (err) {
+    console.warn("sweepSoldAdCars: debts", err);
   }
 
   return { removed: names.length, names };

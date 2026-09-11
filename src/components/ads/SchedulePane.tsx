@@ -2,7 +2,7 @@
 
 import { type AdCar, type AdsSettings, type TikTokDebt } from "@/lib/types";
 import { RotationTimeline } from "./RotationTimeline";
-import { AdsScroller, GhostBtn, Spinner } from "./chrome";
+import { AdsScroller, CloseBtn, GhostBtn, Spinner } from "./chrome";
 
 export function SchedulePane({
   cars,
@@ -11,6 +11,7 @@ export function SchedulePane({
   onEqualize,
   onVacation,
   onDayClick,
+  onClose,
 }: {
   cars: AdCar[];
   settings: AdsSettings;
@@ -18,10 +19,17 @@ export function SchedulePane({
   onEqualize: () => void;
   onVacation: () => void;
   onDayClick: (offset: number, date: Date, dayCars: AdCar[], dayDebts?: TikTokDebt[]) => void;
+  onClose?: () => void;
 }) {
   const perDay = settings.targetCarsPerDay || 3;
   return (
-    <div className="ads-pane flex min-h-0 flex-col max-lg:overflow-visible lg:h-full lg:overflow-hidden">
+    <div
+      className={
+        onClose
+          ? "ads-pane flex max-h-[92vh] min-h-0 flex-col overflow-hidden"
+          : "ads-pane flex min-h-0 flex-col max-lg:overflow-visible lg:h-full lg:overflow-hidden"
+      }
+    >
       <div className="flex items-end justify-between gap-3 px-5 pt-5 pb-3">
         <div>
           <p className="text-xs font-medium text-ads-subtle">График</p>
@@ -36,6 +44,7 @@ export function SchedulePane({
             {balancing ? <Spinner /> : null}
             {balancing ? "Считаю" : "Выровнять К1 / К2"}
           </GhostBtn>
+          {onClose ? <CloseBtn onClick={onClose} /> : null}
         </div>
       </div>
       <AdsScroller nested className="min-h-0 flex-1">

@@ -72,9 +72,11 @@
   --color-files-subtle: #71717a;
   --color-files-line: rgba(255, 255, 255, 0.08);
   --color-files-folder: #e8b931;
-  --shadow-ads-card: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-ads-card: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 40px rgba(0, 0, 0, 0.45);
   --shadow-ads-float: 0 24px 80px rgba(0, 0, 0, 0.6);
   --shadow-ads-pill: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-ads-work: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 8px 20px rgba(0, 0, 0, 0.45);
+  --shadow-ads-work-soft: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 8px 20px rgba(0, 0, 0, 0.28);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

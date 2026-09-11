@@ -75,6 +75,40 @@ export function GhostBtn({
   );
 }
 
+export function WorkBtn({
+  children,
+  onClick,
+  disabled,
+  className,
+  tone = "solid",
+  title,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  tone?: "solid" | "soft";
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-2xl px-4 text-sm font-medium disabled:opacity-40",
+        tone === "solid"
+          ? "bg-ads-ink text-ads-paper shadow-ads-work hover:bg-ads-rail"
+          : "bg-ads-surface text-ads-ink shadow-ads-work-soft hover:bg-ads-card",
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function CloseBtn({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -183,11 +217,13 @@ export function Overlay({
   onClose,
   children,
   align = "center",
+  panelClassName,
 }: {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
   align?: "center" | "end";
+  panelClassName?: string;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -219,7 +255,7 @@ export function Overlay({
         className="ads-veil absolute inset-0 bg-ads-ink/20 backdrop-blur-xl"
         onClick={onClose}
       />
-      <div className={cn("relative z-10", align === "end" ? "h-full w-full max-w-md" : "w-full max-w-lg")}>
+      <div className={cn("relative z-10", align === "end" ? "h-full w-full max-w-md" : "w-full max-w-lg", panelClassName)}>
         {children}
       </div>
     </div>

@@ -17,6 +17,7 @@ export function OnAirBoard({
   onSaveDays,
   onReset,
   onDelete,
+  fill = true,
 }: {
   cars: AdCar[];
   settings: AdsSettings;
@@ -25,6 +26,7 @@ export function OnAirBoard({
   onSaveDays: (car: AdCar, days: number) => void;
   onReset: (car: AdCar) => void;
   onDelete: (car: AdCar) => void;
+  fill?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [tier, setTier] = useState<AdPriceTier | "all">("all");
@@ -57,9 +59,49 @@ export function OnAirBoard({
   }));
   const mixTotal = Math.max(1, air.length);
   const handlers = { onSwitch, onSaveDays, onReset, onDelete };
+  const emptyFilter = query || tier !== "all";
+  const columns = (
+    <div className="grid grid-cols-1 divide-y divide-ads-line xl:grid-cols-2 xl:divide-x xl:divide-y-0">
+      <Column title="Кампания 1" hint="Первый заход ролика" count={rk1.length}>
+        {rk1.length === 0 ? (
+          <Empty text={emptyFilter ? "Ничего по фильтру" : "Пусто. Поставьте машину из «Отснято»."} />
+        ) : (
+          rk1.map((car) => (
+            <AdsCarCard
+              key={car.id}
+              car={car}
+              settings={settings}
+              busy={!!car.id && busyIds.has(car.id)}
+              {...handlers}
+            />
+          ))
+        )}
+      </Column>
+      <Column title="Кампания 2" hint="Второй заход ролика" count={rk2.length}>
+        {rk2.length === 0 ? (
+          <Empty text={emptyFilter ? "Ничего по фильтру" : "Пусто. Поставьте машину из «Отснято»."} />
+        ) : (
+          rk2.map((car) => (
+            <AdsCarCard
+              key={car.id}
+              car={car}
+              settings={settings}
+              busy={!!car.id && busyIds.has(car.id)}
+              {...handlers}
+            />
+          ))
+        )}
+      </Column>
+    </div>
+  );
 
   return (
-    <div className="ads-pane flex min-h-0 flex-col max-lg:overflow-visible lg:h-full lg:overflow-hidden">
+    <div
+      className={cn(
+        "ads-pane flex min-h-0 flex-col",
+        fill ? "max-lg:overflow-visible lg:h-full lg:overflow-hidden" : "overflow-visible",
+      )}
+    >
       <div className="flex items-end justify-between gap-3 px-5 pt-5 pb-3">
         <div>
           <p className="text-xs font-medium text-ads-subtle">Эфир</p>
@@ -116,40 +158,13 @@ export function OnAirBoard({
         </div>
       </div>
 
-      <AdsScroller nested className="min-h-0 flex-1">
-      <div className="grid grid-cols-1 divide-y divide-ads-line xl:grid-cols-2 xl:divide-x xl:divide-y-0">
-        <Column title="Кампания 1" hint="Первый заход ролика" count={rk1.length}>
-          {rk1.length === 0 ? (
-            <Empty text={query || tier !== "all" ? "Ничего по фильтру" : "Пусто. Поставьте машину из «Отснято»."} />
-          ) : (
-            rk1.map((car) => (
-              <AdsCarCard
-                key={car.id}
-                car={car}
-                settings={settings}
-                busy={!!car.id && busyIds.has(car.id)}
-                {...handlers}
-              />
-            ))
-          )}
-        </Column>
-        <Column title="Кампания 2" hint="Второй заход ролика" count={rk2.length}>
-          {rk2.length === 0 ? (
-            <Empty text={query || tier !== "all" ? "Ничего по фильтру" : "Пусто. Поставьте машину из «Отснято»."} />
-          ) : (
-            rk2.map((car) => (
-              <AdsCarCard
-                key={car.id}
-                car={car}
-                settings={settings}
-                busy={!!car.id && busyIds.has(car.id)}
-                {...handlers}
-              />
-            ))
-          )}
-        </Column>
-      </div>
-      </AdsScroller>
+      {fill ? (
+        <AdsScroller nested className="min-h-0 flex-1">
+          {columns}
+        </AdsScroller>
+      ) : (
+        columns
+      )}
     </div>
   );
 }

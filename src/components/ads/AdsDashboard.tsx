@@ -21,18 +21,12 @@ import { AddAdCarModal } from "./AddAdCarModal";
 import { AdsSettingsModal } from "./AdsSettingsModal";
 import { DailyTasksModal } from "./DailyTasksModal";
 import { OnAirBoard } from "./OnAirBoard";
-import { TodayQueue } from "./TodayQueue";
-import { ShootBoard } from "./ShootBoard";
 import { SchedulePane } from "./SchedulePane";
-import { WarehouseDrawer, type WarehouseCar } from "./WarehouseDrawer";
-import { ConfirmSheet, PostponeSheet, nextAirDateLabel, type PreviewDay } from "./ScheduleSheets";
-import { chooseCampaignForNewCar } from "@/lib/services/adsSchedule";
-import { GhostBtn, PrimaryBtn } from "./chrome";
-import { ADS_HINTS_KEY, CAMPAIGN_LABEL, HINTS, humanError } from "@/lib/ads/copy";
-import { CalendarDays, Clapperboard, Plus, Radio, Settings, Sun } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-type Scene = "today" | "shoot" | "air" | "schedule";
+import { ConfirmSheet, PostponeSheet, type PreviewDay } from "./ScheduleSheets";
+import { WorkBoard, type NoClipItem } from "./WorkBoard";
+import { GhostBtn, Overlay, PrimaryBtn } from "./chrome";
+import { ADS_HINTS_KEY, CAMPAIGN_LABEL, HINTS, humanError, otherAir } from "@/lib/ads/copy";
+import { CalendarDays, Settings } from "lucide-react";
 
 interface CatalogCar {
   id: string;
@@ -41,11 +35,15 @@ interface CatalogCar {
   priceUsd: number;
   photoUrl?: string;
   createdAt?: string | number;
+  isSold?: boolean;
 }
 
 export function AdsDashboard() {
   const [cars, setCars] = useState<AdCar[]>([]);
   const [catalogCars, setCatalogCars] = useState<CatalogCar[]>([]);
+  const [catalogReady, setCatalogReady] = useState(false);
+  const [catalogIds, setCatalogIds] = useState<Set<string>>(new Set());
+  const [soldCatalogIds, setSoldCatalogIds] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<AdsSettings>(DEFAULT_ADS_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -53,11 +51,10 @@ export function AdsDashboard() {
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
   const [isBalancing, setIsBalancing] = useState(false);
   const [toast, setToast] = useState<{ text: string; type: "error" | "success"; undo?: () => void } | null>(null);
-  const [scene, setScene] = useState<Scene>("today");
   const [hints, setHints] = useState(false);
   const [hintStep, setHintStep] = useState(0);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
-  const [warehouseOpen, setWarehouseOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [selectedDayTasks, setSelectedDayTasks] = useState<{
@@ -86,11 +83,6 @@ export function AdsDashboard() {
   }, [cars]);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem(ADS_HINTS_KEY)) setHints(true);
-    } catch {
-      // ignore
-    }
     const onHints = () => {
       setHintStep(0);
       setHints(true);
@@ -122,13 +114,19 @@ export function AdsDashboard() {
       const fetchedCars = await getAdCars();
       const [fetchedSettings, catalogRes] = await Promise.all([
         getAdsSettings(),
-        fetch("/api/catalog/cars").then((r) => r.json()).catch(() => ({ cars: [] })),
+        fetch("/api/catalog/cars?includeSold=1")
+          .then((r) => r.json())
+          .catch(() => ({ cars: [] })),
       ]);
       setCars(fetchedCars);
       carsRef.current = fetchedCars;
       setSettings(fetchedSettings);
       if (catalogRes?.success && Array.isArray(catalogRes.cars)) {
-        setCatalogCars(catalogRes.cars);
+        const all = catalogRes.cars as CatalogCar[];
+        setCatalogIds(new Set(all.map((c) => c.id)));
+        setSoldCatalogIds(new Set(all.filter((c) => c.isSold).map((c) => c.id)));
+        setCatalogCars(all.filter((c) => !c.isSold && c.priceUsd > 0));
+        setCatalogReady(true);
       }
     } catch (err) {
       console.error("Error loading ads data:", err);
@@ -192,10 +190,7 @@ export function AdsDashboard() {
     }
   };
 
-  const runSchedule = async (
-    body: Parameters<typeof scheduleAdCars>[0],
-    okText: string,
-  ) => {
+  const runSchedule = async (body: Parameters<typeof scheduleAdCars>[0], okText: string) => {
     try {
       setIsBalancing(true);
       const res = await scheduleAdCars(body);
@@ -221,32 +216,18 @@ export function AdsDashboard() {
     showToast(`«${carData.name}» добавлен`);
   };
 
-  const handleQuickAddWarehouseCar = async (
-    catalogCar: WarehouseCar,
-    targetCampaign: AdCampaignType,
-  ) => {
-    if (addingCarId) return;
-    try {
-      setAddingCarId(catalogCar.id);
-      const newCar = await createAdCar({
-        carId: catalogCar.id,
-        name: catalogCar.name,
-        year: catalogCar.year ? String(catalogCar.year) : undefined,
-        priceUsd: catalogCar.priceUsd,
-        priceTier: calculatePriceTier(catalogCar.priceUsd),
-        campaign: targetCampaign,
-        startedAt: Date.now(),
-        photoUrl: catalogCar.photoUrl,
-      });
-      const next = [newCar, ...carsRef.current];
-      carsRef.current = next;
-      setCars(next);
-      showToast(`«${catalogCar.name}» → ${CAMPAIGN_LABEL[targetCampaign]}`);
-    } catch (err: any) {
-      showToast(humanError(err?.message), "error");
-    } finally {
-      setAddingCarId(null);
-    }
+  const syncDayCars = (updatedCars: AdCar[]) => {
+    setSelectedDayTasks((prev) => {
+      if (!prev.isOpen) return prev;
+      const key = prev.dateKey;
+      return {
+        ...prev,
+        cars: updatedCars.filter((c) => {
+          if (c.campaign !== "rk1" && c.campaign !== "rk2") return false;
+          return c.targetRotationDate ? getMinskDateKey(c.targetRotationDate) === key : false;
+        }),
+      };
+    });
   };
 
   const handleSwitchCampaign = async (car: AdCar, targetCampaign: AdCampaignType) => {
@@ -258,17 +239,7 @@ export function AdsDashboard() {
       const updatedCars = await getAdCars();
       carsRef.current = updatedCars;
       setCars(updatedCars);
-      setSelectedDayTasks((prev) => {
-        if (!prev.isOpen) return prev;
-        const key = prev.dateKey;
-        return {
-          ...prev,
-          cars: updatedCars.filter((c) => {
-            if (c.campaign !== "rk1" && c.campaign !== "rk2") return false;
-            return c.targetRotationDate ? getMinskDateKey(c.targetRotationDate) === key : false;
-          }),
-        };
-      });
+      syncDayCars(updatedCars);
       const label = CAMPAIGN_LABEL[targetCampaign];
       showToast(`${car.name} → ${label}`, "success", async () => {
         await updateAdCar(car.id!, {
@@ -305,9 +276,7 @@ export function AdsDashboard() {
       });
       const notify = updated?.shotNotifyStatus;
       showToast(
-        notify === "failed"
-          ? `${car.name} → Отснято. Пуш не ушёл`
-          : `${car.name} → Отснято`,
+        notify === "failed" ? `${car.name} → Отснято. Пуш не ушёл` : `${car.name} → Отснято`,
         notify === "failed" ? "error" : "success",
         async () => {
           await updateAdCar(car.id!, { campaign: car.campaign, targetRotationDate: car.targetRotationDate });
@@ -322,6 +291,35 @@ export function AdsDashboard() {
       showToast("Не получилось перевести в «Отснято»", "error");
     } finally {
       markBusy(car.id, false);
+    }
+  };
+
+  const handleMarkNoClip = async (item: NoClipItem) => {
+    if (item.adCar) {
+      await handleMarkShot(item.adCar);
+      return;
+    }
+    if (addingCarId) return;
+    try {
+      setAddingCarId(item.carId);
+      const created = await createAdCar({
+        carId: item.carId,
+        name: item.name,
+        year: item.year ? String(item.year) : undefined,
+        priceUsd: item.priceUsd,
+        priceTier: calculatePriceTier(item.priceUsd),
+        campaign: "waiting_video",
+        startedAt: Date.now(),
+        photoUrl: item.photoUrl,
+      });
+      const next = [created, ...carsRef.current];
+      carsRef.current = next;
+      setCars(next);
+      await handleMarkShot(created);
+    } catch (err: any) {
+      showToast(humanError(err?.message), "error");
+    } finally {
+      setAddingCarId(null);
     }
   };
 
@@ -390,31 +388,82 @@ export function AdsDashboard() {
     });
   };
 
+  const liveCars = useMemo(
+    () =>
+      cars.filter((c) => {
+        if (c.sold) return false;
+        if (!c.carId) return true;
+        if (!catalogReady) return true;
+        if (!catalogIds.has(c.carId)) return false;
+        if (soldCatalogIds.has(c.carId)) return false;
+        return true;
+      }),
+    [cars, catalogIds, soldCatalogIds, catalogReady],
+  );
+
+  const trackedCatalogIds = useMemo(() => {
+    const ids = new Set<string>();
+    liveCars.forEach((c) => {
+      if (c.carId) ids.add(c.carId);
+    });
+    return ids;
+  }, [liveCars]);
+
   const trackedIds = useMemo(() => {
     const idSet = new Set<string>();
-    cars.forEach((c) => {
+    liveCars.forEach((c) => {
       if (c.carId) idSet.add(c.carId);
       if (c.id) idSet.add(c.id);
     });
     return idSet;
-  }, [cars]);
+  }, [liveCars]);
 
-  const warehouse = useMemo(
-    () => catalogCars.filter((c) => !trackedIds.has(c.id)),
-    [catalogCars, trackedIds],
-  );
-
-  const workCount = useMemo(
+  const moveFromK1 = useMemo(
     () =>
-      cars.filter((c) => {
-        if (c.sold) return false;
-        if (c.campaign !== "rk1" && c.campaign !== "rk2") return false;
-        return getCalendarDaysLeft(c.targetRotationDate, c.startedAt, c.maxDays) <= 0;
-      }).length,
-    [cars],
+      liveCars
+        .filter((c) => c.campaign === "rk1" && daysLeft(c) <= 0)
+        .sort((a, b) => daysLeft(a) - daysLeft(b)),
+    [liveCars],
   );
-  const airCount = cars.filter((c) => (c.campaign === "rk1" || c.campaign === "rk2") && !c.sold).length;
-  const waitingCount = cars.filter((c) => c.campaign === "waiting_video").length;
+  const moveFromK2 = useMemo(
+    () =>
+      liveCars
+        .filter((c) => c.campaign === "rk2" && daysLeft(c) <= 0)
+        .sort((a, b) => daysLeft(a) - daysLeft(b)),
+    [liveCars],
+  );
+
+  const noClip = useMemo<NoClipItem[]>(() => {
+    const waiting = liveCars.filter((c) => c.campaign === "waiting_video");
+    const fromAds: NoClipItem[] = waiting.map((c) => ({
+      key: c.id || `wait-${c.carId}`,
+      name: c.name,
+      year: c.year,
+      priceUsd: c.priceUsd,
+      photoUrl: c.photoUrl,
+      carId: c.carId || c.id || "",
+      adCar: c,
+    }));
+    const fromCatalog: NoClipItem[] = catalogCars
+      .filter((c) => !trackedCatalogIds.has(c.id))
+      .map((c) => ({
+        key: `cat-${c.id}`,
+        name: c.name,
+        year: c.year,
+        priceUsd: c.priceUsd,
+        photoUrl: c.photoUrl,
+        carId: c.id,
+      }));
+    return [...fromAds, ...fromCatalog];
+  }, [liveCars, catalogCars, trackedCatalogIds]);
+
+  const ready = useMemo(
+    () => liveCars.filter((c) => c.campaign === "ready_for_ads"),
+    [liveCars],
+  );
+
+  const moveCount = moveFromK1.length + moveFromK2.length;
+  const airCount = liveCars.filter((c) => c.campaign === "rk1" || c.campaign === "rk2").length;
 
   const handlers = {
     onSwitch: handleSwitchCampaign,
@@ -438,178 +487,80 @@ export function AdsDashboard() {
         <div className="mx-auto flex max-w-[92rem] items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
           <div className="min-w-0">
             <h1 className="truncate text-lg leading-none font-semibold tracking-tight text-ads-ink">Реклама TikTok</h1>
-            <p className="mt-0.5 truncate text-xs text-ads-subtle">Съёмка → эфир → смена кампании</p>
+            <p className="mt-0.5 truncate text-xs text-ads-subtle">Перенос · съёмка · эфир</p>
           </div>
           <div className="flex items-center gap-1">
-            {workCount > 0 && (
-              <span className="mr-1 hidden h-7 items-center rounded-full bg-ads-danger-soft px-2.5 font-mono text-xs font-semibold text-ads-danger sm:inline-flex">
-                {workCount}
+            {moveCount > 0 && (
+              <span className="mr-1 hidden h-8 items-center rounded-full bg-ads-danger-soft px-2.5 font-mono text-xs font-semibold text-ads-danger sm:inline-flex">
+                {moveCount}
               </span>
             )}
             <GhostBtn
-              className="size-9 px-0 sm:h-9 sm:w-auto sm:px-3"
+              className="size-11 px-0 sm:h-11 sm:w-auto sm:px-3.5"
+              onClick={() => setScheduleOpen(true)}
+              title="График"
+            >
+              <CalendarDays className="size-4" />
+              <span className="hidden sm:inline">График</span>
+            </GhostBtn>
+            <GhostBtn
+              className="size-11 px-0 sm:h-11 sm:w-auto sm:px-3.5"
               onClick={() => setIsSettingsModalOpen(true)}
               title="Правила"
             >
-              <Settings className="size-3.5" />
+              <Settings className="size-4" />
               <span className="hidden sm:inline">Правила</span>
             </GhostBtn>
-            <PrimaryBtn className="h-9 px-3" onClick={() => setWarehouseOpen(true)}>
-              <Plus className="size-3.5" />
-              <span className="hidden sm:inline">Авто</span>
-            </PrimaryBtn>
           </div>
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain lg:overflow-hidden">
-      <div className="mx-auto flex min-h-0 w-full max-w-[92rem] flex-col px-4 py-5 pb-24 sm:px-6 sm:py-6 lg:h-full lg:min-h-0 lg:overflow-hidden lg:pb-6">
-        {loadError && (
-          <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl bg-ads-danger-soft px-4 py-3">
-            <p className="text-sm text-ads-danger">{loadError}</p>
-            <PrimaryBtn
-              className="h-8 px-3 text-xs"
-              onClick={() => {
-                setIsLoading(true);
-                loadData();
-              }}
-            >
-              Повторить
-            </PrimaryBtn>
-          </div>
-        )}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto w-full max-w-[92rem] px-4 py-5 pb-24 sm:px-6 sm:py-6">
+          {loadError && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl bg-ads-danger-soft px-4 py-3">
+              <p className="text-sm text-ads-danger">{loadError}</p>
+              <PrimaryBtn
+                className="h-11 rounded-2xl px-4"
+                onClick={() => {
+                  setIsLoading(true);
+                  loadData();
+                }}
+              >
+                Повторить
+              </PrimaryBtn>
+            </div>
+          )}
 
-        {isLoading ? (
-          <div className="grid h-full grid-cols-1 gap-5 lg:grid-cols-[380px_1fr]">
-            <div className="ads-skeleton h-[32rem] rounded-[22px]" />
-            <div className="ads-skeleton h-[32rem] rounded-[22px]" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(300px,380px)_1fr] lg:overflow-hidden">
-            <div className={cn("min-h-0 lg:h-full lg:overflow-hidden", scene !== "today" && "max-lg:hidden")}>
-              <TodayQueue
-                cars={cars}
-                settings={settings}
-                debts={settings.tiktokDebts || []}
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+              <div className="ads-skeleton h-64 rounded-[24px]" />
+              <div className="ads-skeleton h-64 rounded-[24px]" />
+              <div className="ads-skeleton h-80 rounded-[24px] xl:col-span-2" />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-5">
+              <WorkBoard
+                moveFromK1={moveFromK1}
+                moveFromK2={moveFromK2}
+                noClip={noClip}
+                ready={ready}
                 busyIds={busyIds}
-                nextDueLabel={nextAirDateLabel(cars)}
-                onRotate={handleSwitchCampaign}
-                onMarkShot={handleMarkShot}
-                onAir={handleSwitchCampaign}
-                onClearDebt={(id) => void handleSaveDebts((settings.tiktokDebts || []).filter((d) => d.id !== id))}
-                onOpenWarehouse={() => setWarehouseOpen(true)}
-                onOpenAir={() => setScene("air")}
-                onOpenShoot={() => setScene("shoot")}
+                addingId={addingCarId}
+                onRotate={(car) => void handleSwitchCampaign(car, otherAir(car.campaign))}
+                onMarkShot={(item) => void handleMarkNoClip(item)}
+                onAir={(car, campaign) => void handleSwitchCampaign(car, campaign)}
+                onManual={() => setIsAddModalOpen(true)}
               />
+              <OnAirBoard cars={liveCars} settings={settings} busyIds={busyIds} fill={false} {...handlers} />
             </div>
-            <div className={cn("flex min-h-0 flex-col lg:h-full lg:overflow-hidden", scene === "today" && "max-lg:hidden")}>
-              <div className="mb-3 hidden gap-1 lg:flex">
-                {(
-                  [
-                    ["air", "Эфир"],
-                    ["shoot", "Съёмка"],
-                    ["schedule", "График"],
-                  ] as const
-                ).map(([id, label]) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setScene(id)}
-                    className={cn(
-                      "h-8 rounded-full px-3 text-xs font-medium",
-                      (scene === id || (scene === "today" && id === "air"))
-                        ? "bg-ads-ink text-ads-paper"
-                        : "bg-ads-surface text-ads-muted hover:text-ads-ink",
-                    )}
-                  >
-                    {label}
-                    {id === "shoot" && waitingCount ? ` · ${waitingCount}` : ""}
-                    {id === "air" && airCount ? ` · ${airCount}` : ""}
-                  </button>
-                ))}
-              </div>
-              {(scene === "air" || scene === "today") && (
-                <OnAirBoard cars={cars} settings={settings} busyIds={busyIds} {...handlers} />
-              )}
-              {scene === "shoot" && (
-                <ShootBoard
-                  cars={cars}
-                  busyIds={busyIds}
-                  onMarkShot={handleMarkShot}
-                  onAir={handleSwitchCampaign}
-                  onWaiting={(car) => void handleSwitchCampaign(car, "waiting_video")}
-                  onDelete={executeDeleteCar}
-                />
-              )}
-              {scene === "schedule" && (
-                <SchedulePane
-                  cars={cars}
-                  settings={settings}
-                  balancing={isBalancing}
-                  onEqualize={() => void handleEqualizePreview()}
-                  onVacation={() =>
-                    setPostpone({
-                      open: true,
-                      mode: "vacation",
-                      title: "Пауза графика",
-                      hint: "Все ближайшие смены уедут вперёд. Эти дни будут пустые.",
-                      minDateKey: getMinskDateKey(Date.now()),
-                    })
-                  }
-                  onDayClick={(offset, date, dayCars, dayDebts) =>
-                    setSelectedDayTasks({
-                      isOpen: true,
-                      date,
-                      offset,
-                      dateKey: addDaysToDateKey(getMinskDateKey(Date.now()), offset),
-                      cars: dayCars,
-                      debts: dayDebts || [],
-                    })
-                  }
-                />
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-      </div>
-
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-ads-line bg-ads-bg/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
-        <div className="grid grid-cols-4 px-2 py-1.5">
-          {(
-            [
-              ["today", "Сегодня", Sun, workCount],
-              ["shoot", "Съёмка", Clapperboard, waitingCount],
-              ["air", "Эфир", Radio, airCount],
-              ["schedule", "График", CalendarDays, 0],
-            ] as const
-          ).map(([id, label, Icon, count]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setScene(id)}
-              className={cn(
-                "flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-2xl text-[10px] font-medium",
-                scene === id ? "text-ads-ink" : "text-ads-subtle",
-              )}
-            >
-              <span className="relative">
-                <Icon className="size-5" strokeWidth={1.5} />
-                {count > 0 ? (
-                  <span className="absolute -top-1 -right-2 min-w-4 rounded-full bg-ads-danger px-1 text-[9px] font-semibold text-white">
-                    {count}
-                  </span>
-                ) : null}
-              </span>
-              {label}
-            </button>
-          ))}
+          )}
         </div>
-      </nav>
+      </div>
 
       {toast && (
         <div
-          className={`fixed bottom-20 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-ads-paper shadow-ads-float lg:bottom-6 ${
+          className={`fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium text-ads-paper shadow-ads-float ${
             toast.type === "error" ? "bg-ads-danger" : "bg-ads-ink"
           }`}
         >
@@ -631,19 +582,19 @@ export function AdsDashboard() {
 
       {hints ? (
         <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
-          <button type="button" className="absolute inset-0 bg-black/50 backdrop-blur-md" onClick={closeHints} aria-label="Закрыть" />
-          <div className="ads-enter relative m-4 w-full max-w-md rounded-3xl bg-ads-card p-6 shadow-ads-float">
+          <button type="button" className="absolute inset-0 bg-black/50" onClick={closeHints} aria-label="Закрыть" />
+          <div className="relative m-4 w-full max-w-md rounded-3xl bg-ads-card p-6 shadow-ads-float">
             <p className="text-xs font-medium text-ads-subtle">
               {hintStep + 1} / {HINTS.length}
             </p>
             <h2 className="mt-2 text-xl font-semibold tracking-tight text-ads-ink">{HINTS[hintStep].title}</h2>
             <p className="mt-2 text-sm leading-relaxed text-ads-muted">{HINTS[hintStep].text}</p>
             <div className="mt-5 flex justify-end gap-2">
-              <GhostBtn className="h-9 px-3 text-xs" onClick={closeHints}>
+              <GhostBtn className="h-11 rounded-2xl px-4" onClick={closeHints}>
                 Пропустить
               </GhostBtn>
               <PrimaryBtn
-                className="h-9 px-4"
+                className="h-11 rounded-2xl px-4"
                 onClick={() => {
                   if (hintStep >= HINTS.length - 1) closeHints();
                   else setHintStep((s) => s + 1);
@@ -656,21 +607,37 @@ export function AdsDashboard() {
         </div>
       ) : null}
 
-      <WarehouseDrawer
-        open={warehouseOpen}
-        onClose={() => setWarehouseOpen(false)}
-        warehouse={warehouse}
-        addingId={addingCarId}
-        suggestedAir={chooseCampaignForNewCar(
-          cars.filter((c) => c.campaign === "rk1").length,
-          cars.filter((c) => c.campaign === "rk2").length,
-        )}
-        onAdd={(car, campaign) => void handleQuickAddWarehouseCar(car, campaign)}
-        onManual={() => {
-          setWarehouseOpen(false);
-          setIsAddModalOpen(true);
-        }}
-      />
+      <Overlay open={scheduleOpen} onClose={() => setScheduleOpen(false)} panelClassName="w-full max-w-4xl">
+        <div className="mx-3 mb-[env(safe-area-inset-bottom)] sm:mx-0">
+          <SchedulePane
+            cars={liveCars}
+            settings={settings}
+            balancing={isBalancing}
+            onClose={() => setScheduleOpen(false)}
+            onEqualize={() => void handleEqualizePreview()}
+            onVacation={() =>
+              setPostpone({
+                open: true,
+                mode: "vacation",
+                title: "Пауза графика",
+                hint: "Все ближайшие смены уедут вперёд. Эти дни будут пустые.",
+                minDateKey: getMinskDateKey(Date.now()),
+              })
+            }
+            onDayClick={(offset, date, dayCars, dayDebts) =>
+              setSelectedDayTasks({
+                isOpen: true,
+                date,
+                offset,
+                dateKey: addDaysToDateKey(getMinskDateKey(Date.now()), offset),
+                cars: dayCars,
+                debts: dayDebts || [],
+              })
+            }
+          />
+        </div>
+      </Overlay>
+
       <AddAdCarModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
@@ -762,4 +729,8 @@ export function AdsDashboard() {
       />
     </div>
   );
+}
+
+function daysLeft(c: AdCar) {
+  return getCalendarDaysLeft(c.targetRotationDate, c.startedAt, c.maxDays);
 }

@@ -3,7 +3,7 @@ import { AdsDashboard } from "@/components/ads/AdsDashboard";
 
 export const metadata: Metadata = {
   title: "Реклама TikTok | Белавтоцентр CRM",
-  description: "Съёмка, эфир и смена кампаний TikTok",
+  description: "Перенос кампаний, съёмка и эфир TikTok",
 };
 
 export default function AdsPage() {
