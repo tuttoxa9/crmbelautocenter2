@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { type AdCar } from "@/lib/types";
 import { calculatePriceTier, getCalendarDaysLeft, getPriceTierShort } from "@/lib/services/adsService";
-import { carFacts, otherAir } from "@/lib/ads/copy";
+import { carFacts } from "@/lib/ads/copy";
 import { cn } from "@/lib/utils";
 import { CarThumb } from "./CarThumb";
 import { CatalogLink, Spinner, WorkBtn } from "./chrome";
@@ -27,6 +27,7 @@ export function WorkBoard({
   busyIds,
   addingId,
   onRotate,
+  onPostpone,
   onMarkShot,
   onAir,
   onManual,
@@ -38,6 +39,7 @@ export function WorkBoard({
   busyIds: Set<string>;
   addingId: string | null;
   onRotate: (car: AdCar) => void;
+  onPostpone: (car: AdCar) => void;
   onMarkShot: (item: NoClipItem) => void;
   onAir: (car: AdCar, campaign: "rk1" | "rk2") => void;
   onManual?: () => void;
@@ -51,14 +53,28 @@ export function WorkBoard({
           kicker="Сейчас"
           title="Перенести"
           count={moveCount}
-          hint="Срок в кампании вышел — переложите в другую"
+          hint="Срок вышел — в другую кампанию или отложите смену"
         />
         {moveCount === 0 ? (
           <p className="px-5 pb-6 text-sm text-ads-muted">Переносить нечего.</p>
         ) : (
           <div className="grid grid-cols-1 divide-y divide-ads-line sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-            <MoveColumn title="Из К1" hint="В кампанию 2" cars={moveFromK1} busyIds={busyIds} onRotate={onRotate} />
-            <MoveColumn title="Из К2" hint="В кампанию 1" cars={moveFromK2} busyIds={busyIds} onRotate={onRotate} />
+            <MoveColumn
+              title="Из К1"
+              hint="В кампанию 2"
+              cars={moveFromK1}
+              busyIds={busyIds}
+              onRotate={onRotate}
+              onPostpone={onPostpone}
+            />
+            <MoveColumn
+              title="Из К2"
+              hint="В кампанию 1"
+              cars={moveFromK2}
+              busyIds={busyIds}
+              onRotate={onRotate}
+              onPostpone={onPostpone}
+            />
           </div>
         )}
       </section>
@@ -106,12 +122,14 @@ function MoveColumn({
   cars,
   busyIds,
   onRotate,
+  onPostpone,
 }: {
   title: string;
   hint: string;
   cars: AdCar[];
   busyIds: Set<string>;
   onRotate: (car: AdCar) => void;
+  onPostpone: (car: AdCar) => void;
 }) {
   return (
     <div className="min-w-0">
@@ -142,6 +160,14 @@ function MoveColumn({
                 <WorkBtn disabled={busy} onClick={() => onRotate(car)}>
                   {busy ? <Spinner /> : car.campaign === "rk1" ? "В К2" : "В К1"}
                 </WorkBtn>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onPostpone(car)}
+                  className="inline-flex h-11 items-center justify-center rounded-2xl px-3.5 text-sm font-medium text-ads-muted hover:bg-ads-surface hover:text-ads-ink disabled:opacity-40"
+                >
+                  Отложить
+                </button>
               </WorkRow>
             );
           })}

@@ -15,6 +15,7 @@ import {
   DEFAULT_ADS_SETTINGS,
   getMinskDateKey,
   addDaysToDateKey,
+  MONTHS_SHORT,
 } from "@/lib/services/adsService";
 import { AdCar, AdCampaignType, AdsSettings, TikTokDebt } from "@/lib/types";
 import { AddAdCarModal } from "./AddAdCarModal";
@@ -197,15 +198,28 @@ export function AdsDashboard() {
       if (res.success && Array.isArray(res.cars)) {
         applyScheduleCars(res.cars);
         setPostpone({ open: false });
-        showToast(res.message || okText);
+        showToast(okText || res.message || "Готово");
       } else {
-        showToast(res.error || "Не удалось сдвинуть", "error");
+        showToast(res.error || "Не удалось отложить", "error");
       }
     } catch {
-      showToast("Не удалось сдвинуть", "error");
+      showToast("Не удалось отложить", "error");
     } finally {
       setIsBalancing(false);
     }
+  };
+
+  const handlePostponeCar = (car: AdCar) => {
+    if (!car.id) return;
+    if (car.campaign !== "rk1" && car.campaign !== "rk2") return;
+    setPostpone({
+      open: true,
+      mode: "date",
+      title: `Отложить ${car.name}`,
+      hint: "Кампания не меняется. Смена переедет на выбранный день — в «Перенести» машина вернётся тогда. Если день уже занят, остальные чуть уедут вперёд.",
+      minDateKey: getMinskDateKey(Date.now()),
+      carIds: [car.id],
+    });
   };
 
   const handleAddCar = async (carData: Omit<AdCar, "id" | "createdAt" | "updatedAt">) => {
@@ -470,6 +484,7 @@ export function AdsDashboard() {
     onSaveDays: handleSaveCarDays,
     onReset: executeResetTimer,
     onDelete: executeDeleteCar,
+    onPostpone: handlePostponeCar,
   };
 
   const closeHints = () => {
@@ -548,6 +563,7 @@ export function AdsDashboard() {
                 busyIds={busyIds}
                 addingId={addingCarId}
                 onRotate={(car) => void handleSwitchCampaign(car, otherAir(car.campaign))}
+                onPostpone={handlePostponeCar}
                 onMarkShot={(item) => void handleMarkNoClip(item)}
                 onAir={(car, campaign) => void handleSwitchCampaign(car, campaign)}
                 onManual={() => setIsAddModalOpen(true)}
@@ -665,17 +681,7 @@ export function AdsDashboard() {
         debts={selectedDayTasks.debts}
         busyIds={busyIds}
         onRotate={handleSwitchCampaign}
-        onPostponeCar={(car) => {
-          if (!car.id) return;
-          setPostpone({
-            open: true,
-            mode: "date",
-            title: `Отложить ${car.name}`,
-            hint: "Встанет первой в выбранный день. Остальные чуть уедут вперёд.",
-            minDateKey: getMinskDateKey(Date.now()),
-            carIds: [car.id],
-          });
-        }}
+        onPostponeCar={handlePostponeCar}
         onPostponeDay={() =>
           setPostpone({
             open: true,
@@ -710,7 +716,12 @@ export function AdsDashboard() {
         onPickDate={(toDateKey) => {
           if (!postpone.open || postpone.mode !== "date") return;
           if (postpone.carIds?.length) {
-            void runSchedule({ action: "postponeCars", carIds: postpone.carIds, toDateKey }, "Отложено");
+            const id = postpone.carIds[0];
+            const name = carsRef.current.find((c) => c.id === id)?.name;
+            void runSchedule(
+              { action: "postponeCars", carIds: postpone.carIds, toDateKey },
+              name ? `«${name}» → ${dayLabel(toDateKey)}` : "Отложено",
+            );
             return;
           }
           if (postpone.fromDateKey) {
@@ -733,4 +744,9 @@ export function AdsDashboard() {
 
 function daysLeft(c: AdCar) {
   return getCalendarDaysLeft(c.targetRotationDate, c.startedAt, c.maxDays);
+}
+
+function dayLabel(dateKey: string) {
+  const [, month, day] = dateKey.split("-").map(Number);
+  return `${day} ${MONTHS_SHORT[(month || 1) - 1]}`;
 }

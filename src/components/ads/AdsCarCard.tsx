@@ -21,6 +21,7 @@ export function AdsCarCard({
   onSaveDays,
   onReset,
   onDelete,
+  onPostpone,
 }: {
   car: AdCar;
   settings: AdsSettings;
@@ -29,6 +30,7 @@ export function AdsCarCard({
   onSaveDays: (car: AdCar, days: number) => void;
   onReset: (car: AdCar) => void;
   onDelete: (car: AdCar) => void;
+  onPostpone?: (car: AdCar) => void;
 }) {
   const burn = getAdBurn(car, settings);
   const [menu, setMenu] = useState<"none" | "actions" | "days" | "reset" | "delete">("none");
@@ -110,6 +112,16 @@ export function AdsCarCard({
                   }}
                 >
                   Срок
+                </MenuItem>
+              )}
+              {isActive && onPostpone && (
+                <MenuItem
+                  onClick={() => {
+                    onPostpone(car);
+                    setMenu("none");
+                  }}
+                >
+                  Отложить смену
                 </MenuItem>
               )}
               {isActive && <MenuItem onClick={() => setMenu("reset")}>Считать срок заново</MenuItem>}

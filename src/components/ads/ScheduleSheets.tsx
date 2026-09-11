@@ -152,7 +152,7 @@ export function PostponeSheet({
                 type="button"
                 disabled={busy}
                 onClick={() => onPickDate?.(tomorrow)}
-                className="h-11 rounded-xl bg-ads-ink text-sm font-medium text-ads-paper disabled:opacity-40"
+                className="h-11 rounded-2xl bg-ads-ink text-sm font-medium text-ads-paper shadow-ads-work disabled:opacity-40"
               >
                 Завтра
               </button>
@@ -160,7 +160,7 @@ export function PostponeSheet({
                 type="button"
                 disabled={busy}
                 onClick={() => onPickDate?.(addDaysToDateKey(minDateKey, 2))}
-                className="h-11 rounded-xl bg-ads-card text-sm font-medium text-ads-ink disabled:opacity-40"
+                className="h-11 rounded-2xl bg-ads-surface text-sm font-medium text-ads-ink shadow-ads-work-soft disabled:opacity-40"
               >
                 Послезавтра
               </button>
@@ -173,10 +173,10 @@ export function PostponeSheet({
                 min={tomorrow}
                 max={maxKey}
                 onChange={(e) => setCustom(e.target.value)}
-                className="h-11 w-full rounded-xl bg-ads-card px-3 text-sm text-ads-ink outline-none"
+                className="h-11 w-full rounded-2xl bg-ads-card px-3 text-sm text-ads-ink outline-none"
               />
             </label>
-            <PrimaryBtn className="w-full" disabled={busy || !custom} onClick={() => custom && onPickDate?.(custom)}>
+            <PrimaryBtn className="h-11 w-full rounded-2xl" disabled={busy || !custom} onClick={() => custom && onPickDate?.(custom)}>
               {busy ? <Spinner /> : null}
               Отложить
             </PrimaryBtn>

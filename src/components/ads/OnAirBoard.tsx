@@ -17,6 +17,7 @@ export function OnAirBoard({
   onSaveDays,
   onReset,
   onDelete,
+  onPostpone,
   fill = true,
 }: {
   cars: AdCar[];
@@ -26,6 +27,7 @@ export function OnAirBoard({
   onSaveDays: (car: AdCar, days: number) => void;
   onReset: (car: AdCar) => void;
   onDelete: (car: AdCar) => void;
+  onPostpone?: (car: AdCar) => void;
   fill?: boolean;
 }) {
   const [query, setQuery] = useState("");
@@ -58,7 +60,7 @@ export function OnAirBoard({
     count: air.filter((c) => (c.priceTier || calculatePriceTier(c.priceUsd)) === t).length,
   }));
   const mixTotal = Math.max(1, air.length);
-  const handlers = { onSwitch, onSaveDays, onReset, onDelete };
+  const handlers = { onSwitch, onSaveDays, onReset, onDelete, onPostpone };
   const emptyFilter = query || tier !== "all";
   const columns = (
     <div className="grid grid-cols-1 divide-y divide-ads-line xl:grid-cols-2 xl:divide-x xl:divide-y-0">
