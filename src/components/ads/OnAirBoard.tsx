@@ -2,9 +2,9 @@
 
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
 import { type AdCampaignType, type AdCar, type AdPriceTier, type AdsSettings } from "@/lib/types";
 import { TIERS, calculatePriceTier, getCalendarDaysLeft } from "@/lib/services/adsService";
+import { matchesCarQuery } from "@/lib/ads/copy";
 import { cn } from "@/lib/utils";
 import { AdsCarCard } from "./AdsCarCard";
 import { AdsScroller } from "./chrome";
@@ -19,6 +19,7 @@ export function OnAirBoard({
   onDelete,
   onPostpone,
   fill = true,
+  searchQuery = "",
 }: {
   cars: AdCar[];
   settings: AdsSettings;
@@ -29,9 +30,10 @@ export function OnAirBoard({
   onDelete: (car: AdCar) => void;
   onPostpone?: (car: AdCar) => void;
   fill?: boolean;
+  searchQuery?: string;
 }) {
-  const [query, setQuery] = useState("");
   const [tier, setTier] = useState<AdPriceTier | "all">("all");
+  const searching = searchQuery.trim().length > 0;
 
   const air = useMemo(
     () => cars.filter((c) => (c.campaign === "rk1" || c.campaign === "rk2") && !c.sold),
@@ -39,19 +41,11 @@ export function OnAirBoard({
   );
 
   const filtered = useMemo(() => {
-    const q = query.toLowerCase().trim();
     return air
-      .filter((c) => (tier === "all" ? true : (c.priceTier || calculatePriceTier(c.priceUsd)) === tier))
-      .filter((c) => {
-        if (!q) return true;
-        return (
-          c.name.toLowerCase().includes(q) ||
-          String(c.year || "").includes(q) ||
-          String(c.priceUsd).includes(q)
-        );
-      })
+      .filter((c) => (tier === "all" || searching ? true : (c.priceTier || calculatePriceTier(c.priceUsd)) === tier))
+      .filter((c) => matchesCarQuery(c, searchQuery))
       .sort((a, b) => daysLeft(a) - daysLeft(b));
-  }, [air, query, tier]);
+  }, [air, searchQuery, tier, searching]);
 
   const rk1 = filtered.filter((c) => c.campaign === "rk1");
   const rk2 = filtered.filter((c) => c.campaign === "rk2");
@@ -61,41 +55,55 @@ export function OnAirBoard({
   }));
   const mixTotal = Math.max(1, air.length);
   const handlers = { onSwitch, onSaveDays, onReset, onDelete, onPostpone };
-  const emptyFilter = query || tier !== "all";
+  const emptyFilter = searching || tier !== "all";
   const columns = (
-    <div className="grid grid-cols-1 divide-y divide-ads-line xl:grid-cols-2 xl:divide-x xl:divide-y-0">
-      <Column title="Кампания 1" hint="Первый заход ролика" count={rk1.length}>
-        {rk1.length === 0 ? (
-          <Empty text={emptyFilter ? "Ничего по фильтру" : "Пусто. Поставьте машину из «Отснято»."} />
-        ) : (
-          rk1.map((car) => (
-            <AdsCarCard
-              key={car.id}
-              car={car}
-              settings={settings}
-              busy={!!car.id && busyIds.has(car.id)}
-              {...handlers}
-            />
-          ))
-        )}
-      </Column>
-      <Column title="Кампания 2" hint="Второй заход ролика" count={rk2.length}>
-        {rk2.length === 0 ? (
-          <Empty text={emptyFilter ? "Ничего по фильтру" : "Пусто. Поставьте машину из «Отснято»."} />
-        ) : (
-          rk2.map((car) => (
-            <AdsCarCard
-              key={car.id}
-              car={car}
-              settings={settings}
-              busy={!!car.id && busyIds.has(car.id)}
-              {...handlers}
-            />
-          ))
-        )}
-      </Column>
+    <div
+      className={cn(
+        "grid grid-cols-1 divide-y divide-ads-line",
+        (searching ? Number(rk1.length > 0) + Number(rk2.length > 0) : 2) > 1 &&
+          "xl:grid-cols-2 xl:divide-x xl:divide-y-0",
+      )}
+    >
+      {searching && rk1.length === 0 ? null : (
+        <Column title="Кампания 1" hint="Первый заход ролика" count={rk1.length}>
+          {rk1.length === 0 ? (
+            <Empty text={emptyFilter ? "Ничего по запросу" : "Пусто. Поставьте машину из «Отснято»."} />
+          ) : (
+            rk1.map((car) => (
+              <AdsCarCard
+                key={car.id}
+                car={car}
+                settings={settings}
+                busy={!!car.id && busyIds.has(car.id)}
+                highlight={searching}
+                {...handlers}
+              />
+            ))
+          )}
+        </Column>
+      )}
+      {searching && rk2.length === 0 ? null : (
+        <Column title="Кампания 2" hint="Второй заход ролика" count={rk2.length}>
+          {rk2.length === 0 ? (
+            <Empty text={emptyFilter ? "Ничего по запросу" : "Пусто. Поставьте машину из «Отснято»."} />
+          ) : (
+            rk2.map((car) => (
+              <AdsCarCard
+                key={car.id}
+                car={car}
+                settings={settings}
+                busy={!!car.id && busyIds.has(car.id)}
+                highlight={searching}
+                {...handlers}
+              />
+            ))
+          )}
+        </Column>
+      )}
     </div>
   );
+
+  if (searching && filtered.length === 0) return null;
 
   return (
     <div
@@ -109,56 +117,40 @@ export function OnAirBoard({
           <p className="text-xs font-medium text-ads-subtle">Эфир</p>
           <h2 className="mt-0.5 text-xl leading-tight font-semibold tracking-tight text-ads-ink">Что крутится</h2>
         </div>
-        <span className="font-mono text-sm tabular-nums text-ads-muted">{air.length}</span>
+        <span className="font-mono text-sm tabular-nums text-ads-muted">
+          {searching ? filtered.length : air.length}
+        </span>
       </div>
 
-      <div className="px-5 pb-3">
-        <div className="flex h-1 overflow-hidden rounded-full bg-ads-surface">
-          {mix.map((m) =>
-            m.count === 0 ? null : (
-              <div
-                key={m.tier}
-                className="h-full bg-ads-ink"
-                style={{
-                  width: `${(m.count / mixTotal) * 100}%`,
-                  opacity: 0.22 + (TIERS.indexOf(m.tier) / Math.max(1, TIERS.length - 1)) * 0.78,
-                }}
-              />
-            ),
-          )}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          <Chip active={tier === "all"} onClick={() => setTier("all")}>
-            Все
-          </Chip>
-          {mix.filter((m) => m.count > 0).map((m) => (
-            <Chip key={m.tier} active={tier === m.tier} onClick={() => setTier(m.tier)}>
-              {shortTier(m.tier)}
-              <span className="font-mono tabular-nums opacity-70">{m.count}</span>
+      {searching ? null : (
+        <div className="px-5 pb-3">
+          <div className="flex h-1 overflow-hidden rounded-full bg-ads-surface">
+            {mix.map((m) =>
+              m.count === 0 ? null : (
+                <div
+                  key={m.tier}
+                  className="h-full bg-ads-ink"
+                  style={{
+                    width: `${(m.count / mixTotal) * 100}%`,
+                    opacity: 0.22 + (TIERS.indexOf(m.tier) / Math.max(1, TIERS.length - 1)) * 0.78,
+                  }}
+                />
+              ),
+            )}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <Chip active={tier === "all"} onClick={() => setTier("all")}>
+              Все
             </Chip>
-          ))}
+            {mix.filter((m) => m.count > 0).map((m) => (
+              <Chip key={m.tier} active={tier === m.tier} onClick={() => setTier(m.tier)}>
+                {shortTier(m.tier)}
+                <span className="font-mono tabular-nums opacity-70">{m.count}</span>
+              </Chip>
+            ))}
+          </div>
         </div>
-        <div className="relative mt-3">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-ads-subtle" />
-          <input
-            type="text"
-            autoComplete="off"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Найти авто"
-            className="h-9 w-full rounded-xl border-0 bg-ads-bg pr-9 pl-9 text-sm text-ads-ink outline-none placeholder:text-ads-subtle focus:bg-ads-surface focus:ring-2 focus:ring-ads-accent/25"
-          />
-          {query ? (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              className="absolute top-1/2 right-1 flex size-7 -translate-y-1/2 items-center justify-center text-ads-subtle"
-            >
-              <X className="size-3.5" />
-            </button>
-          ) : null}
-        </div>
-      </div>
+      )}
 
       {fill ? (
         <AdsScroller nested className="min-h-0 flex-1">
@@ -210,7 +202,7 @@ function Chip({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors",
+        "inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium",
         active ? "bg-ads-ink text-ads-paper shadow-ads-pill" : "bg-ads-bg text-ads-ink hover:bg-ads-surface",
       )}
     >

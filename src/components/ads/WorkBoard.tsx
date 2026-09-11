@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
 import { type AdCar } from "@/lib/types";
 import { calculatePriceTier, getCalendarDaysLeft, getPriceTierShort } from "@/lib/services/adsService";
 import { carFacts } from "@/lib/ads/copy";
@@ -26,6 +24,7 @@ export function WorkBoard({
   ready,
   busyIds,
   addingId,
+  searching,
   onRotate,
   onPostpone,
   onMarkShot,
@@ -38,6 +37,7 @@ export function WorkBoard({
   ready: AdCar[];
   busyIds: Set<string>;
   addingId: string | null;
+  searching?: boolean;
   onRotate: (car: AdCar) => void;
   onPostpone: (car: AdCar) => void;
   onMarkShot: (item: NoClipItem) => void;
@@ -45,50 +45,76 @@ export function WorkBoard({
   onManual?: () => void;
 }) {
   const moveCount = moveFromK1.length + moveFromK2.length;
+  const showMove = searching ? moveCount > 0 : true;
+  const showNoClip = searching ? noClip.length > 0 : true;
+  const showReady = searching ? ready.length > 0 : true;
+
+  if (!showMove && !showNoClip && !showReady) return null;
 
   return (
     <div className="flex flex-col gap-5">
-      <section className="ads-pane overflow-hidden">
-        <BlockHead
-          kicker="Сейчас"
-          title="Перенести"
-          count={moveCount}
-          hint="Срок вышел — в другую кампанию или отложите смену"
-        />
-        {moveCount === 0 ? (
-          <p className="px-5 pb-6 text-sm text-ads-muted">Переносить нечего.</p>
-        ) : (
-          <div className="grid grid-cols-1 divide-y divide-ads-line sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-            <MoveColumn
-              title="Из К1"
-              hint="В кампанию 2"
-              cars={moveFromK1}
-              busyIds={busyIds}
-              onRotate={onRotate}
-              onPostpone={onPostpone}
-            />
-            <MoveColumn
-              title="Из К2"
-              hint="В кампанию 1"
-              cars={moveFromK2}
-              busyIds={busyIds}
-              onRotate={onRotate}
-              onPostpone={onPostpone}
-            />
-          </div>
-        )}
-      </section>
+      {showMove ? (
+        <section className="ads-pane overflow-hidden">
+          <BlockHead
+            kicker="Сейчас"
+            title="Перенести"
+            count={moveCount}
+            hint="Срок вышел — в другую кампанию или отложите смену"
+          />
+          {moveCount === 0 ? (
+            <p className="px-5 pb-6 text-sm text-ads-muted">Переносить нечего.</p>
+          ) : (
+            <div
+              className={cn(
+                "grid grid-cols-1 divide-y divide-ads-line",
+                (!searching || (moveFromK1.length > 0 && moveFromK2.length > 0)) &&
+                  "sm:grid-cols-2 sm:divide-x sm:divide-y-0",
+              )}
+            >
+              {searching && moveFromK1.length === 0 ? null : (
+                <MoveColumn
+                  title="Из К1"
+                  hint="В кампанию 2"
+                  cars={moveFromK1}
+                  busyIds={busyIds}
+                  highlight={searching}
+                  onRotate={onRotate}
+                  onPostpone={onPostpone}
+                />
+              )}
+              {searching && moveFromK2.length === 0 ? null : (
+                <MoveColumn
+                  title="Из К2"
+                  hint="В кампанию 1"
+                  cars={moveFromK2}
+                  busyIds={busyIds}
+                  highlight={searching}
+                  onRotate={onRotate}
+                  onPostpone={onPostpone}
+                />
+              )}
+            </div>
+          )}
+        </section>
+      ) : null}
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <NoClipBlock
-          items={noClip}
-          busyIds={busyIds}
-          addingId={addingId}
-          onMarkShot={onMarkShot}
-          onManual={onManual}
-        />
-        <ReadyBlock cars={ready} busyIds={busyIds} onAir={onAir} />
-      </div>
+      {showNoClip || showReady ? (
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+          {showNoClip ? (
+            <NoClipBlock
+              items={noClip}
+              busyIds={busyIds}
+              addingId={addingId}
+              highlight={searching}
+              onMarkShot={onMarkShot}
+              onManual={searching ? undefined : onManual}
+            />
+          ) : null}
+          {showReady ? (
+            <ReadyBlock cars={ready} busyIds={busyIds} highlight={searching} onAir={onAir} />
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -121,6 +147,7 @@ function MoveColumn({
   hint,
   cars,
   busyIds,
+  highlight,
   onRotate,
   onPostpone,
 }: {
@@ -128,6 +155,7 @@ function MoveColumn({
   hint: string;
   cars: AdCar[];
   busyIds: Set<string>;
+  highlight?: boolean;
   onRotate: (car: AdCar) => void;
   onPostpone: (car: AdCar) => void;
 }) {
@@ -156,6 +184,7 @@ function MoveColumn({
                 facts={carFacts(car)}
                 hint={rotateHint(left)}
                 busy={busy}
+                highlight={highlight}
               >
                 <WorkBtn disabled={busy} onClick={() => onRotate(car)}>
                   {busy ? <Spinner /> : car.campaign === "rk1" ? "В К2" : "В К1"}
@@ -181,28 +210,17 @@ function NoClipBlock({
   items,
   busyIds,
   addingId,
+  highlight,
   onMarkShot,
   onManual,
 }: {
   items: NoClipItem[];
   busyIds: Set<string>;
   addingId: string | null;
+  highlight?: boolean;
   onMarkShot: (item: NoClipItem) => void;
   onManual?: () => void;
 }) {
-  const [query, setQuery] = useState("");
-  const list = useMemo(() => {
-    const q = query.toLowerCase().trim();
-    if (!q) return items;
-    return items.filter((item) => {
-      return (
-        item.name.toLowerCase().includes(q) ||
-        String(item.year || "").includes(q) ||
-        String(item.priceUsd).includes(q)
-      );
-    });
-  }, [items, query]);
-
   return (
     <section className="ads-pane overflow-hidden">
       <BlockHead
@@ -211,37 +229,11 @@ function NoClipBlock({
         count={items.length}
         hint="Нет в рекламе или ролик ещё не снят"
       />
-      {items.length > 6 ? (
-        <div className="px-5 pb-3">
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-ads-subtle" />
-            <input
-              type="text"
-              autoComplete="off"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Найти авто"
-              className="h-11 w-full rounded-2xl border-0 bg-ads-bg pr-11 pl-9 text-sm text-ads-ink outline-none placeholder:text-ads-subtle focus:bg-ads-surface focus:ring-2 focus:ring-ads-accent/25"
-            />
-            {query ? (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 items-center justify-center text-ads-subtle"
-              >
-                <X className="size-3.5" />
-              </button>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-      {list.length === 0 ? (
-        <p className="px-5 pb-6 text-sm text-ads-muted">
-          {query ? "Ничего по запросу." : "Все машины либо в эфире, либо уже отсняты."}
-        </p>
+      {items.length === 0 ? (
+        <p className="px-5 pb-6 text-sm text-ads-muted">Все машины либо в эфире, либо уже отсняты.</p>
       ) : (
         <div className="divide-y divide-ads-line/80 pb-2">
-          {list.map((item) => {
+          {items.map((item) => {
             const busy = addingId === item.carId || (!!item.adCar?.id && busyIds.has(item.adCar.id));
             return (
               <WorkRow
@@ -252,6 +244,7 @@ function NoClipBlock({
                 facts={carFacts(item)}
                 hint={item.adCar ? "На доске · ролика нет" : "Не в рекламе"}
                 busy={busy}
+                highlight={highlight}
               >
                 <WorkBtn disabled={busy} onClick={() => onMarkShot(item)}>
                   {busy ? <Spinner /> : "Отснято"}
@@ -279,10 +272,12 @@ function NoClipBlock({
 function ReadyBlock({
   cars,
   busyIds,
+  highlight,
   onAir,
 }: {
   cars: AdCar[];
   busyIds: Set<string>;
+  highlight?: boolean;
   onAir: (car: AdCar, campaign: "rk1" | "rk2") => void;
 }) {
   return (
@@ -310,6 +305,7 @@ function ReadyBlock({
                 facts={facts}
                 hint={car.shotByName ? `Снял ${car.shotByName}` : getPriceTierShort(tier)}
                 busy={busy}
+                highlight={highlight}
               >
                 <WorkBtn disabled={busy} onClick={() => onAir(car, "rk1")}>
                   {busy ? <Spinner /> : "В К1"}
@@ -333,6 +329,7 @@ function WorkRow({
   facts,
   hint,
   busy,
+  highlight,
   children,
 }: {
   name: string;
@@ -341,10 +338,14 @@ function WorkRow({
   facts: string;
   hint: string;
   busy: boolean;
+  highlight?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <article className={cn("px-4 py-3.5 sm:px-5", busy && "opacity-60")}>
+    <article
+      data-ads-match={highlight ? "" : undefined}
+      className={cn("px-4 py-3.5 sm:px-5", busy && "opacity-60", highlight && "bg-ads-bg")}
+    >
       <div className="flex items-center gap-3">
         <CatalogLink carId={carId} className="flex min-w-0 flex-1 items-center gap-3">
           <CarThumb name={name} photoUrl={photoUrl} className="h-14 w-20 rounded-xl" />

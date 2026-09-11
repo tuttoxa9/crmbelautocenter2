@@ -49,6 +49,19 @@ export function carFacts(car: {
   return bits.join(" · ");
 }
 
+export function matchesCarQuery(
+  item: { name?: string; year?: string | number; priceUsd?: number },
+  raw: string,
+): boolean {
+  const q = raw.trim().toLowerCase();
+  if (!q) return true;
+  const hay = [item.name, item.year, item.priceUsd]
+    .filter((v) => v != null && v !== "")
+    .join(" ")
+    .toLowerCase();
+  return q.split(/\s+/).every((token) => hay.includes(token));
+}
+
 export const HINTS = [
   {
     title: "Две кампании TikTok",

@@ -22,6 +22,7 @@ export function AdsCarCard({
   onReset,
   onDelete,
   onPostpone,
+  highlight,
 }: {
   car: AdCar;
   settings: AdsSettings;
@@ -31,6 +32,7 @@ export function AdsCarCard({
   onReset: (car: AdCar) => void;
   onDelete: (car: AdCar) => void;
   onPostpone?: (car: AdCar) => void;
+  highlight?: boolean;
 }) {
   const burn = getAdBurn(car, settings);
   const [menu, setMenu] = useState<"none" | "actions" | "days" | "reset" | "delete">("none");
@@ -38,7 +40,10 @@ export function AdsCarCard({
   const isActive = car.campaign === "rk1" || car.campaign === "rk2";
 
   return (
-    <article className="relative min-w-0 px-4 py-3">
+    <article
+      data-ads-match={highlight ? "" : undefined}
+      className={cn("relative min-w-0 px-4 py-3", highlight && "bg-ads-bg")}
+    >
       <BusyOverlay show={busy} />
       <div className="flex items-start gap-3">
         <CatalogLink carId={car.carId} className="flex min-w-0 flex-1 items-start gap-3">

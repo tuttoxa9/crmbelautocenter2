@@ -26,8 +26,8 @@ import { SchedulePane } from "./SchedulePane";
 import { ConfirmSheet, PostponeSheet, type PreviewDay } from "./ScheduleSheets";
 import { WorkBoard, type NoClipItem } from "./WorkBoard";
 import { GhostBtn, Overlay, PrimaryBtn } from "./chrome";
-import { ADS_HINTS_KEY, CAMPAIGN_LABEL, HINTS, humanError, otherAir } from "@/lib/ads/copy";
-import { CalendarDays, Settings } from "lucide-react";
+import { ADS_HINTS_KEY, CAMPAIGN_LABEL, HINTS, humanError, otherAir, matchesCarQuery } from "@/lib/ads/copy";
+import { CalendarDays, Search, Settings, X } from "lucide-react";
 
 interface CatalogCar {
   id: string;
@@ -55,6 +55,7 @@ export function AdsDashboard() {
   const [hints, setHints] = useState(false);
   const [hintStep, setHintStep] = useState(0);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -79,6 +80,8 @@ export function AdsDashboard() {
   >({ open: false });
 
   const carsRef = useRef<AdCar[]>([]);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     carsRef.current = cars;
   }, [cars]);
@@ -91,6 +94,26 @@ export function AdsDashboard() {
     window.addEventListener("ads-hints-reset", onHints);
     return () => window.removeEventListener("ads-hints-reset", onHints);
   }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+      if (e.key === "/" && !typing) {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+      }
+      if (e.key === "Escape" && query) {
+        e.preventDefault();
+        setQuery("");
+        searchRef.current?.blur();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [query]);
 
   const showToast = (text: string, type: "error" | "success" = "success", undo?: () => void) => {
     setToast({ text, type, undo });
@@ -476,6 +499,44 @@ export function AdsDashboard() {
     [liveCars],
   );
 
+  const searching = query.trim().length > 0;
+  const shownMoveK1 = useMemo(
+    () => (searching ? moveFromK1.filter((c) => matchesCarQuery(c, query)) : moveFromK1),
+    [moveFromK1, query, searching],
+  );
+  const shownMoveK2 = useMemo(
+    () => (searching ? moveFromK2.filter((c) => matchesCarQuery(c, query)) : moveFromK2),
+    [moveFromK2, query, searching],
+  );
+  const shownNoClip = useMemo(
+    () => (searching ? noClip.filter((c) => matchesCarQuery(c, query)) : noClip),
+    [noClip, query, searching],
+  );
+  const shownReady = useMemo(
+    () => (searching ? ready.filter((c) => matchesCarQuery(c, query)) : ready),
+    [ready, query, searching],
+  );
+  const airHits = useMemo(
+    () =>
+      liveCars.filter(
+        (c) => (c.campaign === "rk1" || c.campaign === "rk2") && matchesCarQuery(c, query),
+      ).length,
+    [liveCars, query],
+  );
+  const noHits =
+    searching &&
+    shownMoveK1.length + shownMoveK2.length + shownNoClip.length + shownReady.length + airHits === 0;
+
+  useEffect(() => {
+    if (!searching) return;
+    const frame = window.requestAnimationFrame(() => {
+      scrollerRef.current
+        ?.querySelector<HTMLElement>("[data-ads-match]")
+        ?.scrollIntoView({ block: "center", inline: "nearest" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [searching, query, shownMoveK1, shownMoveK2, shownNoClip, shownReady, airHits]);
+
   const moveCount = moveFromK1.length + moveFromK2.length;
   const airCount = liveCars.filter((c) => c.campaign === "rk1" || c.campaign === "rk2").length;
 
@@ -528,9 +589,38 @@ export function AdsDashboard() {
             </GhostBtn>
           </div>
         </div>
+        <div className="mx-auto max-w-[92rem] px-4 pb-3 sm:px-6">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-ads-subtle" />
+            <input
+              ref={searchRef}
+              type="text"
+              inputMode="search"
+              autoComplete="off"
+              spellCheck={false}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Найти машину"
+              className="h-11 w-full rounded-2xl border-0 bg-ads-surface pr-11 pl-11 text-sm text-ads-ink outline-none placeholder:text-ads-subtle focus:bg-ads-card focus:ring-2 focus:ring-ads-accent/25"
+            />
+            {query ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  searchRef.current?.focus();
+                }}
+                className="absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-xl text-ads-subtle hover:text-ads-ink"
+                aria-label="Очистить"
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
+          </label>
+        </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="mx-auto w-full max-w-[92rem] px-4 py-5 pb-24 sm:px-6 sm:py-6">
           {loadError && (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl bg-ads-danger-soft px-4 py-3">
@@ -555,20 +645,37 @@ export function AdsDashboard() {
             </div>
           ) : (
             <div className="flex flex-col gap-5">
-              <WorkBoard
-                moveFromK1={moveFromK1}
-                moveFromK2={moveFromK2}
-                noClip={noClip}
-                ready={ready}
-                busyIds={busyIds}
-                addingId={addingCarId}
-                onRotate={(car) => void handleSwitchCampaign(car, otherAir(car.campaign))}
-                onPostpone={handlePostponeCar}
-                onMarkShot={(item) => void handleMarkNoClip(item)}
-                onAir={(car, campaign) => void handleSwitchCampaign(car, campaign)}
-                onManual={() => setIsAddModalOpen(true)}
-              />
-              <OnAirBoard cars={liveCars} settings={settings} busyIds={busyIds} fill={false} {...handlers} />
+              {noHits ? (
+                <div className="ads-pane px-5 py-16 text-center">
+                  <p className="text-sm font-medium text-ads-ink">Ничего не нашли</p>
+                  <p className="mt-1 text-sm text-ads-muted">Попробуйте марку, модель, год или цену.</p>
+                </div>
+              ) : (
+                <>
+                  <WorkBoard
+                    moveFromK1={shownMoveK1}
+                    moveFromK2={shownMoveK2}
+                    noClip={shownNoClip}
+                    ready={shownReady}
+                    busyIds={busyIds}
+                    addingId={addingCarId}
+                    searching={searching}
+                    onRotate={(car) => void handleSwitchCampaign(car, otherAir(car.campaign))}
+                    onPostpone={handlePostponeCar}
+                    onMarkShot={(item) => void handleMarkNoClip(item)}
+                    onAir={(car, campaign) => void handleSwitchCampaign(car, campaign)}
+                    onManual={() => setIsAddModalOpen(true)}
+                  />
+                  <OnAirBoard
+                    cars={liveCars}
+                    settings={settings}
+                    busyIds={busyIds}
+                    fill={false}
+                    searchQuery={query}
+                    {...handlers}
+                  />
+                </>
+              )}
             </div>
           )}
         </div>
