@@ -6,6 +6,7 @@ import { carFacts } from "@/lib/ads/copy";
 import { cn } from "@/lib/utils";
 import { CarThumb } from "./CarThumb";
 import { CatalogLink, Spinner, WorkBtn } from "./chrome";
+import { AdClipChip } from "./AdClipChip";
 
 export type NoClipItem = {
   key: string;
@@ -185,6 +186,7 @@ function MoveColumn({
                 hint={rotateHint(left)}
                 busy={busy}
                 highlight={highlight}
+                car={car}
               >
                 <WorkBtn disabled={busy} onClick={() => onRotate(car)}>
                   {busy ? <Spinner /> : car.campaign === "rk1" ? "В К2" : "В К1"}
@@ -245,6 +247,7 @@ function NoClipBlock({
                 hint={item.adCar ? "На доске · ролика нет" : "Не в рекламе"}
                 busy={busy}
                 highlight={highlight}
+                car={item.adCar}
               >
                 <WorkBtn disabled={busy} onClick={() => onMarkShot(item)}>
                   {busy ? <Spinner /> : "Отснято"}
@@ -306,6 +309,7 @@ function ReadyBlock({
                 hint={car.shotByName ? `Снял ${car.shotByName}` : getPriceTierShort(tier)}
                 busy={busy}
                 highlight={highlight}
+                car={car}
               >
                 <WorkBtn disabled={busy} onClick={() => onAir(car, "rk1")}>
                   {busy ? <Spinner /> : "В К1"}
@@ -330,6 +334,7 @@ function WorkRow({
   hint,
   busy,
   highlight,
+  car,
   children,
 }: {
   name: string;
@@ -339,6 +344,7 @@ function WorkRow({
   hint: string;
   busy: boolean;
   highlight?: boolean;
+  car?: AdCar;
   children: React.ReactNode;
 }) {
   return (
@@ -355,7 +361,10 @@ function WorkRow({
             <p className="mt-0.5 truncate text-xs text-ads-subtle">{hint}</p>
           </div>
         </CatalogLink>
-        <div className="flex shrink-0 flex-col gap-1.5 sm:flex-row">{children}</div>
+        <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center">
+          {children}
+          {car ? <AdClipChip car={car} /> : null}
+        </div>
       </div>
     </article>
   );

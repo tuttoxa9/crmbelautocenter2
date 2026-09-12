@@ -87,6 +87,13 @@ export type AdCampaignType = 'rk1' | 'rk2' | 'waiting_video' | 'ready_for_ads';
 
 export type AdPriceTier = 'tier_under_7k' | 'tier_7k_13k' | 'tier_13k_20k' | 'tier_20k_plus';
 
+export type AdClipPreview = {
+  id: string;
+  durationSec?: number;
+  createdAt?: string;
+  downloadName: string;
+};
+
 export interface AdCar {
   id?: string;
   carId?: string; // ID авто из Neon DB
@@ -101,6 +108,7 @@ export interface AdCar {
   photoUrl?: string;
   videoUrl?: string; // Ссылка на загруженное видео без сжатия в S3/R2
   videoCoverUrl?: string; // Ссылка на обложку видео в S3/R2
+  adClips?: AdClipPreview[];
   notes?: string;
   lastAlertSentAt?: number | null;
   plannedCampaign?: "rk1" | "rk2";

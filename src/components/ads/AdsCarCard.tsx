@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { CarThumb } from "./CarThumb";
 import { CampaignBadge } from "./CampaignBadge";
 import { BusyOverlay, BurnMeter, CatalogLink, GhostBtn, PrimaryBtn } from "./chrome";
+import { AdClipChip } from "./AdClipChip";
 
 const DAY_PRESETS = [7, 10, 14, 17, 21, 30];
 
@@ -93,6 +94,7 @@ export function AdsCarCard({
             <Mini onClick={() => onSwitch(car, "rk2")}>В К2</Mini>
           </>
         )}
+        <AdClipChip car={car} />
         <span className="ml-auto">
           <button
             type="button"

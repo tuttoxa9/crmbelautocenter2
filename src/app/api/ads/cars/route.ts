@@ -10,6 +10,7 @@ import { pickFairRotationDateKey, isAirCampaign } from '@/lib/services/adsSchedu
 import { appendHistory } from '@/lib/ads/mutate';
 import { sweepSoldAdCars } from '@/lib/ads/sold';
 import { loadAdsRules } from '@/lib/ads/rules';
+import { clipFileName, loadSiteAdClips } from '@/lib/ads/clips';
 import crypto from 'crypto';
 
 export async function GET() {
@@ -36,6 +37,32 @@ export async function GET() {
         createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
         updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
       });
+    }
+
+    try {
+      const site = await loadSiteAdClips(cars.map((car) => String(car.carId || "")));
+      for (const car of cars) {
+        const hit = car.carId ? site.get(String(car.carId)) : undefined;
+        if (hit?.clips.length) {
+          car.adClips = hit.clips.map((clip, index) => ({
+            id: clip.id,
+            durationSec: clip.durationSec,
+            createdAt: clip.createdAt,
+            downloadName: clipFileName(car.name || hit.name, car.year || hit.year, index),
+          }));
+        } else if (car.videoUrl) {
+          car.adClips = [
+            {
+              id: "legacy",
+              downloadName: clipFileName(car.name, car.year, 0),
+            },
+          ];
+        } else {
+          car.adClips = [];
+        }
+      }
+    } catch (error) {
+      console.warn("ads clips join", error);
     }
 
     return NextResponse.json({ success: true, cars });

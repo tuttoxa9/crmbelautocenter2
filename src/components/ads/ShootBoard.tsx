@@ -6,6 +6,7 @@ import { carFacts } from "@/lib/ads/copy";
 import { AdsScroller, CatalogLink, Spinner } from "./chrome";
 import { CarThumb } from "./CarThumb";
 import { CampaignBadge } from "./CampaignBadge";
+import { AdClipChip } from "./AdClipChip";
 import { cn } from "@/lib/utils";
 
 export function ShootBoard({
@@ -150,7 +151,8 @@ function Row({
           ) : null}
         </div>
       </div>
-      <div className="mt-2 flex flex-wrap gap-1 pl-[68px]">
+      <div className="mt-2 flex flex-wrap items-center gap-1 pl-[68px]">
+        <AdClipChip car={car} />
         {secondary.map((item) => (
           <button
             key={item.label}
