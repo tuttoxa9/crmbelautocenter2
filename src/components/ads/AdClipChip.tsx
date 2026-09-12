@@ -5,13 +5,11 @@ import { auth } from "@/lib/firebase";
 import type { AdCar, AdClipPreview } from "@/lib/types";
 
 function hasClips(car: AdCar) {
-  return Boolean(car.adClips?.length || car.videoUrl);
+  return Boolean(car.adClips?.length);
 }
 
 function clipsOf(car: AdCar): AdClipPreview[] {
-  if (car.adClips?.length) return car.adClips;
-  if (car.videoUrl) return [{ id: "legacy", downloadName: `${car.name}.mp4` }];
-  return [];
+  return car.adClips?.length ? car.adClips : [];
 }
 
 function clipLabel(clip: AdClipPreview) {

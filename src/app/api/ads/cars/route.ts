@@ -50,13 +50,6 @@ export async function GET() {
             createdAt: clip.createdAt,
             downloadName: clipFileName(car.name || hit.name, car.year || hit.year, index),
           }));
-        } else if (car.videoUrl) {
-          car.adClips = [
-            {
-              id: "legacy",
-              downloadName: clipFileName(car.name, car.year, 0),
-            },
-          ];
         } else {
           car.adClips = [];
         }
