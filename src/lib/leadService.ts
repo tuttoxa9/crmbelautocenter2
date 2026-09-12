@@ -6,8 +6,20 @@ import {
 import { db } from "./firebase";
 import { Lead, LeadStatus, StatusHistoryEntry } from "./types";
 import { ACTIVE_STATUSES } from "./leads/match";
+import { toLeadMillis } from "./leads/time";
 
 const LEADS_COLLECTION = "leads";
+
+function mapLead(docSnap: { id: string; data: () => unknown }): Lead {
+  const data = (docSnap.data() || {}) as DocumentData;
+  return {
+    ...data,
+    id: docSnap.id,
+    createdAt: toLeadMillis(data.createdAt) || 0,
+    updatedAt: toLeadMillis(data.updatedAt) || 0,
+    nextActionDate: toLeadMillis(data.nextActionDate),
+  } as Lead;
+}
 
 export const subscribeToLeads = (callback: (leads: Lead[]) => void, statuses?: LeadStatus[]) => {
   if (!db) {
@@ -23,10 +35,7 @@ export const subscribeToLeads = (callback: (leads: Lead[]) => void, statuses?: L
   }
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    let leads = snapshot.docs.map(docSnap => ({
-      id: docSnap.id,
-      ...docSnap.data()
-    })) as Lead[];
+    let leads = snapshot.docs.map(mapLead);
 
     if (statuses && statuses.length > 0) {
       leads = leads.sort((a, b) => b.createdAt - a.createdAt);
@@ -40,6 +49,7 @@ export const subscribeToLeads = (callback: (leads: Lead[]) => void, statuses?: L
   return unsubscribe;
 };
 
+
 export const subscribeToActiveLeads = (callback: (leads: Lead[]) => void) =>
   subscribeToLeads(callback, ACTIVE_STATUSES);
 
@@ -49,10 +59,7 @@ export const getLeads = async (): Promise<Lead[]> => {
   const q = query(leadsRef, orderBy("createdAt", "desc"));
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map(docSnap => ({
-    id: docSnap.id,
-    ...docSnap.data()
-  })) as Lead[];
+  return snapshot.docs.map(mapLead);
 };
 
 export const createLead = async (
@@ -159,7 +166,7 @@ export const getLeadsByCarId = async (carId: string): Promise<Lead[]> => {
   const leadsRef = collection(db, LEADS_COLLECTION);
   const q = query(leadsRef, where("carIds", "array-contains", carId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Lead));
+  return snapshot.docs.map(mapLead);
 };
 
 export const getPaginatedLeads = async (
@@ -188,13 +195,7 @@ export const getPaginatedLeads = async (
   const q = query.apply(null, qArgs as any);
   const snapshot = await getDocs(q);
 
-  const leads = snapshot.docs.map(d => {
-    const data = d.data();
-    return {
-      id: d.id,
-      ...(typeof data === 'object' && data !== null ? data : {})
-    } as Lead;
-  });
+  const leads = snapshot.docs.map(mapLead);
 
   const lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
