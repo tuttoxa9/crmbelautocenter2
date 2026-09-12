@@ -2,7 +2,6 @@ export const TG_TOPIC_KEYS = [
   "site",
   "instagram",
   "tiktok",
-  "other",
   "crm",
   "ads",
   "service",
@@ -21,7 +20,7 @@ export const TG_TOPICS: Record<TgTopicKey, TgTopic> = {
   site: {
     key: "site",
     name: "Заявки сайт",
-    hint: "формы с belautocenter.by: звонок, кредит, лизинг, бронь, комиссия, гарантия",
+    hint: "формы с belautocenter.by: кредит, лизинг, бронь, комиссия, гарантия, обратный звонок",
     iconColor: 7322096,
   },
   instagram: {
@@ -33,14 +32,8 @@ export const TG_TOPICS: Record<TgTopicKey, TgTopic> = {
   tiktok: {
     key: "tiktok",
     name: "Лиды TikTok",
-    hint: "TikTok Lead Ads и вебхук",
+    hint: "TikTok Lead Ads",
     iconColor: 16766590,
-  },
-  other: {
-    key: "other",
-    name: "Лиды прочее",
-    hint: "звонок, Куфар, Telegram, с улицы, Zapier",
-    iconColor: 9367192,
   },
   crm: {
     key: "crm",
@@ -62,12 +55,12 @@ export const TG_TOPICS: Record<TgTopicKey, TgTopic> = {
   },
 };
 
-export function topicForLeadSource(source: string | undefined | null): TgTopicKey {
+export function topicForLeadSource(source: string | undefined | null): TgTopicKey | null {
   const s = String(source || "").toLowerCase();
   if (s === "site") return "site";
   if (s === "instagram" || s === "meta" || s === "facebook") return "instagram";
   if (s === "tiktok") return "tiktok";
-  return "other";
+  return null;
 }
 
 export type TelegramTopicStore = {

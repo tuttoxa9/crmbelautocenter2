@@ -70,7 +70,7 @@ async function loadAdsFlags(): Promise<TelegramFlags> {
   return { botToken, chatId, isActive };
 }
 
-async function deliver(flags: TelegramFlags, text: string, topic: TgTopicKey) {
+async function deliver(flags: TelegramFlags, text: string, topic: TgTopicKey | null) {
   if (!flags.isActive) {
     console.log("Telegram notifications are disabled in settings.");
     return;

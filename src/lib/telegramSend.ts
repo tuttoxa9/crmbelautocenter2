@@ -211,7 +211,12 @@ export async function ensureTelegramTopics(opts: {
   const inspect = await inspectTelegramChat(opts.token, opts.chatId);
   const store = await loadTelegramStore();
   const sameForum = inspect.ok && store.forumChatId === inspect.forumChatId;
-  const topics: Partial<Record<TgTopicKey, number>> = sameForum ? { ...(store.topics || {}) } : {};
+  const topics: Partial<Record<TgTopicKey, number>> = {};
+  if (sameForum) {
+    for (const key of TG_TOPIC_KEYS) {
+      if (store.topics?.[key]) topics[key] = store.topics[key];
+    }
+  }
   const created: TgTopicKey[] = [];
   if (!inspect.ok) return { inspect, topics, created };
   if (inspect.isForum) {
@@ -260,7 +265,7 @@ export async function loadTelegramCreds(): Promise<TelegramCreds> {
 
 export async function sendTelegramMessage(opts: {
   text: string;
-  topic: TgTopicKey;
+  topic?: TgTopicKey | null;
   token?: string;
   chatId?: string;
   parseMode?: "HTML";
@@ -269,6 +274,16 @@ export async function sendTelegramMessage(opts: {
   const token = (opts.token || store.botToken || DEFAULT_BOT_TOKEN).trim();
   const chatId = (opts.chatId || store.chatId || DEFAULT_CHAT_ID).trim();
   if (!token || !chatId) return { ok: false, error: "не настроен Telegram", via: "prefix" };
+
+  if (!opts.topic) {
+    const sent = await tgApi(token, "sendMessage", {
+      chat_id: chatId,
+      text: opts.text,
+      parse_mode: opts.parseMode || "HTML",
+    });
+    if (!sent.ok) return { ok: false, error: sent.description || "Telegram не принял", via: "prefix" };
+    return { ok: true, via: "prefix" };
+  }
 
   let inspect: ChatInspect | null = null;
   const stale = !store.inspectedAt || Date.parse(store.inspectedAt) < Date.now() - 6 * 60 * 60 * 1000;
