@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyFirebaseIdToken } from '@/lib/verifyToken';
+import { sendTelegramMessage } from '@/lib/telegramSend';
 
 export async function POST(request: Request) {
   try {
@@ -23,31 +24,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Необходимы Bot Token и Chat ID" }, { status: 400 });
     }
 
-    const message = `🔔 <b>Тест связи Белавтоцентр CRM</b>\n\nИнтеграция с Telegram настроена успешно!`;
-
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-      }),
+    const sent = await sendTelegramMessage({
+      token: botToken,
+      chatId,
+      topic: "service",
+      text: `🔔 <b>Тест связи Белавтоцентр CRM</b>\n\nИнтеграция с Telegram настроена успешно!`,
     });
 
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
+    if (!sent.ok) {
       return NextResponse.json({ 
         success: false, 
-        error: data.description || "Не удалось отправить сообщение через Telegram API" 
+        error: sent.error || "Не удалось отправить сообщение через Telegram API" 
       }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, via: sent.via });
   } catch (error: any) {
     console.error("Error in api/test-telegram route:", error);
     return NextResponse.json({ error: error.message || "Ошибка отправки тестового сообщения" }, { status: 500 });

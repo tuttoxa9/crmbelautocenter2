@@ -1,4 +1,6 @@
 import { adminDb } from './firebaseAdmin';
+import { sendTelegramMessage } from './telegramSend';
+import { topicForLeadSource, type TgTopicKey } from './telegramTopics';
 
 interface LeadNotificationData {
   name: string;
@@ -8,33 +10,88 @@ interface LeadNotificationData {
   notes?: string;
 }
 
+type TelegramFlags = {
+  botToken: string;
+  chatId: string;
+  isActive: boolean;
+};
+
+const DEFAULT_BOT_TOKEN = "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4";
+const DEFAULT_CHAT_ID = "-1002721193947";
+
+async function loadLeadFlags(): Promise<TelegramFlags> {
+  let botToken = DEFAULT_BOT_TOKEN;
+  let chatId = DEFAULT_CHAT_ID;
+  let isActive = true;
+  try {
+    if (adminDb) {
+      const settingsDoc = await adminDb.collection('settings').doc('telegram').get();
+      const telegramSettings = settingsDoc.data();
+      if (telegramSettings?.botToken) botToken = String(telegramSettings.botToken);
+      if (telegramSettings?.chatId) chatId = String(telegramSettings.chatId);
+      if (telegramSettings?.isActive !== undefined) isActive = Boolean(telegramSettings.isActive);
+    }
+  } catch (error) {
+    console.warn("Could not load telegram settings from Firestore, using defaults:", error);
+  }
+  return { botToken, chatId, isActive };
+}
+
+async function loadAdsFlags(): Promise<TelegramFlags> {
+  let botToken = DEFAULT_BOT_TOKEN;
+  let chatId = DEFAULT_CHAT_ID;
+  let isActive = true;
+  try {
+    const { sql } = await import('./db');
+    const settingsRows = await sql`
+      SELECT id, data FROM settings WHERE id IN ('ads', 'telegram')
+    `;
+    for (const row of settingsRows) {
+      const d = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
+      if (d?.botToken) botToken = d.botToken;
+      if (d?.chatId) chatId = d.chatId;
+      if (row.id === 'ads' && d?.isActive !== undefined) {
+        isActive = Boolean(d.isActive);
+      }
+    }
+  } catch (dbErr) {
+    console.warn("Could not load telegram settings from Neon DB, using defaults:", dbErr);
+  }
+  try {
+    if (adminDb) {
+      const settingsDoc = await adminDb.collection('settings').doc('telegram').get();
+      const telegramSettings = settingsDoc.data();
+      if (telegramSettings?.botToken) botToken = String(telegramSettings.botToken);
+      if (telegramSettings?.chatId) chatId = String(telegramSettings.chatId);
+    }
+  } catch {
+    /* neon already filled */
+  }
+  return { botToken, chatId, isActive };
+}
+
+async function deliver(flags: TelegramFlags, text: string, topic: TgTopicKey) {
+  if (!flags.isActive) {
+    console.log("Telegram notifications are disabled in settings.");
+    return;
+  }
+  if (!flags.botToken || !flags.chatId) {
+    console.warn("Telegram botToken or chatId is missing. Skipping notification.");
+    return;
+  }
+  const sent = await sendTelegramMessage({
+    text,
+    topic,
+    token: flags.botToken,
+    chatId: flags.chatId,
+  });
+  if (!sent.ok) console.error("Failed to send Telegram notification:", sent.error);
+  else console.log("Telegram notification sent successfully.");
+}
+
 export async function sendTelegramNotification(lead: LeadNotificationData) {
   try {
-    if (!adminDb) {
-      console.warn("Firebase Admin is not initialized. Skipping Telegram notification.");
-      return;
-    }
-
-    // Получаем настройки телеграма из Firestore
-    const settingsDoc = await adminDb.collection('settings').doc('telegram').get();
-    const telegramSettings = settingsDoc.data();
-
-    // Дефолтные настройки, если в базе ничего нет
-    const botToken = telegramSettings?.botToken ?? "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4";
-    const chatId = telegramSettings?.chatId ?? "-1002721193947";
-    const isActive = telegramSettings?.isActive !== undefined ? telegramSettings.isActive : true;
-
-    if (!isActive) {
-      console.log("Telegram notifications are disabled in settings.");
-      return;
-    }
-
-    if (!botToken || !chatId) {
-      console.warn("Telegram botToken or chatId is missing. Skipping notification.");
-      return;
-    }
-
-    // Сопоставление источников с эмодзи для красивого отображения
+    const flags = await loadLeadFlags();
     const sourceEmojiMap: Record<string, string> = {
       site: "Сайт 🌐",
       instagram: "Instagram 📸",
@@ -59,25 +116,7 @@ export async function sendTelegramNotification(lead: LeadNotificationData) {
       .filter(Boolean)
       .join('\n');
 
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Failed to send Telegram notification:", errorData);
-    } else {
-      console.log("Telegram notification sent successfully.");
-    }
+    await deliver(flags, message, topicForLeadSource(lead.source));
   } catch (error) {
     console.error("Error in sendTelegramNotification:", error);
   }
@@ -85,27 +124,7 @@ export async function sendTelegramNotification(lead: LeadNotificationData) {
 
 export async function sendTelegramReminder(lead: any, minutesLeft: number) {
   try {
-    if (!adminDb) {
-      console.warn("Firebase Admin is not initialized. Skipping Telegram reminder.");
-      return;
-    }
-
-    const settingsDoc = await adminDb.collection('settings').doc('telegram').get();
-    const telegramSettings = settingsDoc.data();
-
-    const botToken = telegramSettings?.botToken ?? "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4";
-    const chatId = telegramSettings?.chatId ?? "-1002721193947";
-    const isActive = telegramSettings?.isActive !== undefined ? telegramSettings.isActive : true;
-
-    if (!isActive) {
-      return;
-    }
-
-    if (!botToken || !chatId) {
-      return;
-    }
-
-    // Форматируем статус для красивого отображения
+    const flags = await loadLeadFlags();
     const statusNameMap: Record<string, string> = {
       new: "Новый 🆕",
       in_progress: "В работе ⚙️",
@@ -121,7 +140,6 @@ export async function sendTelegramReminder(lead: any, minutesLeft: number) {
 
     const formattedStatus = statusNameMap[lead.status] || lead.status;
 
-    // Время следующего действия в читаемом виде (Минск/Москва, UTC+3)
     const eventTime = new Date(lead.nextActionDate).toLocaleTimeString("ru-RU", {
       timeZone: "Europe/Minsk",
       hour: "2-digit",
@@ -139,25 +157,7 @@ export async function sendTelegramReminder(lead: any, minutesLeft: number) {
       .filter(Boolean)
       .join('\n');
 
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Failed to send Telegram reminder:", errorData);
-    } else {
-      console.log(`Telegram reminder for lead ${lead.id || lead.phone} sent successfully.`);
-    }
+    await deliver(flags, message, "crm");
   } catch (error) {
     console.error("Error in sendTelegramReminder:", error);
   }
@@ -176,38 +176,7 @@ export interface AdRotationAlertData {
 
 export async function sendTelegramAdRotationAlert(data: AdRotationAlertData) {
   try {
-    let botToken = "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4";
-    let chatId = "-1002721193947";
-    let isActive = true;
-
-    try {
-      const { sql } = await import('./db');
-      const settingsRows = await sql`
-        SELECT id, data FROM settings WHERE id IN ('ads', 'telegram')
-      `;
-
-      for (const row of settingsRows) {
-        const d = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-        if (d?.botToken) botToken = d.botToken;
-        if (d?.chatId) chatId = d.chatId;
-        if (row.id === 'ads' && d?.isActive !== undefined) {
-          isActive = Boolean(d.isActive);
-        }
-      }
-    } catch (dbErr) {
-      console.warn("Could not load telegram settings from Neon DB, using defaults:", dbErr);
-    }
-
-    if (!isActive) {
-      console.log("Ad Telegram notifications are disabled in settings.");
-      return;
-    }
-
-    if (!botToken || !chatId) {
-      console.warn("Telegram botToken or chatId is missing.");
-      return;
-    }
-
+    const flags = await loadAdsFlags();
     const currentCampaignLabel = data.currentCampaign === "rk1" ? "Кампания 1" : "Кампания 2";
     const targetCampaignLabel = data.targetCampaign === "rk1" ? "Кампания 1" : "Кампания 2";
 
@@ -222,25 +191,7 @@ export async function sendTelegramAdRotationAlert(data: AdRotationAlertData) {
       `⚠️ <b>Действие:</b> Перенести авто из <b>${currentCampaignLabel}</b> в <b>${targetCampaignLabel}</b>`
     ].join('\n');
 
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Failed to send Telegram ad rotation alert:", errorData);
-    } else {
-      console.log(`Telegram ad rotation alert for ${data.name} sent successfully.`);
-    }
+    await deliver(flags, message, "ads");
   } catch (error) {
     console.error("Error in sendTelegramAdRotationAlert:", error);
   }
@@ -258,38 +209,7 @@ export interface AdShotAlertData {
 
 export async function sendTelegramAdShotAlert(data: AdShotAlertData) {
   try {
-    let botToken = "7969988440:AAEqIdBJZVZJ-pco6otAJAkSv2XiTEsi1Z4";
-    let chatId = "-1002721193947";
-    let isActive = true;
-
-    try {
-      const { sql } = await import("./db");
-      const settingsRows = await sql`
-        SELECT id, data FROM settings WHERE id IN ('ads', 'telegram')
-      `;
-
-      for (const row of settingsRows) {
-        const d = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
-        if (d?.botToken) botToken = d.botToken;
-        if (d?.chatId) chatId = d.chatId;
-        if (row.id === "ads" && d?.isActive !== undefined) {
-          isActive = Boolean(d.isActive);
-        }
-      }
-    } catch (dbErr) {
-      console.warn("Could not load telegram settings from Neon DB, using defaults:", dbErr);
-    }
-
-    if (!isActive) {
-      console.log("Ad Telegram notifications are disabled in settings.");
-      return;
-    }
-
-    if (!botToken || !chatId) {
-      console.warn("Telegram botToken or chatId is missing.");
-      return;
-    }
-
+    const flags = await loadAdsFlags();
     const from =
       data.fromCampaign === "rk1"
         ? "Кампания 1"
@@ -314,21 +234,7 @@ export async function sendTelegramAdShotAlert(data: AdShotAlertData) {
       .filter(Boolean)
       .join("\n");
 
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Failed to send Telegram ad shot alert:", errorData);
-    }
+    await deliver(flags, message, "ads");
   } catch (error) {
     console.error("Error in sendTelegramAdShotAlert:", error);
   }

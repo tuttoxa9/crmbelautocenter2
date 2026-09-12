@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
+import { sendTelegramMessage } from '@/lib/telegramSend';
 
 export async function POST(request: Request) {
   try {
@@ -41,24 +42,16 @@ export async function POST(request: Request) {
       `Связь с ботом работает. Сюда будут приходить «Отснято» и напоминания сменить кампанию.`,
     ].join("\n");
 
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: message,
-        parse_mode: "HTML",
-      }),
+    const sent = await sendTelegramMessage({
+      token: botToken,
+      chatId,
+      topic: "ads",
+      text: message,
     });
 
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
+    if (!sent.ok) {
       return NextResponse.json(
-        { success: false, error: data.description || "Ошибка Telegram API" },
+        { success: false, error: sent.error || "Ошибка Telegram API" },
         { status: 400 }
       );
     }
@@ -66,6 +59,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: "Тестовое уведомление успешно отправлено в Telegram!",
+      via: sent.via,
     });
   } catch (error: any) {
     console.error("Error sending test telegram ad alert:", error);

@@ -1,5 +1,6 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
+import type { TgTopicKey } from "./telegramTopics";
 
 export interface TelegramSettings {
   botToken: string;
@@ -7,6 +8,12 @@ export interface TelegramSettings {
   isActive: boolean;
   reminderRules?: Record<string, number>;
   updatedAt?: number;
+  forumChatId?: string;
+  isForum?: boolean;
+  chatType?: string;
+  chatTitle?: string;
+  topics?: Partial<Record<TgTopicKey, number>>;
+  inspectedAt?: string;
 }
 
 const SETTINGS_COLLECTION = "settings";
@@ -34,6 +41,12 @@ export const getTelegramSettings = async (): Promise<TelegramSettings> => {
         chatId: data.chatId !== undefined ? data.chatId : DEFAULT_TELEGRAM_SETTINGS.chatId,
         isActive: data.isActive !== undefined ? data.isActive : DEFAULT_TELEGRAM_SETTINGS.isActive,
         reminderRules: data.reminderRules !== undefined ? data.reminderRules : DEFAULT_TELEGRAM_SETTINGS.reminderRules,
+        forumChatId: typeof data.forumChatId === "string" ? data.forumChatId : undefined,
+        isForum: typeof data.isForum === "boolean" ? data.isForum : undefined,
+        chatType: typeof data.chatType === "string" ? data.chatType : undefined,
+        chatTitle: typeof data.chatTitle === "string" ? data.chatTitle : undefined,
+        topics: data.topics && typeof data.topics === "object" ? data.topics : undefined,
+        inspectedAt: typeof data.inspectedAt === "string" ? data.inspectedAt : undefined,
       };
     } else {
       // If it doesn't exist yet, we save default settings to Firestore so it is initialized

@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTelegramSettings, saveTelegramSettings, TelegramSettings } from "@/lib/settingsService";
+import { TG_TOPICS, TG_TOPIC_KEYS, type TgTopicKey } from "@/lib/telegramTopics";
 import { deleteLeadsByStatusAndDateRange } from "@/lib/leadService";
 import { LEAD_STATUSES } from "@/constants/leadStatuses";
 import { LeadStatus } from "@/lib/types";
 import IntegrationsPage from "./integrations/page";
-import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange, ChevronDown, Check, Trash2, ShieldAlert, LayoutGrid } from "lucide-react";
+import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange, ChevronDown, Check, Trash2, ShieldAlert, LayoutGrid, Hash } from "lucide-react";
 
 interface CustomSelectProps {
   value: number;
@@ -88,6 +89,17 @@ export default function SettingsPage() {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [isTopicsBusy, setIsTopicsBusy] = useState<"inspect" | "ensure" | "test" | null>(null);
+  const [topicsInfo, setTopicsInfo] = useState<{
+    type?: string;
+    title?: string;
+    isForum?: boolean;
+    forumChatId?: string;
+    error?: string;
+    topics?: Partial<Record<TgTopicKey, number>>;
+    created?: string[];
+    results?: Record<string, { ok: boolean; error?: string; via?: string }>;
+  } | null>(null);
 
   const [settings, setSettings] = useState<TelegramSettings>({
     botToken: "",
@@ -122,6 +134,15 @@ export default function SettingsPage() {
       const data = await getTelegramSettings();
       if (data) {
         setSettings(data);
+        if (data.chatType || data.topics) {
+          setTopicsInfo({
+            type: data.chatType,
+            title: data.chatTitle,
+            isForum: data.isForum,
+            forumChatId: data.forumChatId,
+            topics: data.topics,
+          });
+        }
       }
     }
     loadSettings();
@@ -176,6 +197,55 @@ export default function SettingsPage() {
       setTestResult({ success: false, message: "Произошла ошибка при тестировании соединения." });
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const callTopics = async (action: "inspect" | "ensure" | "test") => {
+    if (!settings.botToken || !settings.chatId) {
+      setTopicsInfo({ error: "Сначала заполните токен и Chat ID." });
+      return;
+    }
+    setIsTopicsBusy(action);
+    try {
+      const idToken = await user?.getIdToken();
+      const res = await fetch("/api/telegram-topics", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          action,
+          botToken: settings.botToken,
+          chatId: settings.chatId,
+        }),
+      });
+      const data = await res.json();
+      const inspect = data.inspect || {};
+      setTopicsInfo({
+        type: inspect.type,
+        title: inspect.title,
+        isForum: inspect.isForum,
+        forumChatId: inspect.forumChatId,
+        error: data.error || inspect.error,
+        topics: data.topics,
+        created: data.created,
+        results: data.results,
+      });
+      if (data.topics) {
+        setSettings((prev) => ({
+          ...prev,
+          topics: data.topics,
+          isForum: inspect.isForum,
+          chatType: inspect.type,
+          chatTitle: inspect.title,
+          forumChatId: inspect.forumChatId,
+        }));
+      }
+    } catch {
+      setTopicsInfo({ error: "Не удалось связаться с Telegram." });
+    } finally {
+      setIsTopicsBusy(null);
     }
   };
 
@@ -401,11 +471,11 @@ export default function SettingsPage() {
                       id="chat-id"
                       placeholder="-1002721193947"
                       value={settings.chatId}
-                      onChange={(e) => setSettings({ ...settings, chatId: e.target.value })}
+                      onChange={(e) => setSettings({ ...settings, chatId: e.target.value, topics: undefined, isForum: undefined, forumChatId: undefined, chatType: undefined, chatTitle: undefined })}
                       className="h-11 px-4 text-sm font-mono border-white/10 focus:border-zinc-400 focus:ring-zinc-400 rounded-xl"
                     />
                     <p className="text-[11px] text-zinc-400">
-                      ID группы (обычно начинается с <code>-100</code>). Бот должен быть добавлен в группу.
+                      ID группы или канала (обычно начинается с <code>-100</code>). Для тем нужна группа с включёнными темами, бот — админ с правом «Управление темами».
                     </p>
                   </div>
 
@@ -428,6 +498,98 @@ export default function SettingsPage() {
                           Проверить связь с ботом
                         </>
                       )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-white/10 shadow-sm bg-[#141416] rounded-2xl">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Hash className="w-5 h-5 text-zinc-300" />
+                    Темы в Telegram
+                  </CardTitle>
+                  <CardDescription>
+                    Заявки, лиды и служебные сообщения разносятся по темам. Если чат ещё канал — бот пишет туда же, но с пометкой темы в тексте.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {topicsInfo?.type === "channel" && topicsInfo.isForum !== true && (
+                    <div className="p-3.5 rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-200 text-sm leading-relaxed">
+                      Сейчас это канал{topicsInfo.title ? ` «${topicsInfo.title}»` : ""}. Темы в канале не работают.
+                      <div className="mt-2 text-xs text-amber-100/80 space-y-1">
+                        <p>1. Преобразуйте канал в группу или создайте новую группу.</p>
+                        <p>2. Управление → Темы → включить.</p>
+                        <p>3. Бот @Autobelcenter_bot — админ с правом «Управление темами».</p>
+                        <p>4. Вставьте Chat ID группы и нажмите «Создать темы».</p>
+                      </div>
+                    </div>
+                  )}
+                  {topicsInfo?.isForum && (
+                    <div className="p-3.5 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-200 text-sm">
+                      Группа с темами{topicsInfo.title ? ` «${topicsInfo.title}»` : ""} готова. Сообщения уходят в свои темы.
+                    </div>
+                  )}
+                  {topicsInfo?.error && (
+                    <p className="text-sm text-red-300">{topicsInfo.error}</p>
+                  )}
+
+                  <div className="space-y-2">
+                    {TG_TOPIC_KEYS.map((key) => {
+                      const topic = TG_TOPICS[key];
+                      const threadId = topicsInfo?.topics?.[key] ?? settings.topics?.[key];
+                      const test = topicsInfo?.results?.[key];
+                      return (
+                        <div key={key} className="flex items-start justify-between gap-3 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-zinc-100">{topic.name}</p>
+                            <p className="text-xs text-zinc-500 mt-0.5">{topic.hint}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-[11px] font-mono text-zinc-400">
+                              {threadId ? `#${threadId}` : "пока без id"}
+                            </p>
+                            {test && (
+                              <p className={`text-[11px] mt-0.5 ${test.ok ? "text-emerald-400" : "text-red-400"}`}>
+                                {test.ok ? (test.via === "topic" ? "тема" : "с пометкой") : test.error || "ошибка"}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => callTopics("inspect")}
+                      disabled={Boolean(isTopicsBusy)}
+                      className="h-10 border-white/10 hover:bg-white/[0.06] text-zinc-300 rounded-full font-semibold px-5"
+                    >
+                      {isTopicsBusy === "inspect" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                      Проверить чат
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => callTopics("ensure")}
+                      disabled={Boolean(isTopicsBusy)}
+                      className="h-10 border-white/10 hover:bg-white/[0.06] text-zinc-300 rounded-full font-semibold px-5"
+                    >
+                      {isTopicsBusy === "ensure" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                      Создать темы
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => callTopics("test")}
+                      disabled={Boolean(isTopicsBusy)}
+                      className="h-10 border-white/10 hover:bg-white/[0.06] text-zinc-300 rounded-full font-semibold px-5"
+                    >
+                      {isTopicsBusy === "test" ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                      Тест по темам
                     </Button>
                   </div>
                 </CardContent>
