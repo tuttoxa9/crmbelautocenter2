@@ -222,11 +222,11 @@ export function LeadFocusView({ lead, cars, allLeads, onClose, onOpenCar, onDele
               <button
                 type="button"
                 onClick={() => setBlockIpOpen(true)}
-                className="flex items-center gap-1.5 rounded-full bg-white/[0.04] border border-white/10 px-3 py-1.5 text-[12px] text-zinc-400 hover:text-red-400 hover:border-red-500/30 transition-colors cursor-pointer"
-                title="Заблокировать по IP с паролем администратора"
+                className="flex items-center gap-1.5 rounded-full bg-white/[0.04] border border-white/10 px-3 py-1.5 text-[12px] text-zinc-500 hover:text-zinc-300 hover:border-white/20 transition-colors cursor-pointer"
+                title="У старых заявок IP не был сохранён. Нажмите, если хотите ввести IP вручную"
               >
-                <ShieldAlert className="size-3.5" />
-                <span>Заблокировать IP</span>
+                <ShieldAlert className="size-3.5 text-zinc-500" />
+                <span>IP не записан (указать)</span>
               </button>
             )}
           </div>
