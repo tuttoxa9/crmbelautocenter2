@@ -67,6 +67,18 @@ export async function GET() {
       FROM blocked_ips 
       ORDER BY created_at DESC
     `;
+    // Самовосстановление: восстанавливаем статус 'new' для лидов, созданных с пустым статусом
+    if (adminDb) {
+      try {
+        const snap = await adminDb.collection("leads").where("status", "==", "").get();
+        for (const doc of snap.docs) {
+          await doc.ref.update({ status: "new" });
+        }
+      } catch (err) {
+        console.warn("Auto-repair status error:", err);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       blockedIps: rows.map((r: any) => ({
