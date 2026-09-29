@@ -190,6 +190,7 @@ export async function POST(request: Request) {
       payloadToStore.ip = clientIp;
     }
 
+    const status: LeadStatus = (data.status as LeadStatus) || "new";
     const now = Date.now();
     const newLead = {
       name,
