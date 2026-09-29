@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { leadCarIds, needsNextAction, phoneKey, resolveLeadCar } from "@/lib/leads/match";
 import { DatePresets } from "../DateControls";
 import { CarChip, CarPicker } from "../CarPicker";
-import { BlockIpModal } from "../BlockIpModal";
+import { BlockIpModal, isValidIp } from "../BlockIpModal";
 import { AdsScroller } from "@/components/ads/chrome";
 import { cn } from "@/lib/utils";
 
@@ -47,11 +47,20 @@ export function LeadFocusView({ lead, cars, allLeads, onClose, onOpenCar, onDele
   const [picker, setPicker] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [blockIpOpen, setBlockIpOpen] = useState(false);
-  const leadIp =
-    (typeof lead.ip === "string" && lead.ip) ||
-    (typeof (lead.payload as Record<string, unknown> | undefined)?.ip === "string" &&
-      String((lead.payload as Record<string, unknown>).ip)) ||
-    "";
+  const leadIp = useMemo(() => {
+    if (isValidIp(lead.ip)) return (lead.ip as string).trim();
+    const payload = lead.payload as Record<string, unknown> | undefined;
+    if (payload) {
+      if (isValidIp(payload.ip)) return String(payload.ip).trim();
+      if (isValidIp(payload.clientIp)) return String(payload.clientIp).trim();
+      if (isValidIp(payload.user_ip)) return String(payload.user_ip).trim();
+    }
+    if (typeof lead.notes === "string") {
+      const match = lead.notes.match(/\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/);
+      if (match && isValidIp(match[0])) return match[0];
+    }
+    return "";
+  }, [lead.ip, lead.payload, lead.notes]);
 
   useEffect(() => {
     setForm({
