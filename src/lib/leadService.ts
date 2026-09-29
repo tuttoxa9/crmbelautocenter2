@@ -15,6 +15,7 @@ function mapLead(docSnap: { id: string; data: () => unknown }): Lead {
   return {
     ...data,
     id: docSnap.id,
+    ip: data.ip || (data.payload as Record<string, unknown> | undefined)?.ip || undefined,
     createdAt: toLeadMillis(data.createdAt) || 0,
     updatedAt: toLeadMillis(data.updatedAt) || 0,
     nextActionDate: toLeadMillis(data.nextActionDate),

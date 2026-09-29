@@ -11,8 +11,11 @@ import { TG_TOPICS, TG_TOPIC_KEYS, type TgTopicKey } from "@/lib/telegramTopics"
 import { deleteLeadsByStatusAndDateRange } from "@/lib/leadService";
 import { LEAD_STATUSES } from "@/constants/leadStatuses";
 import { LeadStatus } from "@/lib/types";
-import IntegrationsPage from "./integrations/page";
-import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange, ChevronDown, Check, Trash2, ShieldAlert, LayoutGrid, Hash } from "lucide-react";
+import { Bot, Link2, Send, CheckCircle2, AlertCircle, Loader2, CalendarRange, ChevronDown, Check, Trash2, ShieldAlert, LayoutGrid, Hash, ShieldCheck, Plus, RefreshCw } from "lucide-react";
+import { BlockIpModal } from "@/components/leads/BlockIpModal";
+import IntegrationsPage from "@/app/(dashboard)/settings/integrations/page";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
 
 interface CustomSelectProps {
   value: number;
@@ -84,7 +87,51 @@ function InterfaceSettings() {
 
 export default function SettingsPage() {
   const { user, userRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<"interface" | "telegram" | "integrations" | "cleanup">("interface");
+  const [activeTab, setActiveTab] = useState<"interface" | "telegram" | "integrations" | "cleanup" | "blacklist">("interface");
+  const [blockedIps, setBlockedIps] = useState<{ ip: string; reason: string; blockedBy: string; createdAt: number }[]>([]);
+  const [isBlockedIpsLoading, setIsBlockedIpsLoading] = useState(false);
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [unblockingIp, setUnblockingIp] = useState<string | null>(null);
+
+  const loadBlockedIps = useCallback(async () => {
+    setIsBlockedIpsLoading(true);
+    try {
+      const res = await fetch("/api/leads/block-ip");
+      const data = await res.json();
+      if (data.success && Array.isArray(data.blockedIps)) {
+        setBlockedIps(data.blockedIps);
+      }
+    } catch (e) {
+      console.error("loadBlockedIps error", e);
+    } finally {
+      setIsBlockedIpsLoading(false);
+    }
+  }, []);
+
+  const handleUnblock = async (ipToUnblock: string) => {
+    const password = prompt(`Введите пароль от админки для разблокировки ${ipToUnblock}:`);
+    if (!password) return;
+    setUnblockingIp(ipToUnblock);
+    try {
+      const res = await fetch(`/api/leads/block-ip`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ip: ipToUnblock, password: password.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        alert(data.error || "Не удалось разблокировать IP");
+        return;
+      }
+      setToast({ type: "success", message: `IP ${ipToUnblock} успешно разблокирован` });
+      void loadBlockedIps();
+    } catch {
+      alert("Ошибка при разблокировке IP");
+    } finally {
+      setUnblockingIp(null);
+    }
+  };
+
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -372,6 +419,22 @@ export default function SettingsPage() {
         >
           <Trash2 className="w-4 h-4" />
           Очистка базы
+        </button>
+        <button
+          onClick={() => setActiveTab("blacklist")}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
+            activeTab === "blacklist"
+              ? "border-red-500 text-red-400 font-bold"
+              : "border-transparent text-zinc-500 hover:text-white"
+          }`}
+        >
+          <ShieldAlert className="w-4 h-4 text-red-500" />
+          Чёрный список IP
+          {blockedIps.length > 0 && (
+            <span className="ml-1 px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[11px] font-mono font-bold">
+              {blockedIps.length}
+            </span>
+          )}
         </button>
       </div>
 
@@ -671,7 +734,7 @@ export default function SettingsPage() {
           <div className="animate-in fade-in duration-200">
             <IntegrationsPage />
           </div>
-        ) : (
+        ) : activeTab === "cleanup" ? (
           <div className="max-w-2xl space-y-6 animate-in fade-in duration-200">
             {/* Cleanup result toast */}
             {deleteResult && (
@@ -815,8 +878,108 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </div>
-        )}
+        ) : activeTab === "blacklist" ? (
+          <div className="max-w-4xl space-y-6">
+            <Card className="bg-[#141416] border-white/10 rounded-[28px] overflow-hidden">
+              <CardHeader className="p-6 border-b border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <CardTitle className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+                    <ShieldAlert className="w-5 h-5 text-red-500" />
+                    Чёрный список IP-адресов
+                  </CardTitle>
+                  <CardDescription className="text-zinc-500 text-xs mt-1">
+                    Сайт belautocenter.by автоматически и бесшумно блокирует отправку заявок с этих IP.
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void loadBlockedIps()}
+                    disabled={isBlockedIpsLoading}
+                    className="border-white/10 bg-transparent text-zinc-300 hover:bg-white/5 rounded-xl text-xs h-9 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isBlockedIpsLoading ? "animate-spin" : ""}`} />
+                    Обновить
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setIsBlockModalOpen(true)}
+                    className="bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-semibold h-9 shadow-lg shadow-red-900/30 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    Заблокировать IP
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                {isBlockedIpsLoading ? (
+                  <div className="py-12 flex flex-col items-center justify-center text-zinc-500">
+                    <Loader2 className="w-6 h-6 animate-spin mb-2" />
+                    <span className="text-xs">Загрузка черного списка...</span>
+                  </div>
+                ) : blockedIps.length === 0 ? (
+                  <div className="py-12 flex flex-col items-center justify-center text-center text-zinc-500">
+                    <ShieldCheck className="w-10 h-10 text-emerald-500/40 mb-2" />
+                    <p className="text-sm font-medium text-zinc-300">Чёрный список пуст</p>
+                    <p className="text-xs text-zinc-500 mt-1">Все входящие заявки с сайта принимаются в обычном режиме.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-white/10 text-zinc-500">
+                          <th className="pb-3 font-semibold">IP адрес</th>
+                          <th className="pb-3 font-semibold">Причина</th>
+                          <th className="pb-3 font-semibold">Кем заблокирован</th>
+                          <th className="pb-3 font-semibold">Дата</th>
+                          <th className="pb-3 font-semibold text-right">Действие</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {blockedIps.map((b) => (
+                          <tr key={b.ip} className="hover:bg-white/[0.02]">
+                            <td className="py-3 font-mono font-bold text-red-400">
+                              {b.ip}
+                            </td>
+                            <td className="py-3 text-zinc-300">
+                              {b.reason}
+                            </td>
+                            <td className="py-3 text-zinc-400">
+                              {b.blockedBy}
+                            </td>
+                            <td className="py-3 text-zinc-500">
+                              {format(new Date(b.createdAt), "d MMM yyyy, HH:mm", { locale: ru })}
+                            </td>
+                            <td className="py-3 text-right">
+                              <button
+                                type="button"
+                                disabled={unblockingIp === b.ip}
+                                onClick={() => void handleUnblock(b.ip)}
+                                className="px-2.5 py-1 rounded-lg border border-white/10 bg-white/[0.04] hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400 text-zinc-400 text-[11px] font-medium transition-colors cursor-pointer"
+                              >
+                                {unblockingIp === b.ip ? "Разблокировка..." : "Разблокировать"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
       </div>
+
+      <BlockIpModal
+        isOpen={isBlockModalOpen}
+        onClose={() => setIsBlockModalOpen(false)}
+        onSuccess={() => void loadBlockedIps()}
+      />
     </div>
   );
 }

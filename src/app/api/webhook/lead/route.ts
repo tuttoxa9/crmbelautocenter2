@@ -182,9 +182,14 @@ export async function POST(request: Request) {
 
     const linkedCarId = extractCarId(data as Record<string, unknown>, notes, car);
 
-    const status: LeadStatus = "new";
-    const now = Date.now();
+    const forwardedHeader = request.headers.get('x-forwarded-for');
+    const headerIp = forwardedHeader ? forwardedHeader.split(',')[0].trim() : request.headers.get('x-real-ip') || undefined;
+    const clientIp = (typeof data.ip === 'string' && data.ip.trim()) || headerIp;
+    if (clientIp) {
+      payloadToStore.ip = clientIp;
+    }
 
+    const now = Date.now();
     const newLead = {
       name,
       phone,
@@ -195,6 +200,7 @@ export async function POST(request: Request) {
       status,
       nextActionDate: null,
       notes,
+      ip: clientIp || undefined,
       createdAt: now,
       updatedAt: now,
       history: [

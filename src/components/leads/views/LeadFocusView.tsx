@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { format, isToday, isYesterday } from "date-fns";
 import { ru } from "date-fns/locale";
-import { CheckCircle2, Copy, Phone, Plus, Trash2, X } from "lucide-react";
+import { CheckCircle2, Copy, Phone, Plus, ShieldAlert, Trash2, X } from "lucide-react";
 import type { CatalogCar, Lead, LeadSource, LeadStatus } from "@/lib/types";
 import { formatPhone } from "@/lib/formatPhone";
 import { getStatusLabel } from "@/lib/displayUtils";
@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { leadCarIds, needsNextAction, phoneKey, resolveLeadCar } from "@/lib/leads/match";
 import { DatePresets } from "../DateControls";
 import { CarChip, CarPicker } from "../CarPicker";
+import { BlockIpModal } from "../BlockIpModal";
 import { AdsScroller } from "@/components/ads/chrome";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,12 @@ export function LeadFocusView({ lead, cars, allLeads, onClose, onOpenCar, onDele
   const [saving, setSaving] = useState(false);
   const [picker, setPicker] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [blockIpOpen, setBlockIpOpen] = useState(false);
+  const leadIp =
+    (typeof lead.ip === "string" && lead.ip) ||
+    (typeof (lead.payload as Record<string, unknown> | undefined)?.ip === "string" &&
+      String((lead.payload as Record<string, unknown>).ip)) ||
+    "";
 
   useEffect(() => {
     setForm({
@@ -188,6 +195,31 @@ export function LeadFocusView({ lead, cars, allLeads, onClose, onOpenCar, onDele
                 Позвонить
               </a>
             ) : null}
+
+            {leadIp ? (
+              <div className="flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 px-3 py-1 text-[12px] text-red-300">
+                <ShieldAlert className="size-3.5 text-red-400 shrink-0" />
+                <span className="font-mono text-[11px] font-medium">{leadIp}</span>
+                <button
+                  type="button"
+                  onClick={() => setBlockIpOpen(true)}
+                  className="ml-1 text-[11px] font-semibold text-red-400 hover:text-red-200 underline transition-colors cursor-pointer"
+                  title="Заблокировать заявки с этого IP"
+                >
+                  Заблокировать
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setBlockIpOpen(true)}
+                className="flex items-center gap-1.5 rounded-full bg-white/[0.04] border border-white/10 px-3 py-1.5 text-[12px] text-zinc-400 hover:text-red-400 hover:border-red-500/30 transition-colors cursor-pointer"
+                title="Заблокировать по IP с паролем администратора"
+              >
+                <ShieldAlert className="size-3.5" />
+                <span>Заблокировать IP</span>
+              </button>
+            )}
           </div>
 
           {duplicate ? (
@@ -311,6 +343,17 @@ export function LeadFocusView({ lead, cars, allLeads, onClose, onOpenCar, onDele
             </div>
           </div>
         ) : null}
+
+        <BlockIpModal
+          isOpen={blockIpOpen}
+          ip={leadIp}
+          leadId={lead.id}
+          leadName={lead.name}
+          onClose={() => setBlockIpOpen(false)}
+          onSuccess={() => {
+            setForm((p) => ({ ...p, status: "spam" }));
+          }}
+        />
       </div>
     </div>
   );

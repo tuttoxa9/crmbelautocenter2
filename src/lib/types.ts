@@ -51,6 +51,7 @@ export interface Lead {
   status: LeadStatus;
   nextActionDate?: number | null; // Timestamp для приезда или перезвона
   notes: string;
+  ip?: string; // IP-адрес клиента для заявок с сайта
   createdAt: number;
   updatedAt: number;
   history: StatusHistoryEntry[];
