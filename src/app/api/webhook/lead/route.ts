@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
         if (process.env.META_SYSTEM_ACCESS_TOKEN) {
           try {
-            const metaRes = await fetch(`https://graph.facebook.com/v19.0/${leadgenId}?access_token=${process.env.META_SYSTEM_ACCESS_TOKEN}`);
+            const metaRes = await fetch(`https://graph.facebook.com/v22.0/${leadgenId}?fields=id,ad_id,ad_name,campaign_name,form_id,field_data&access_token=${process.env.META_SYSTEM_ACCESS_TOKEN}`);
             const metaData = await metaRes.json();
             
             payloadToStore.graphData = metaData;
@@ -92,6 +92,7 @@ export async function POST(request: Request) {
               if (fname.includes("phone")) phone = field.values[0];
               if (fname.includes("car") || fname.includes("vehicle") || fname.includes("авто")) car = field.values[0];
             }
+            if (!car && typeof metaData.ad_name === "string") car = metaData.ad_name.trim();
           } catch (err) {
             console.error("Error fetching Graph API lead:", err);
           }
