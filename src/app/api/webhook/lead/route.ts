@@ -223,17 +223,18 @@ export async function POST(request: Request) {
 
     const docRef = await adminDb.collection('leads').add(newLead);
 
-    // Отправка уведомления в Telegram
-    try {
-      await sendTelegramNotification({
-        name,
-        phone,
-        car,
-        source: detectedSource,
-        notes
-      });
-    } catch (err) {
-      console.error("Error sending Telegram notification from webhook:", err);
+    if (data.telegram !== false) {
+      try {
+        await sendTelegramNotification({
+          name,
+          phone,
+          car,
+          source: detectedSource,
+          notes
+        });
+      } catch (err) {
+        console.error("Error sending Telegram notification from webhook:", err);
+      }
     }
 
     return NextResponse.json(
