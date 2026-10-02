@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Plus, X } from "lucide-react";
 import type { CatalogCar, Lead, LeadStatus } from "@/lib/types";
-import { carTitle, isActiveStatus, leadMatchesCar, TERMINAL_STATUSES } from "@/lib/leads/match";
+import { carTitle, isActiveStatus, leadMatchesCar, leadMatchesQuery, TERMINAL_STATUSES } from "@/lib/leads/match";
 import { getLeadsByCarId } from "@/lib/leadService";
 import { getStatusLabel } from "@/lib/displayUtils";
 import { LeadRow } from "./views/LeadFocusView";
@@ -51,19 +51,17 @@ export function AutoBoard({
     const rows = cars
       .map((car) => ({ car, ...statsFor(car, leads) }))
       .filter((row) => {
-        if (filter === "sold") return row.car.isSold;
-        if (filter === "active") return !row.car.isSold && row.active.length > 0;
-        return !row.car.isSold;
-      })
-      .filter((row) => {
-        if (!q) return true;
-        return (
+        const matchesQuery =
+          !q ||
           row.car.name.toLowerCase().includes(q) ||
           String(row.car.year || "").includes(q) ||
-          row.linked.some(
-            (l) => l.name?.toLowerCase().includes(q) || l.phone?.includes(q),
-          )
-        );
+          `${row.car.make} ${row.car.model}`.toLowerCase().includes(q) ||
+          row.linked.some((l) => leadMatchesQuery(l, q));
+        if (!matchesQuery) return false;
+        if (filter === "sold") return row.car.isSold;
+        if (filter === "all") return !row.car.isSold;
+        if (q) return !row.car.isSold;
+        return !row.car.isSold && row.active.length > 0;
       })
       .sort((a, b) => b.active.length - a.active.length);
     return rows;

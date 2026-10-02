@@ -32,6 +32,18 @@ export function phoneKey(phone: string) {
   return digits.slice(-9);
 }
 
+/** Name, phone, car text, and notes. Phone digits match even with spaces and +375. */
+export function leadMatchesQuery(lead: Lead, raw: string): boolean {
+  const q = raw.trim().toLowerCase();
+  if (!q) return true;
+  const digits = q.replace(/\D/g, "");
+  const phoneDigits = (lead.phone || "").replace(/\D/g, "");
+  if (digits.length >= 3 && phoneDigits.includes(digits)) return true;
+  return [lead.name, lead.phone, lead.car, lead.notes].some((value) =>
+    (value || "").toLowerCase().includes(q),
+  );
+}
+
 export function leadCarIds(lead: Lead): string[] {
   const ids = [...(lead.carIds || [])];
   if (lead.primaryCarId && !ids.includes(lead.primaryCarId)) ids.unshift(lead.primaryCarId);

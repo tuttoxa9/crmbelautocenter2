@@ -10,11 +10,8 @@ import { AdsScroller } from "@/components/ads/chrome";
 
 type DayTab = "new" | "in_progress" | "visit" | "callback" | "no_answer" | "thinking";
 
-function hourBucket(ts: number) {
-  const h = new Date(ts).getHours();
-  if (h < 12) return { key: "morning", label: "Утро", order: 1 };
-  if (h < 17) return { key: "day", label: "День", order: 2 };
-  return { key: "evening", label: "Вечер", order: 3 };
+function newestFirst(a: Lead, b: Lead) {
+  return b.createdAt - a.createdAt || leadActionAt(b) - leadActionAt(a);
 }
 
 function overdueDayLabel(d: Date) {
@@ -68,7 +65,7 @@ export function buildDayGroups(leads: Lead[], tab: DayTab, filterDate: Date, sea
   });
 
   const overdueByDay: Record<string, { key: string; label: string; day: number; items: Lead[] }> = {};
-  const buckets: Record<string, BoardGroup> = {};
+  const dayItems: Lead[] = [];
 
   for (const lead of rows) {
     const at = leadActionAt(lead);
@@ -81,25 +78,10 @@ export function buildDayGroups(leads: Lead[], tab: DayTab, filterDate: Date, sea
       overdueByDay[key].items.push(lead);
       continue;
     }
-    let key = "none";
-    let label = "Без времени";
-    let order = 4;
-    if (lead.nextActionDate) {
-      const b = hourBucket(at);
-      key = b.key;
-      label = b.label;
-      order = b.order;
-    }
-    if (!buckets[key]) buckets[key] = { key, label, order, items: [] };
-    buckets[key].items.push(lead);
+    dayItems.push(lead);
   }
 
-  const timed = Object.values(buckets)
-    .map((g) => ({
-      ...g,
-      items: g.items.sort((a, b) => leadActionAt(a) - leadActionAt(b)),
-    }))
-    .sort((a, b) => a.order - b.order);
+  dayItems.sort(newestFirst);
 
   const overdueDays = Object.values(overdueByDay)
     .map((g) => ({
@@ -110,18 +92,13 @@ export function buildDayGroups(leads: Lead[], tab: DayTab, filterDate: Date, sea
 
   const result: BoardGroup[] = [];
 
-  if (today) {
-    if (timed.length > 0) {
-      result.push({
-        key: "today",
-        label: "Сегодня",
-        order: -1,
-        items: timed.flatMap((g) => g.items),
-        subgroups: timed,
-      });
-    }
-  } else {
-    result.push(...timed);
+  if (dayItems.length > 0) {
+    result.push({
+      key: today ? "today" : "day",
+      label: today ? "Сегодня" : format(target, "d MMMM", { locale: ru }),
+      order: -1,
+      items: dayItems,
+    });
   }
 
   if (overdueDays.length > 0) {

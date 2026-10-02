@@ -396,9 +396,13 @@ export function LeadRow({
 }) {
   const car = resolveLeadCar(lead, cars);
   const extra = Math.max(0, leadCarIds(lead).length - (car ? 1 : 0));
-  const when = lead.nextActionDate && lead.status !== "new"
-    ? formatLeadWhen(lead.nextActionDate, showFullDate)
-    : null;
+  const whenTs =
+    lead.nextActionDate && lead.status !== "new"
+      ? lead.nextActionDate
+      : showFullDate
+        ? lead.createdAt
+        : null;
+  const when = whenTs ? formatLeadWhen(whenTs, Boolean(showFullDate)) : null;
   return (
     <button
       type="button"

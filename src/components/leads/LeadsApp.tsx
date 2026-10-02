@@ -5,7 +5,8 @@ import { Search } from "lucide-react";
 import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { startOfDay } from "date-fns";
 import type { CatalogCar, Lead } from "@/lib/types";
-import { getPaginatedLeads, subscribeToActiveLeads } from "@/lib/leadService";
+import { getLeads, getPaginatedLeads, subscribeToActiveLeads } from "@/lib/leadService";
+import { leadCarIds, leadMatchesQuery } from "@/lib/leads/match";
 import { fetchCatalogCars } from "@/lib/catalog";
 import { DateStepper } from "./DateControls";
 import { DayBoard, DAY_TABS, type DayTab } from "./DayBoard";
@@ -29,6 +30,15 @@ function readTab(): DayTab {
   return DAY_TABS.some((t) => t.id === v) ? (v as DayTab) : "in_progress";
 }
 
+function carText(lead: Lead, cars: CatalogCar[]) {
+  const linked = leadCarIds(lead)
+    .map((id) => cars.find((car) => car.id === id))
+    .filter((car): car is CatalogCar => Boolean(car))
+    .map((car) => `${car.name} ${car.make} ${car.model} ${car.year ?? ""}`)
+    .join(" ");
+  return `${lead.car || ""} ${linked}`.toLowerCase();
+}
+
 export function LeadsApp() {
   const [mode, setMode] = useState<Mode>("day");
   const [tab, setTab] = useState<DayTab>("in_progress");
@@ -46,6 +56,8 @@ export function LeadsApp() {
   const [presetCar, setPresetCar] = useState<CatalogCar | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [archive, setArchive] = useState<Lead[] | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
     setMode(readMode());
@@ -67,9 +79,48 @@ export function LeadsApp() {
     void fetchCatalogCars({ includeSold: true }).then(setCars);
   }, []);
 
+  const query = search.trim();
+
+  useEffect(() => {
+    if (!query || archive) return;
+    let cancel = false;
+    setSearchLoading(true);
+    getLeads()
+      .then((rows) => {
+        if (!cancel) setArchive(rows);
+      })
+      .catch(() => {
+        if (!cancel) setArchive([]);
+      })
+      .finally(() => {
+        if (!cancel) setSearchLoading(false);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [query, archive]);
+
+  const searchPool = useMemo(() => {
+    if (!archive) return leads;
+    const map = new Map<string, Lead>();
+    for (const lead of archive) {
+      if (lead.id) map.set(lead.id, lead);
+    }
+    for (const lead of leads) {
+      if (lead.id) map.set(lead.id, lead);
+    }
+    return Array.from(map.values());
+  }, [archive, leads]);
+
+  const searchRows = useMemo(() => {
+    if (!query) return [];
+    return searchPool
+      .filter((lead) => leadMatchesQuery(lead, query) || carText(lead, cars).includes(query.toLowerCase()))
+      .sort((a, b) => b.createdAt - a.createdAt);
+  }, [searchPool, query, cars]);
+
   const setModePersist = (next: Mode) => {
     setMode(next);
-    setSearch("");
     window.localStorage.setItem("leads.mode", next);
     if (next !== "auto") setDossier(null);
   };
@@ -78,7 +129,6 @@ export function LeadsApp() {
     setTab(next);
     setMobileMenu(false);
     setSelected(null);
-    setSearch("");
     window.localStorage.setItem("leads.tab", next);
   };
 
@@ -105,17 +155,7 @@ export function LeadsApp() {
     return c;
   }, [leads]);
 
-  const baseRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return history;
-    return history.filter(
-      (l) =>
-        l.name?.toLowerCase().includes(q) ||
-        l.phone?.toLowerCase().includes(q) ||
-        l.car?.toLowerCase().includes(q) ||
-        l.notes?.toLowerCase().includes(q),
-    );
-  }, [history, search]);
+  const baseRows = history;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -207,13 +247,16 @@ export function LeadsApp() {
           <input
             id="leads-search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={mode === "auto" ? "Марка, клиент, телефон" : "Имя, телефон, авто"}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              if (e.target.value.trim()) setMobileMenu(false);
+            }}
+            placeholder="Имя, телефон, авто — вся база"
             className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-leads-subtle"
           />
         </div>
 
-        {mode === "day" && tab !== "new" ? <DateStepper value={filterDate} onChange={setFilterDate} /> : null}
+        {mode === "day" && tab !== "new" && !query ? <DateStepper value={filterDate} onChange={setFilterDate} /> : null}
 
         <button
           type="button"
@@ -265,17 +308,29 @@ export function LeadsApp() {
                   Статусы
                 </button>
               </div>
-              <DayBoard
-                leads={leads}
-                cars={cars}
-                tab={tab}
-                filterDate={filterDate}
-                search={search}
-                selectedId={selected?.id}
-                highlightId={highlightId}
-                onOpen={setSelected}
-                onOpenCar={openCar}
-              />
+              {query ? (
+                <LeadSearchResults
+                  rows={searchRows}
+                  loading={searchLoading && !archive}
+                  cars={cars}
+                  selectedId={selected?.id}
+                  highlightId={highlightId}
+                  onOpen={setSelected}
+                  onOpenCar={openCar}
+                />
+              ) : (
+                <DayBoard
+                  leads={leads}
+                  cars={cars}
+                  tab={tab}
+                  filterDate={filterDate}
+                  search=""
+                  selectedId={selected?.id}
+                  highlightId={highlightId}
+                  onOpen={setSelected}
+                  onOpenCar={openCar}
+                />
+              )}
             </div>
           </>
         ) : null}
@@ -284,7 +339,7 @@ export function LeadsApp() {
           <div className="min-w-0 flex-1">
             <AutoBoard
               cars={cars}
-              leads={leads}
+              leads={query ? searchPool : leads}
               search={search}
               selectedLeadId={selected?.id}
               dossierCar={dossier}
@@ -301,6 +356,17 @@ export function LeadsApp() {
 
         {mode === "base" ? (
           <div className="min-w-0 flex-1">
+            {query ? (
+              <LeadSearchResults
+                rows={searchRows}
+                loading={searchLoading && !archive}
+                cars={cars}
+                selectedId={selected?.id}
+                highlightId={highlightId}
+                onOpen={setSelected}
+                onOpenCar={openCar}
+              />
+            ) : (
             <AdsScroller className="h-full" contentClassName="pb-24">
               <div className="divide-y divide-leads-line bg-[#141416] md:mx-3 md:mt-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
                 {baseRows.map((lead) => (
@@ -328,6 +394,7 @@ export function LeadsApp() {
                 </div>
               ) : null}
             </AdsScroller>
+            )}
           </div>
         ) : null}
       </div>
@@ -365,7 +432,7 @@ export function LeadsApp() {
         <LeadFocusView
           lead={selected}
           cars={cars}
-          allLeads={[...leads, ...history]}
+          allLeads={archive ? searchPool : [...leads, ...history]}
           onClose={() => setSelected(null)}
           onOpenCar={openCar}
           onDeleted={() => setSelected(null)}
@@ -373,5 +440,54 @@ export function LeadsApp() {
         />
       ) : null}
     </div>
+  );
+}
+
+function LeadSearchResults({
+  rows,
+  loading,
+  cars,
+  selectedId,
+  highlightId,
+  onOpen,
+  onOpenCar,
+}: {
+  rows: Lead[];
+  loading: boolean;
+  cars: CatalogCar[];
+  selectedId?: string | null;
+  highlightId?: string | null;
+  onOpen: (lead: Lead) => void;
+  onOpenCar: (car: CatalogCar) => void;
+}) {
+  if (!loading && rows.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center px-6 text-sm text-leads-muted">
+        Ничего не нашлось
+      </div>
+    );
+  }
+
+  return (
+    <AdsScroller className="h-full" contentClassName="pb-24">
+      <p className="px-4 py-2 text-[11px] font-semibold tracking-wide text-leads-muted uppercase">
+        Вся база <span className="text-leads-subtle">{rows.length}</span>
+        {loading ? " · ещё ищем" : ""}
+      </p>
+      <div className="divide-y divide-leads-line bg-[#141416] md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+        {rows.map((lead) => (
+          <LeadRow
+            key={lead.id}
+            lead={lead}
+            cars={cars}
+            selected={selectedId === lead.id}
+            highlight={highlightId === lead.id}
+            showFullDate
+            onOpen={() => onOpen(lead)}
+            onOpenCar={onOpenCar}
+          />
+        ))}
+      </div>
+    </AdsScroller>
   );
 }
