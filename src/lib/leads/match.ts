@@ -47,6 +47,13 @@ export function leadMatchesQuery(lead: Lead, raw: string): boolean {
 export function leadCarIds(lead: Lead): string[] {
   const ids = [...(lead.carIds || [])];
   if (lead.primaryCarId && !ids.includes(lead.primaryCarId)) ids.unshift(lead.primaryCarId);
+  const fallbackId =
+    (lead as unknown as { carId?: string }).carId ||
+    (lead.payload as { carId?: string; car_id?: string } | undefined)?.carId ||
+    (lead.payload as { carId?: string; car_id?: string } | undefined)?.car_id;
+  if (fallbackId && typeof fallbackId === "string" && !ids.includes(fallbackId)) {
+    ids.push(fallbackId);
+  }
   return ids;
 }
 
