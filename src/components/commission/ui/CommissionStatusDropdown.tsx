@@ -39,7 +39,7 @@ export function CommissionStatusDropdown({ value, onChange, className }: Commiss
         className="flex items-center justify-between w-full h-10 px-3 py-2 bg-[#141416] border border-white/10 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-white/20 transition-all text-sm font-medium text-zinc-100 hover:bg-white/[0.06]"
       >
         <span className="flex items-center gap-2">
-          <span className={cn("w-2 h-2 rounded-full", getStatusDotColor(value))} />
+          <span className="w-2 h-2 rounded-full" style={{ background: getStatusDotColor(value) }} />
           {getStatusLabel(value)}
         </span>
         <ChevronDown className={cn("w-4 h-4 text-zinc-400 transition-transform duration-200", isOpen && "rotate-180")} />
@@ -58,7 +58,7 @@ export function CommissionStatusDropdown({ value, onChange, className }: Commiss
               className="flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-white/[0.08] text-zinc-200"
             >
               <span className="flex items-center gap-2">
-                <span className={cn("w-2 h-2 rounded-full", getStatusDotColor(status))} />
+                <span className="w-2 h-2 rounded-full" style={{ background: getStatusDotColor(status) }} />
                 {getStatusLabel(status)}
               </span>
               {value === status && <Check className="w-4 h-4 text-zinc-100" />}

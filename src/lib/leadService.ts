@@ -22,7 +22,11 @@ function mapLead(docSnap: { id: string; data: () => unknown }): Lead {
   } as Lead;
 }
 
-export const subscribeToLeads = (callback: (leads: Lead[]) => void, statuses?: LeadStatus[]) => {
+export const subscribeToLeads = (
+  callback: (leads: Lead[]) => void,
+  statuses?: LeadStatus[],
+  onError?: (error: unknown) => void,
+) => {
   if (!db) {
     console.error("Firestore is not initialized");
     callback([]);
@@ -45,14 +49,17 @@ export const subscribeToLeads = (callback: (leads: Lead[]) => void, statuses?: L
     callback(leads);
   }, (error) => {
     console.error("Error listening to leads:", error);
+    onError?.(error);
   });
 
   return unsubscribe;
 };
 
 
-export const subscribeToActiveLeads = (callback: (leads: Lead[]) => void) =>
-  subscribeToLeads(callback, ACTIVE_STATUSES);
+export const subscribeToActiveLeads = (
+  callback: (leads: Lead[]) => void,
+  onError?: (error: unknown) => void,
+) => subscribeToLeads(callback, ACTIVE_STATUSES, onError);
 
 export const getLeads = async (): Promise<Lead[]> => {
   if (!db) return [];

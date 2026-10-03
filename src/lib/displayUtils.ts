@@ -1,4 +1,5 @@
 import { LeadStatus } from "@/lib/types";
+import { isMetaLead } from "@/lib/leads/match";
 
 export const getStatusLabel = (status: LeadStatus) => {
   const map: Record<LeadStatus, string> = {
@@ -44,4 +45,9 @@ export const getSourceLabel = (source: string) => {
     kufar: "Куфар",
   };
   return map[source] || "Неизвестно";
+};
+
+export const leadChannelLabel = (lead: { source: string; payload?: Record<string, unknown> }) => {
+  if (isMetaLead(lead)) return "Meta";
+  return getSourceLabel(lead.source);
 };

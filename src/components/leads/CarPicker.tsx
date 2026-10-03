@@ -6,15 +6,22 @@ import type { CatalogCar } from "@/lib/types";
 import { carTitle } from "@/lib/leads/match";
 import { cn } from "@/lib/utils";
 import { AdsScroller } from "@/components/ads/chrome";
+import { CarPhoto, CenterNote } from "./chrome";
 
 export function CarPicker({
   cars,
   selectedIds,
+  catalogError,
+  catalogLoading,
+  onRetry,
   onPick,
   onClose,
 }: {
   cars: CatalogCar[];
   selectedIds: string[];
+  catalogError?: boolean;
+  catalogLoading?: boolean;
+  onRetry?: () => void;
   onPick: (car: CatalogCar) => void;
   onClose: () => void;
 }) {
@@ -26,44 +33,52 @@ export function CarPicker({
     return cars.filter((c) => {
       if (!showSold && c.isSold) return false;
       if (!q) return true;
-      return (
-        c.name.toLowerCase().includes(q) ||
-        String(c.year || "").includes(q) ||
-        String(c.priceUsd).includes(q)
-      );
+      const blob = `${c.name} ${c.make} ${c.model} ${c.year ?? ""} ${c.priceUsd || ""}`.toLowerCase();
+      return blob.includes(q);
     });
   }, [cars, query, showSold]);
 
+  const inStock = cars.some((c) => !c.isSold);
+  const emptyText = query.trim() ? "Такой машины нет" : !showSold && !inStock ? "В наличии ничего нет" : "Такой машины нет";
+
   return (
-    <div className="absolute inset-0 z-[80] flex flex-col bg-black text-zinc-100">
-      <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
-        <button type="button" onClick={onClose} className="flex size-9 items-center justify-center rounded-full text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-100">
+    <div className="absolute inset-0 z-[80] flex flex-col bg-leads-raised text-leads-ink">
+      <div className="flex items-center gap-2 border-b border-leads-line px-4 py-3">
+        <button type="button" onClick={onClose} className="flex size-9 items-center justify-center rounded-xl text-leads-muted hover:bg-white/[0.06] hover:text-leads-ink" aria-label="Закрыть">
           <X className="size-4" />
         </button>
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-[#141416] px-3 py-2 ring-1 ring-white/10">
-          <Search className="size-4 text-zinc-500" />
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-leads-card px-3 py-2 ring-1 ring-leads-line">
+          <Search className="size-4 text-leads-subtle" />
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Марка, модель, год"
-            className="min-w-0 flex-1 bg-transparent text-[15px] text-zinc-100 outline-none placeholder:text-zinc-500"
+            className="min-w-0 flex-1 bg-transparent text-[15px] text-leads-ink outline-none placeholder:text-leads-subtle"
           />
         </div>
       </div>
       <div className="flex items-center justify-between px-4 py-2">
-        <p className="text-xs text-zinc-500">{filtered.length} авто</p>
+        <p className="text-[13px] text-leads-subtle">{filtered.length}</p>
         <button
           type="button"
           onClick={() => setShowSold((v) => !v)}
-          className={cn("text-xs font-medium", showSold ? "text-zinc-100" : "text-zinc-500")}
+          className={cn("text-[13px] font-medium", showSold ? "text-leads-ink" : "text-leads-muted")}
         >
           {showSold ? "Скрыть проданные" : "Показать проданные"}
         </button>
       </div>
       <AdsScroller className="min-h-0 flex-1" contentClassName="px-3 pb-8">
-        {filtered.length === 0 ? (
-          <p className="px-2 py-10 text-center text-sm text-zinc-500">Ничего не нашлось</p>
+        {catalogError ? (
+          <CenterNote text="Склад не открылся" action={{ label: "Повторить", onClick: () => onRetry?.() }} />
+        ) : catalogLoading && cars.length === 0 ? (
+          <div className="space-y-2">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="h-[72px] animate-pulse rounded-2xl bg-leads-card" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <CenterNote text={emptyText} />
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {filtered.map((car) => {
@@ -74,24 +89,21 @@ export function CarPicker({
                   type="button"
                   onClick={() => onPick(car)}
                   className={cn(
-                    "flex gap-3 rounded-2xl bg-[#141416] p-2 text-left ring-1",
-                    on ? "ring-white" : "ring-white/10 hover:bg-white/[0.04] hover:ring-white/20",
+                    "flex gap-3 rounded-2xl p-2 text-left ring-1 ring-leads-line",
+                    on ? "bg-leads-card" : "hover:bg-white/[0.04]",
                   )}
                 >
-                  <div className="size-16 shrink-0 overflow-hidden rounded-xl bg-[#1c1c1f]">
-                    {car.photoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={car.photoUrl} alt="" className="h-full w-full object-cover" />
-                    ) : null}
-                  </div>
-                  <div className="min-w-0 py-0.5">
-                    <p className="truncate text-[13px] font-semibold text-zinc-100">{carTitle(car)}</p>
-                    <p className="mt-0.5 text-[12px] text-zinc-400">
-                      {car.priceUsd ? `${car.priceUsd.toLocaleString("ru-RU")} $` : "без цены"}
-                      {car.isSold ? " · продана" : ""}
-                    </p>
-                    {on ? <p className="mt-1 text-[10px] font-medium text-zinc-500">Уже привязана</p> : null}
-                  </div>
+                  <span className="size-16 shrink-0 overflow-hidden rounded-xl">
+                    <CarPhoto name={car.make || car.name} photoUrl={car.photoUrl} className="size-16" />
+                  </span>
+                  <span className="min-w-0 py-0.5">
+                    <span className="block truncate text-[14px] font-semibold text-leads-ink">{carTitle(car)}</span>
+                    <span className="mt-0.5 block text-[13px] text-leads-muted tabular-nums">
+                      {car.priceUsd ? `${car.priceUsd.toLocaleString("ru-RU")} $` : ""}
+                      {car.isSold ? " · Продана" : ""}
+                    </span>
+                    {on ? <span className="mt-1 block text-[12px] text-leads-subtle">Уже привязана</span> : null}
+                  </span>
                 </button>
               );
             })}
@@ -114,28 +126,25 @@ export function CarChip({
   onRemove?: () => void;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-2xl bg-white/[0.04] p-2 ring-1 ring-white/10">
-      <div className="size-12 shrink-0 overflow-hidden rounded-xl bg-[#1c1c1f]">
-        {car.photoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={car.photoUrl} alt="" className="h-full w-full object-cover" />
-        ) : null}
-      </div>
+    <div className="flex items-center gap-2 rounded-2xl bg-leads-card p-2 ring-1 ring-leads-line">
+      <span className="size-12 shrink-0 overflow-hidden rounded-xl">
+        <CarPhoto name={car.make || car.name} photoUrl={car.photoUrl} className="size-12" />
+      </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[13px] font-semibold text-zinc-100">{carTitle(car)}</p>
-        <p className="text-[11px] text-zinc-400">
+        <p className="truncate text-[14px] font-semibold text-leads-ink">{carTitle(car)}</p>
+        <p className="text-[13px] text-leads-muted tabular-nums">
           {car.priceUsd ? `${car.priceUsd.toLocaleString("ru-RU")} $` : ""}
-          {primary ? " · основная" : ""}
+          {primary ? " · Основная" : ""}
         </p>
       </div>
       <div className="flex flex-col items-end gap-1">
         {!primary && onPrimary ? (
-          <button type="button" onClick={(e) => { e.stopPropagation(); onPrimary(); }} className="text-[10px] font-medium text-zinc-500 hover:text-zinc-100">
-            Основная
+          <button type="button" onClick={(e) => { e.stopPropagation(); onPrimary(); }} className="text-[12px] font-medium text-leads-muted hover:text-leads-ink">
+            Сделать основной
           </button>
         ) : null}
         {onRemove ? (
-          <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(); }} className="text-[10px] font-medium text-zinc-500 hover:text-red-400">
+          <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(); }} className="text-[12px] font-medium text-leads-muted hover:text-leads-danger">
             Убрать
           </button>
         ) : null}

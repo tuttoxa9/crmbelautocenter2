@@ -34,17 +34,17 @@ export function StatusDropdown({ value, onChange, className }: StatusDropdownPro
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full h-10 px-3 py-2 bg-[#141416] border border-white/10 rounded-md shadow-sm outline-none focus:ring-2 focus:ring-white transition-all text-sm font-medium text-zinc-100 hover:bg-white/[0.04]"
+        className="flex h-11 w-full items-center justify-between rounded-xl bg-leads-card px-3 text-[14px] font-medium text-leads-ink ring-1 ring-leads-line transition-colors duration-200 hover:bg-white/[0.04]"
       >
         <span className="flex items-center gap-2">
-          <span className={cn("w-2 h-2 rounded-full", getStatusDotColor(value))} />
+          <span className="size-2 rounded-full" style={{ background: getStatusDotColor(value) }} />
           {getStatusLabel(value)}
         </span>
         <ChevronDown className={cn("w-4 h-4 text-zinc-400 transition-transform duration-200", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-[#1c1c1f]/95 backdrop-blur-xl border border-white/10 rounded-md shadow-xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 py-1">
+        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-xl bg-leads-raised py-1 shadow-xl ring-1 ring-leads-line">
           {LEAD_STATUSES.map((status) => (
             <button
               key={status}
@@ -53,10 +53,10 @@ export function StatusDropdown({ value, onChange, className }: StatusDropdownPro
                 onChange(status);
                 setIsOpen(false);
               }}
-              className="flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-white/[0.06] text-zinc-200"
+              className="flex w-full items-center justify-between px-3 py-2 text-left text-[14px] text-leads-ink transition-colors duration-200 hover:bg-white/[0.06]"
             >
               <span className="flex items-center gap-2">
-                <span className={cn("w-2 h-2 rounded-full", getStatusDotColor(status))} />
+                <span className="size-2 rounded-full" style={{ background: getStatusDotColor(status) }} />
                 {getStatusLabel(status)}
               </span>
               {value === status && <Check className="w-4 h-4 text-zinc-100" />}

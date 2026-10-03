@@ -7,7 +7,8 @@ import { startOfDay } from "date-fns";
 import type { CatalogCar, Lead } from "@/lib/types";
 import { getLeads, getPaginatedLeads, subscribeToActiveLeads } from "@/lib/leadService";
 import { leadCarIds, leadMatchesQuery } from "@/lib/leads/match";
-import { fetchCatalogCars } from "@/lib/catalog";
+import { loadCatalogCars } from "@/lib/catalog";
+import { CenterNote, InlineNotice, LeadSkeleton } from "./chrome";
 import { DateStepper } from "./DateControls";
 import { DayBoard, DAY_TABS, type DayTab } from "./DayBoard";
 import { AutoBoard } from "./AutoBoard";
@@ -58,6 +59,14 @@ export function LeadsApp() {
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [archive, setArchive] = useState<Lead[] | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [archiveError, setArchiveError] = useState(false);
+  const [feedReady, setFeedReady] = useState(false);
+  const [feedError, setFeedError] = useState(false);
+  const [feedNonce, setFeedNonce] = useState(0);
+  const [catalogNonce, setCatalogNonce] = useState(0);
+  const [catalogReady, setCatalogReady] = useState(false);
+  const [catalogError, setCatalogError] = useState(false);
+  const [historyError, setHistoryError] = useState(false);
 
   useEffect(() => {
     setMode(readMode());
@@ -66,39 +75,57 @@ export function LeadsApp() {
 
   useEffect(() => {
     const unsub = subscribeToActiveLeads((rows) => {
+      setFeedReady(true);
+      setFeedError(false);
       setLeads(rows);
       setSelected((prev) => {
         if (!prev?.id) return prev;
         return rows.find((l) => l.id === prev.id) || prev;
       });
-    });
+    }, () => setFeedError(true));
     return unsub;
-  }, []);
+  }, [feedNonce]);
 
   useEffect(() => {
-    void fetchCatalogCars({ includeSold: true }).then(setCars);
-  }, []);
-
-  const query = search.trim();
-
-  useEffect(() => {
-    if (!query || archive) return;
     let cancel = false;
-    setSearchLoading(true);
-    getLeads()
-      .then((rows) => {
-        if (!cancel) setArchive(rows);
-      })
-      .catch(() => {
-        if (!cancel) setArchive([]);
-      })
-      .finally(() => {
-        if (!cancel) setSearchLoading(false);
-      });
+    setCatalogError(false);
+    void loadCatalogCars({ includeSold: true }).then((loaded) => {
+      if (cancel) return;
+      setCatalogReady(true);
+      if (!loaded.ok) {
+        setCatalogError(true);
+        return;
+      }
+      setCars(loaded.cars);
+      setCatalogError(false);
+    });
     return () => {
       cancel = true;
     };
-  }, [query, archive]);
+  }, [catalogNonce]);
+
+  const query = search.trim();
+
+  const wantArchive = Boolean(query || selected || addOpen);
+
+  const loadArchive = useCallback(() => {
+    setSearchLoading(true);
+    setArchiveError(false);
+    return getLeads()
+      .then((rows) => {
+        setArchive(rows);
+        setArchiveError(false);
+      })
+      .catch(() => {
+        setArchiveError(true);
+      })
+      .finally(() => setSearchLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!wantArchive || archive || searchLoading || archiveError) return;
+    void loadArchive();
+  }, [wantArchive, archive, searchLoading, archiveError, loadArchive]);
 
   const searchPool = useMemo(() => {
     if (!archive) return leads;
@@ -137,9 +164,12 @@ export function LeadsApp() {
     setHistoryLoading(true);
     try {
       const { leads: rows, lastDoc } = await getPaginatedLeads(50, more ? historyLast : null);
+      setHistoryError(false);
       setHistory((prev) => (more ? [...prev, ...rows] : rows));
       setHistoryLast(lastDoc as QueryDocumentSnapshot<DocumentData, DocumentData> | null);
       setHasMore(rows.length === 50);
+    } catch {
+      setHistoryError(true);
     } finally {
       setHistoryLoading(false);
     }
@@ -162,8 +192,8 @@ export function LeadsApp() {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (e.key === "Escape") {
-        if (selected) setSelected(null);
-        else if (dossier) setDossier(null);
+        if (addOpen || selected) return;
+        if (dossier) setDossier(null);
       }
       if (e.key === "/" ) {
         e.preventDefault();
@@ -172,7 +202,7 @@ export function LeadsApp() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selected, dossier]);
+  }, [selected, dossier, addOpen]);
 
   const openCar = (car: CatalogCar) => {
     setModePersist("auto");
@@ -209,12 +239,15 @@ export function LeadsApp() {
 
   useEffect(() => {
     if (!highlightId) return;
-    const scroll = window.setTimeout(() => {
+    const scroll = () => {
       document.querySelector(`[data-lead-id="${highlightId}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
-    }, 80);
-    const clear = window.setTimeout(() => setHighlightId(null), 3200);
+    };
+    const first = window.setTimeout(scroll, 80);
+    const again = window.setTimeout(scroll, 500);
+    const clear = window.setTimeout(() => setHighlightId(null), 2400);
     return () => {
-      window.clearTimeout(scroll);
+      window.clearTimeout(first);
+      window.clearTimeout(again);
       window.clearTimeout(clear);
     };
   }, [highlightId, tab, mode, filterDate]);
@@ -222,7 +255,7 @@ export function LeadsApp() {
   return (
     <div className="leads-os ads-os flex h-full min-h-0 flex-col bg-leads-bg text-leads-ink">
       <header className="flex flex-col gap-3 border-b border-leads-line px-3 py-3 md:flex-row md:items-center md:px-5">
-        <div className="flex items-center gap-1 rounded-full bg-[#141416] p-0.5 ring-1 ring-leads-line">
+        <div className="flex items-center gap-1">
           {([
             ["day", "День"],
             ["auto", "Авто"],
@@ -233,8 +266,8 @@ export function LeadsApp() {
               type="button"
               onClick={() => setModePersist(id)}
               className={cn(
-                "rounded-full px-3.5 py-1.5 text-[13px] font-semibold",
-                mode === id ? "bg-white text-black" : "text-leads-muted hover:text-leads-ink",
+                "rounded-xl px-3.5 py-2 text-[13px] font-medium",
+                mode === id ? "bg-leads-paper text-leads-paper-ink" : "text-leads-muted hover:text-leads-ink",
               )}
             >
               {label}
@@ -242,7 +275,7 @@ export function LeadsApp() {
           ))}
         </div>
 
-        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-full bg-[#141416] px-3 py-2 ring-1 ring-leads-line">
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-leads-card px-3 py-2 ring-1 ring-leads-line">
           <Search className="size-4 text-leads-subtle" />
           <input
             id="leads-search"
@@ -251,9 +284,14 @@ export function LeadsApp() {
               setSearch(e.target.value);
               if (e.target.value.trim()) setMobileMenu(false);
             }}
-            placeholder="Имя, телефон, авто — вся база"
+            placeholder="Имя, телефон или авто"
             className="min-w-0 flex-1 bg-transparent text-[14px] outline-none placeholder:text-leads-subtle"
           />
+          {search ? (
+            <button type="button" onClick={() => setSearch("")} className="text-[13px] text-leads-muted" aria-label="Очистить поиск">
+              ×
+            </button>
+          ) : null}
         </div>
 
         {mode === "day" && tab !== "new" && !query ? <DateStepper value={filterDate} onChange={setFilterDate} /> : null}
@@ -261,7 +299,7 @@ export function LeadsApp() {
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          className="hidden h-10 items-center justify-center rounded-full bg-white px-4 text-[13px] font-semibold text-black md:flex"
+          className="hidden h-10 items-center justify-center rounded-xl bg-leads-paper px-4 text-[13px] font-medium text-leads-paper-ink md:flex"
         >
           Клиент
         </button>
@@ -272,7 +310,7 @@ export function LeadsApp() {
           <>
             <aside
               className={cn(
-                "w-full shrink-0 flex-col border-r border-leads-line md:flex md:w-[220px]",
+                "w-full shrink-0 flex-col border-r border-leads-line md:flex md:w-[240px]",
                 mobileMenu ? "flex" : "hidden md:flex",
               )}
             >
@@ -280,7 +318,7 @@ export function LeadsApp() {
                 <button
                   type="button"
                   onClick={() => setAddOpen(true)}
-                  className="flex h-10 w-full items-center justify-center rounded-full bg-white text-[13px] font-semibold text-black"
+                  className="flex h-10 w-full items-center justify-center rounded-xl bg-leads-paper text-[13px] font-medium text-leads-paper-ink"
                 >
                   Клиент
                 </button>
@@ -292,8 +330,8 @@ export function LeadsApp() {
                     type="button"
                     onClick={() => setTabPersist(t.id)}
                     className={cn(
-                      "flex items-center justify-between rounded-xl px-3 py-2.5 text-left text-[14px] md:py-1.5 md:text-[13px]",
-                      tab === t.id ? "bg-white text-black font-semibold" : "text-leads-muted hover:bg-white/[0.08] hover:text-leads-ink",
+                      "flex items-center justify-between rounded-xl px-3 py-2.5 text-left text-[15px]",
+                      tab === t.id ? "bg-leads-raised font-medium text-leads-ink" : "text-leads-muted hover:bg-white/[0.04] hover:text-leads-ink",
                     )}
                   >
                     <span>{t.label}</span>
@@ -308,16 +346,23 @@ export function LeadsApp() {
                   Статусы
                 </button>
               </div>
+              {feedError ? <InlineNotice text="Заявки не обновляются" onRetry={() => setFeedNonce((n) => n + 1)} /> : null}
               {query ? (
                 <LeadSearchResults
                   rows={searchRows}
                   loading={searchLoading && !archive}
+                  failed={archiveError}
+                  onRetry={() => void loadArchive()}
                   cars={cars}
                   selectedId={selected?.id}
                   highlightId={highlightId}
                   onOpen={setSelected}
                   onOpenCar={openCar}
                 />
+              ) : !feedReady && !feedError ? (
+                <div className="divide-y divide-leads-line bg-leads-card md:mx-3 md:mt-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+                  {Array.from({ length: 6 }, (_, i) => <LeadSkeleton key={i} />)}
+                </div>
               ) : (
                 <DayBoard
                   leads={leads}
@@ -343,6 +388,12 @@ export function LeadsApp() {
               search={search}
               selectedLeadId={selected?.id}
               dossierCar={dossier}
+              catalogLoading={!catalogReady && !catalogError}
+              catalogError={catalogError && cars.length === 0}
+              onRetryCatalog={() => {
+                setCatalogReady(false);
+                setCatalogNonce((n) => n + 1);
+              }}
               onOpenLead={setSelected}
               onOpenCar={setDossier}
               onCloseCar={() => setDossier(null)}
@@ -360,6 +411,8 @@ export function LeadsApp() {
               <LeadSearchResults
                 rows={searchRows}
                 loading={searchLoading && !archive}
+                failed={archiveError}
+                onRetry={() => void loadArchive()}
                 cars={cars}
                 selectedId={selected?.id}
                 highlightId={highlightId}
@@ -368,7 +421,14 @@ export function LeadsApp() {
               />
             ) : (
             <AdsScroller className="h-full" contentClassName="pb-24">
-              <div className="divide-y divide-leads-line bg-[#141416] md:mx-3 md:mt-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+              {historyError && history.length === 0 ? (
+                <CenterNote text="Базу открыть не удалось" action={{ label: "Повторить", onClick: () => void loadHistory() }} />
+              ) : historyLoading && history.length === 0 ? (
+                <div className="divide-y divide-leads-line bg-leads-card md:mx-3 md:mt-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+                  {Array.from({ length: 6 }, (_, i) => <LeadSkeleton key={i} />)}
+                </div>
+              ) : (
+              <div className="divide-y divide-leads-line bg-leads-card md:mx-3 md:mt-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
                 {baseRows.map((lead) => (
                   <LeadRow
                     key={lead.id}
@@ -381,15 +441,24 @@ export function LeadsApp() {
                   />
                 ))}
               </div>
-              {hasMore ? (
+              )}
+              {historyError && history.length > 0 ? (
+                <InlineNotice text="Дальше прочитать не удалось" onRetry={() => void loadHistory(true)} />
+              ) : null}
+              {historyLoading && history.length > 0 ? (
+                <div className="divide-y divide-leads-line">
+                  {Array.from({ length: 3 }, (_, i) => <LeadSkeleton key={i} />)}
+                </div>
+              ) : null}
+              {hasMore && !historyError ? (
                 <div className="p-4 text-center">
                   <button
                     type="button"
                     onClick={() => void loadHistory(true)}
                     disabled={historyLoading}
-                    className="rounded-full px-4 py-2 text-[13px] font-medium ring-1 ring-leads-line"
+                    className="rounded-xl px-4 py-2 text-[13px] font-medium ring-1 ring-leads-line disabled:opacity-45"
                   >
-                    {historyLoading ? "Загрузка…" : "Ещё"}
+                    Ещё
                   </button>
                 </div>
               ) : null}
@@ -404,7 +473,7 @@ export function LeadsApp() {
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="flex h-12 items-center justify-center rounded-full bg-white px-5 text-[13px] font-semibold text-black shadow-lg"
+            className="flex h-12 items-center justify-center rounded-xl bg-leads-paper px-5 text-[13px] font-medium text-leads-paper-ink shadow-lg"
           >
             Клиент
           </button>
@@ -413,10 +482,16 @@ export function LeadsApp() {
 
       <QuickAddLead
         cars={cars}
-        allLeads={leads}
+        allLeads={archive ? searchPool : [...leads, ...history]}
         presetCar={presetCar}
         open={addOpen}
         hideTrigger
+        catalogError={catalogError && cars.length === 0}
+        catalogLoading={!catalogReady && !catalogError}
+        onRetryCatalog={() => {
+          setCatalogReady(false);
+          setCatalogNonce((n) => n + 1);
+        }}
         onOpenChange={(v) => {
           setAddOpen(v);
           if (!v) setPresetCar(null);
@@ -425,7 +500,30 @@ export function LeadsApp() {
           setPresetCar(null);
           setAddOpen(false);
         }}
+        archiveFailed={archiveError}
         onOpenDuplicate={revealLead}
+        onCreated={(lead) => {
+          setPresetCar(null);
+          setAddOpen(false);
+          const tabId = DAY_TABS.some((t) => t.id === lead.status) ? (lead.status as DayTab) : null;
+          if (tabId) {
+            setMode("day");
+            setTab(tabId);
+            setMobileMenu(false);
+            setSearch("");
+            window.localStorage.setItem("leads.mode", "day");
+            window.localStorage.setItem("leads.tab", tabId);
+            if (tabId !== "new") {
+              const raw = lead.nextActionDate || lead.createdAt;
+              const due = startOfDay(new Date(raw));
+              const today = startOfDay(new Date());
+              setFilterDate(due.getTime() < today.getTime() ? today : due);
+            }
+            setHighlightId(lead.id || null);
+            return;
+          }
+          revealLead(lead);
+        }}
       />
 
       {selected ? (
@@ -433,10 +531,18 @@ export function LeadsApp() {
           lead={selected}
           cars={cars}
           allLeads={archive ? searchPool : [...leads, ...history]}
+          archiveFailed={archiveError}
+          catalogError={catalogError && cars.length === 0}
+          catalogLoading={!catalogReady && !catalogError}
+          onRetryCatalog={() => {
+            setCatalogReady(false);
+            setCatalogNonce((n) => n + 1);
+          }}
           onClose={() => setSelected(null)}
           onOpenCar={openCar}
           onDeleted={() => setSelected(null)}
           onOpenDuplicate={revealLead}
+          onUpdated={setSelected}
         />
       ) : null}
     </div>
@@ -446,6 +552,8 @@ export function LeadsApp() {
 function LeadSearchResults({
   rows,
   loading,
+  failed,
+  onRetry,
   cars,
   selectedId,
   highlightId,
@@ -454,27 +562,33 @@ function LeadSearchResults({
 }: {
   rows: Lead[];
   loading: boolean;
+  failed?: boolean;
+  onRetry: () => void;
   cars: CatalogCar[];
   selectedId?: string | null;
   highlightId?: string | null;
   onOpen: (lead: Lead) => void;
   onOpenCar: (car: CatalogCar) => void;
 }) {
-  if (!loading && rows.length === 0) {
+  if (loading && rows.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center px-6 text-sm text-leads-muted">
-        Ничего не нашлось
+      <div className="divide-y divide-leads-line bg-leads-card md:mx-3 md:mt-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+        {Array.from({ length: 6 }, (_, i) => <LeadSkeleton key={i} />)}
       </div>
     );
+  }
+  if (!loading && rows.length === 0) {
+    return <CenterNote text="Ничего не нашлось" />;
   }
 
   return (
     <AdsScroller className="h-full" contentClassName="pb-24">
-      <p className="px-4 py-2 text-[11px] font-semibold tracking-wide text-leads-muted uppercase">
+      {failed ? <InlineNotice text="Всю базу прочитать не удалось" onRetry={onRetry} /> : null}
+      <p className="px-4 py-3 text-[12px] font-medium text-leads-muted md:px-5">
         Вся база <span className="text-leads-subtle">{rows.length}</span>
-        {loading ? " · ещё ищем" : ""}
+        {loading ? " · Проверяем всю базу" : ""}
       </p>
-      <div className="divide-y divide-leads-line bg-[#141416] md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+      <div className="divide-y divide-leads-line bg-leads-card md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
         {rows.map((lead) => (
           <LeadRow
             key={lead.id}

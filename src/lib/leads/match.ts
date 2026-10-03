@@ -65,3 +65,20 @@ export function resolveLeadCar(lead: Lead, cars: CatalogCar[]): CatalogCar | nul
 export function carTitle(car: CatalogCar) {
   return [car.name, car.year].filter(Boolean).join(" · ");
 }
+
+export function isMetaLead(lead: { source?: string; payload?: Record<string, unknown> | null }): boolean {
+  if (lead.source !== "instagram" || !lead.payload) return false;
+  const payload = lead.payload;
+  return Boolean(
+    payload.adId || payload.ad_id || payload.leadgenId || payload.leadgen_id || payload.formId || payload.form_id || payload.linkKind,
+  );
+}
+
+export function metaOriginLine(lead: Lead): string | null {
+  if (!isMetaLead(lead)) return null;
+  const linked = leadCarIds(lead).length > 0;
+  const kind = lead.payload?.linkKind;
+  if (!linked && kind === "none") return "Объявление Meta без автомобиля";
+  if (!linked) return "Объявление Meta без машины на складе";
+  return "Из объявления Meta";
+}

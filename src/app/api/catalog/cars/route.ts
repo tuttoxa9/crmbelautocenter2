@@ -66,7 +66,10 @@ export async function GET(request: Request) {
     const includeSold = searchParams.get('includeSold') === '1';
     const id = searchParams.get('id');
 
-    const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL || "postgresql://neondb_owner:npg_j7eSMifBFtd3@ep-curly-brook-ascm3kjp-pooler.c-4.eu-central-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require";
+    const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+    if (!connectionString) {
+      return NextResponse.json({ cars: [], error: "catalog" }, { status: 503 });
+    }
 
     const sql = neon(connectionString);
 

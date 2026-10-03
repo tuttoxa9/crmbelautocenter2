@@ -6,30 +6,25 @@ import { InstagramIcon, TikTokIcon, TelegramIcon } from "./Icons";
 import { getStatusLabel } from "@/lib/displayUtils";
 import { Globe, Search, PhoneCall, User, ShoppingBag } from "lucide-react";
 
-export const getStatusDotColor = (status: LeadStatus) => {
-  const config: Record<LeadStatus, string> = {
-    new: "bg-blue-400",
-    in_progress: "bg-amber-400",
-    visit: "bg-violet-400",
-    refusal: "bg-zinc-500",
-    bank_refusal: "bg-red-400",
-    success: "bg-emerald-400",
-    no_answer: "bg-orange-400",
-    spam: "bg-zinc-300",
-    thinking: "bg-indigo-400",
-    callback: "bg-yellow-400",
-  };
-  return config[status] || config.new;
+const STATUS_DOT: Record<LeadStatus, string> = {
+  new: "#8ea0b5",
+  in_progress: "#c4a15a",
+  visit: "#8d84b8",
+  callback: "#b7a06a",
+  no_answer: "#b5836a",
+  thinking: "#7f92b0",
+  success: "#7d9a78",
+  refusal: "#8a867e",
+  bank_refusal: "#c4554a",
+  spam: "#5e5a55",
 };
 
+export const getStatusDotColor = (status: LeadStatus) => STATUS_DOT[status] || STATUS_DOT.new;
+
 export const StatusBadge = ({ status, className }: { status: LeadStatus, className?: string }) => {
-  const dotColorClass = getStatusDotColor(status);
   return (
-    <span className={cn(
-      "inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-zinc-300 md:px-2.5 md:py-1 md:text-[11px]",
-      className
-    )}>
-      <span className={cn("w-1.5 h-1.5 rounded-full shadow-sm", dotColorClass)} />
+    <span className={cn("inline-flex items-center gap-1.5 text-[13px] font-medium text-leads-ink", className)}>
+      <span className="size-2 shrink-0 rounded-full" style={{ background: getStatusDotColor(status) }} />
       {getStatusLabel(status)}
     </span>
   );
@@ -38,13 +33,13 @@ export const StatusBadge = ({ status, className }: { status: LeadStatus, classNa
 export const SourceIcon = ({ source, className }: { source: string, className?: string }) => {
   const iconClass = cn("w-4 h-4", className);
   switch (source) {
-    case 'instagram': return <InstagramIcon className={cn(iconClass, "text-pink-500")} />;
-    case 'tiktok': return <TikTokIcon className={cn(iconClass, "text-white")} />;
-    case 'telegram': return <TelegramIcon className={cn(iconClass, "text-sky-400")} />;
-    case 'site': return <Globe className={cn(iconClass, "text-blue-400")} />;
-    case 'call': return <PhoneCall className={cn(iconClass, "text-emerald-400")} />;
-    case 'walk_in': return <User className={cn(iconClass, "text-amber-400")} />;
-    case 'kufar': return <ShoppingBag className={cn(iconClass, "text-emerald-400")} />;
-    default: return <Search className={cn(iconClass, "text-zinc-400")} />;
+    case 'instagram': return <InstagramIcon className={cn(iconClass, "text-leads-muted")} />;
+    case 'tiktok': return <TikTokIcon className={cn(iconClass, "text-leads-muted")} />;
+    case 'telegram': return <TelegramIcon className={cn(iconClass, "text-leads-muted")} />;
+    case 'site': return <Globe className={cn(iconClass, "text-leads-muted")} />;
+    case 'call': return <PhoneCall className={cn(iconClass, "text-leads-muted")} />;
+    case 'walk_in': return <User className={cn(iconClass, "text-leads-muted")} />;
+    case 'kufar': return <ShoppingBag className={cn(iconClass, "text-leads-muted")} />;
+    default: return <Search className={cn(iconClass, "text-leads-muted")} />;
   }
 };

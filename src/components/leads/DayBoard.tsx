@@ -143,8 +143,8 @@ export function DayBoard({
 
   if (groups.length === 0 || groups.every((g) => g.items.length === 0)) {
     return (
-      <div className="flex h-full items-center justify-center px-6 text-sm text-leads-muted">
-        {search ? "Ничего не нашлось" : "На этот день пусто"}
+      <div className="flex h-full items-center justify-center px-6 text-[15px] text-leads-muted">
+        {search ? "Ничего не нашлось" : tab === "new" ? "Новых заявок нет" : "На этот день пусто"}
       </div>
     );
   }
@@ -153,8 +153,8 @@ export function DayBoard({
     <AdsScroller className="h-full" contentClassName="pb-24">
       {groups.map((group) => (
         <section key={group.key} className="mb-2">
-          <div className="sticky top-0 z-10 bg-[#0a0a0b]/90 px-4 py-2 backdrop-blur">
-            <p className="text-[11px] font-semibold tracking-wide text-leads-muted uppercase">
+          <div className="sticky top-0 z-10 bg-leads-bg/95 px-4 py-3 md:px-5">
+            <p className="text-[12px] font-medium text-leads-muted">
               {group.label} <span className="text-leads-subtle">{group.items.length}</span>
             </p>
           </div>
@@ -164,7 +164,7 @@ export function DayBoard({
                 <p className="px-4 py-1.5 text-[12px] font-semibold text-leads-ink md:px-5">
                   {sub.label} <span className="font-medium text-leads-subtle">{sub.items.length}</span>
                 </p>
-                <div className="divide-y divide-leads-line bg-[#141416] md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+                <div className="divide-y divide-leads-line bg-leads-card md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
                   {sub.items.map((lead) => (
                     <LeadRow
                       key={lead.id}
@@ -181,7 +181,7 @@ export function DayBoard({
               </div>
             ))
           ) : (
-            <div className="divide-y divide-leads-line bg-[#141416] md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
+            <div className="divide-y divide-leads-line bg-leads-card md:mx-3 md:rounded-2xl md:ring-1 md:ring-leads-line">
               {group.items.map((lead) => (
                 <LeadRow
                   key={lead.id}

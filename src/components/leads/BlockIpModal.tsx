@@ -53,15 +53,15 @@ export function BlockIpModal({
   const handleSubmit = async () => {
     const cleanIp = targetIp.trim();
     if (!cleanIp) {
-      setError("Укажите IP адрес для блокировки");
+      setError("Укажите IP");
       return;
     }
     if (!isValidIp(cleanIp)) {
-      setError("Введите корректный IP адрес (например: 178.120.45.12)");
+      setError("Введите корректный IP");
       return;
     }
     if (!password.trim()) {
-      setError("Введите пароль от админки");
+      setError("Введите пароль");
       return;
     }
 
@@ -82,9 +82,17 @@ export function BlockIpModal({
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Не удалось заблокировать IP");
+        const msg = String(data.error || "");
+        if (/неверный пароль/i.test(msg)) {
+          setError("Неверный пароль");
+        } else if (msg) {
+          setError(msg);
+        } else {
+          setError("Заблокировать не удалось");
+        }
+        return;
       }
 
       setSuccess(true);
@@ -94,8 +102,8 @@ export function BlockIpModal({
         setSuccess(false);
         setPassword("");
       }, 1400);
-    } catch (err: any) {
-      setError(err?.message || "Ошибка при блокировке IP");
+    } catch {
+      setError("Заблокировать не удалось");
     } finally {
       setLoading(false);
     }
@@ -209,7 +217,7 @@ export function BlockIpModal({
                   onChange={(e) => setMarkSpam(e.target.checked)}
                   className="rounded border-zinc-700 bg-zinc-900 text-red-500 focus:ring-red-500/40 w-4 h-4 cursor-pointer"
                 />
-                <span>Пометить текущую заявку как «Брак/Спам»</span>
+                <span>Отметить заявку как брак</span>
               </label>
             )}
 

@@ -14,7 +14,7 @@ export function DateStepper({
 }) {
   const today = isToday(value);
   return (
-    <div className="flex items-center gap-0.5 rounded-xl bg-[#141416] ring-1 ring-leads-line p-0.5">
+    <div className="flex items-center gap-0.5 rounded-xl bg-leads-card p-0.5 ring-1 ring-leads-line">
       <button
         type="button"
         onClick={() => onChange(subDays(value, 1))}
@@ -26,10 +26,7 @@ export function DateStepper({
       <button
         type="button"
         onClick={() => onChange(startOfDay(new Date()))}
-        className={cn(
-          "min-w-[108px] rounded-lg px-3 py-1.5 text-[13px] font-semibold",
-          today ? "bg-white text-black" : "text-leads-ink hover:bg-white/[0.06]",
-        )}
+        className="min-w-[108px] rounded-lg px-3 py-1.5 text-[13px] font-medium text-leads-ink hover:bg-white/[0.04]"
       >
         {today ? "Сегодня" : format(value, "d MMM, EEE", { locale: ru })}
       </button>
@@ -85,7 +82,7 @@ export function DatePresets({
               onClick={() => onChange(atTime(d.date, currentTime && TIMES.includes(currentTime) ? currentTime : "12:00"))}
               className={cn(
                 "rounded-full px-3 py-1.5 text-xs font-medium ring-1",
-                active ? "bg-white text-black ring-white" : "bg-[#141416] text-leads-ink ring-leads-line hover:bg-white/[0.04]",
+                active ? "bg-leads-paper text-leads-paper-ink" : "bg-transparent text-leads-ink ring-1 ring-leads-line hover:bg-white/[0.04]",
               )}
             >
               {d.label}
@@ -96,7 +93,7 @@ export function DatePresets({
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="rounded-full px-3 py-1.5 text-xs font-medium text-leads-muted hover:text-leads-ink"
+            className="rounded-xl px-3 py-1.5 text-[13px] font-medium text-leads-muted hover:text-leads-ink"
           >
             Сбросить
           </button>
@@ -115,7 +112,7 @@ export function DatePresets({
               }}
               className={cn(
                 "rounded-lg px-2.5 py-1 font-mono text-[11px] ring-1",
-                active ? "bg-white text-black ring-white" : "bg-[#141416] text-leads-muted ring-leads-line hover:text-leads-ink",
+                active ? "bg-leads-paper text-leads-paper-ink" : "bg-transparent text-leads-muted ring-1 ring-leads-line hover:text-leads-ink",
               )}
             >
               {t}
@@ -125,7 +122,7 @@ export function DatePresets({
       </div>
       <input
         type="datetime-local"
-        className="h-10 w-full rounded-xl bg-[#141416] px-3 text-[13px] text-leads-ink ring-1 ring-leads-line outline-none focus:ring-zinc-400"
+        className="h-11 w-full rounded-xl bg-leads-card px-3 text-[14px] text-leads-ink ring-1 ring-leads-line outline-none"
         value={selected ? format(selected, "yyyy-MM-dd'T'HH:mm") : ""}
         onChange={(e) => {
           if (!e.target.value) {

@@ -29,8 +29,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    console.log('Incoming webhook data:', JSON.stringify(data, null, 2));
-
     const signature = request.headers.get('x-hub-signature-256');
     const tiktokSignature = request.headers.get('x-tiktok-signature');
     const authHeader = request.headers.get('authorization');
@@ -181,7 +179,14 @@ export async function POST(request: Request) {
       return match?.[1] || "";
     };
 
-    const linkedCarId = extractCarId(data as Record<string, unknown>, notes, car);
+    const requestedKind = data.linkKind === "linked" || data.linkKind === "unmatched" || data.linkKind === "none"
+      ? data.linkKind
+      : "";
+    let linkedCarId = extractCarId(data as Record<string, unknown>, notes, car);
+    if (requestedKind === "unmatched" || requestedKind === "none") linkedCarId = "";
+    if (requestedKind === "linked" && data.carId) linkedCarId = String(data.carId);
+
+    const leadgenId = String(data.leadgenId || data.leadgen_id || "").trim();
 
     const cf = request.headers.get('cf-connecting-ip');
     const forwardedHeader = request.headers.get('x-forwarded-for');
@@ -221,7 +226,26 @@ export async function POST(request: Request) {
       throw new Error("Firebase Admin is not initialized");
     }
 
-    const docRef = await adminDb.collection('leads').add(newLead);
+    if (leadgenId) {
+      const leadsCol = adminDb.collection('leads');
+      const lookups = [
+        leadsCol.where('leadgenId', '==', leadgenId).limit(1).get(),
+        leadsCol.where('payload.leadgenId', '==', leadgenId).limit(1).get(),
+        leadsCol.where('payload.leadgen_id', '==', leadgenId).limit(1).get(),
+      ];
+      const found = (await Promise.all(lookups)).find((snap) => !snap.empty);
+      if (found) {
+        return NextResponse.json(
+          { success: true, id: found.docs[0].id, duplicate: true },
+          { status: 200 }
+        );
+      }
+    }
+
+    const docRef = await adminDb.collection('leads').add({
+      ...newLead,
+      ...(leadgenId ? { leadgenId } : {}),
+    });
 
     if (data.telegram !== false) {
       try {
