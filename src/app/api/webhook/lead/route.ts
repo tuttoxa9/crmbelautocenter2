@@ -4,6 +4,15 @@ import { LeadSource, LeadStatus, Integration } from '@/lib/types';
 import crypto from 'crypto';
 import { sendTelegramNotification } from '@/lib/telegram';
 
+// Название объявления TikTok — это начало текста объявления, режем до читаемой длины
+function shortAdName(adName: string, max = 150) {
+  const text = adName.replace(/\s+/g, " ").trim();
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > max / 2 ? cut.slice(0, lastSpace) : cut).replace(/[\s.,;:!?-]+$/, "")}…`;
+}
+
 // Обязательная верификация для Meta Webhooks (challenge)
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -101,7 +110,7 @@ export async function POST(request: Request) {
       }
     } 
     // 2. Обработка TikTok Lead Generation нативно
-    else if (tiktokSignature || data?.tiktok_signature || (data?.form_id && !data.object)) {
+    else if (tiktokSignature || data?.tiktok_signature || (data?.form_id && !data.object && !data.source)) {
       // Верификация подписи TikTok (примерная логика)
       const tiktokSecret = process.env.TIKTOK_SECRET;
       if (tiktokSecret && tiktokSignature) {
@@ -152,9 +161,13 @@ export async function POST(request: Request) {
       }
 
       name = data.name || "";
-      phone = data.phone || "";
+      phone = data.phone || data.phone_number || "";
       car = data.car || "";
       notes = data.notes || "";
+
+      // TikTok Lead Generation через Zapier: в форме нет поля авто, берём название объявления
+      const adName = typeof data.ad_name === "string" ? data.ad_name : "";
+      if (detectedSource === "tiktok" && !car && adName) car = shortAdName(adName);
     }
 
     if (notes.includes("Получено через API")) {
@@ -186,7 +199,9 @@ export async function POST(request: Request) {
     if (requestedKind === "unmatched" || requestedKind === "none") linkedCarId = "";
     if (requestedKind === "linked" && data.carId) linkedCarId = String(data.carId);
 
-    const leadgenId = String(data.leadgenId || data.leadgen_id || "").trim();
+    const leadgenId = String(
+      data.leadgenId || data.leadgen_id || (detectedSource === "tiktok" ? data.lead_id : "") || ""
+    ).trim();
 
     const cf = request.headers.get('cf-connecting-ip');
     const forwardedHeader = request.headers.get('x-forwarded-for');
