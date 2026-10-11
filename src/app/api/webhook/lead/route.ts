@@ -262,6 +262,21 @@ export async function POST(request: Request) {
       ...(leadgenId ? { leadgenId } : {}),
     });
 
+    // Дублируем лид напрямую в belautocenter2 (PostgreSQL) для перехода на новую CRM
+    try {
+      await fetch("https://belautocenter.by/api/webhook/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...newLead,
+          ...(leadgenId ? { leadgenId } : {}),
+          telegram: false,
+        }),
+      });
+    } catch (forwardErr) {
+      console.error("Error forwarding lead to belautocenter.by:", forwardErr);
+    }
+
     if (data.telegram !== false) {
       try {
         await sendTelegramNotification({
