@@ -263,18 +263,21 @@ export async function POST(request: Request) {
     });
 
     // Дублируем лид напрямую в belautocenter2 (PostgreSQL) для перехода на новую CRM
-    try {
-      await fetch("https://belautocenter.by/api/webhook/lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newLead,
-          ...(leadgenId ? { leadgenId } : {}),
-          telegram: false,
-        }),
-      });
-    } catch (forwardErr) {
-      console.error("Error forwarding lead to belautocenter.by:", forwardErr);
+    // Только для заявок не из Meta (Instagram), так как Meta обрабатывается напрямую в belautocenter2/api/meta-webhook
+    if (detectedSource !== 'instagram') {
+      try {
+        await fetch("https://belautocenter.by/api/webhook/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...newLead,
+            ...(leadgenId ? { leadgenId } : {}),
+            telegram: false,
+          }),
+        });
+      } catch (forwardErr) {
+        console.error("Error forwarding lead to belautocenter.by:", forwardErr);
+      }
     }
 
     if (data.telegram !== false) {
