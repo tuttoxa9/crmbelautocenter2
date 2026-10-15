@@ -393,7 +393,7 @@ export function FileManager() {
       {videoTarget && (
         <VideoOverlay
           item={videoTarget}
-          url={fm.getPublicUrl(videoTarget.path)}
+          url={fm.getPublicUrl(videoTarget.path, videoTarget.url)}
           onClose={() => setVideoTarget(null)}
           onDownload={() => {
             void fm.handleDownloadFile(videoTarget.path).then((r) => {

@@ -22,6 +22,7 @@ export interface S3Object {
   type: "folder" | "file";
   size?: number;
   lastModified?: string;
+  url?: string;
 }
 
 export type FileStatus = "pending" | "compressing" | "ready" | "uploading" | "success" | "error";
@@ -367,13 +368,18 @@ export function useFileManager() {
   const uploadViaPresigned = (file: File, token: string, onProgress: (pct: number) => void) =>
     new Promise<void>(async (resolve, reject) => {
       try {
+        const cleanPrefix = currentPrefix
+          ? currentPrefix.replace(/^\/+/, "").replace(/\\/g, "/")
+          : "";
+        const prefixToSend = cleanPrefix && !cleanPrefix.endsWith("/") ? `${cleanPrefix}/` : cleanPrefix;
+
         const presigned = await fetch("/api/s3/presigned", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify({
             fileName: file.name,
             contentType: file.type || "application/octet-stream",
-            prefix: currentPrefix,
+            prefix: prefixToSend,
           }),
         });
         const data = await presigned.json().catch(() => ({}));
@@ -404,8 +410,13 @@ export function useFileManager() {
       const { token } = await authHeader();
       const toUpload = stagedFiles.filter((f) => f.status === "ready" || f.status === "error");
       let failed = 0;
-      await Promise.all(
-        toUpload.map(async (item) => {
+
+      // Ограничиваем параллельные запросы (до 3 одновременных), чтобы не рвать соединения
+      const concurrency = Math.min(3, toUpload.length);
+      let cursor = 0;
+      const worker = async () => {
+        while (cursor < toUpload.length) {
+          const item = toUpload[cursor++];
           setStagedFiles((prev) =>
             prev.map((f) => (f.id === item.id ? { ...f, status: "uploading", progress: 0, error: undefined } : f)),
           );
@@ -426,8 +437,10 @@ export function useFileManager() {
               ),
             );
           }
-        }),
-      );
+        }
+      };
+
+      await Promise.all(Array.from({ length: concurrency }, worker));
       await fetchItems(currentPrefix, { silent: true });
       if (failed > 0) return { ok: false, error: `Не вышло у ${failed} из ${toUpload.length}` };
       return { ok: true };
@@ -498,10 +511,11 @@ export function useFileManager() {
     }
   };
 
-  const getPublicUrl = (path: string) => {
+  const getPublicUrl = (path: string, itemUrl?: string) => {
+    if (itemUrl) return itemUrl;
     const base = (process.env.NEXT_PUBLIC_CLOUDFLARE_R2_DEV_URL || "").replace(/\/$/, "");
-    if (!base) return "";
-    return `${base}/${encodeStoragePath(path)}`;
+    if (base) return `${base}/${encodeStoragePath(path)}`;
+    return `/api/s3/view?key=${encodeURIComponent(path)}`;
   };
 
   const images = displayedItems.filter((i) => i.type === "file" && isImageName(i.name));

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { GetObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3Client, BUCKET_NAME } from "@/lib/s3";
 import { verifyFirebaseIdToken } from "@/lib/verifyToken";
+import { isImageName } from "@/lib/files/displayName";
 
 export async function GET(request: Request) {
   try {
@@ -32,6 +34,7 @@ export async function GET(request: Request) {
       type: "file";
       size?: number;
       lastModified?: Date;
+      url?: string;
     }> = [];
 
     let token: string | undefined;
@@ -77,8 +80,11 @@ export async function GET(request: Request) {
 
     const missing = folders.filter((f) => !f.lastModified && f.path);
     if (missing.length > 0) {
-      await Promise.all(
-        missing.map(async (f) => {
+      let cursor = 0;
+      const worker = async () => {
+        while (cursor < missing.length) {
+          const index = cursor++;
+          const f = missing[index];
           try {
             const folderResponse = await s3Client.send(
               new ListObjectsV2Command({
@@ -88,12 +94,38 @@ export async function GET(request: Request) {
               }),
             );
             f.lastModified = folderResponse.Contents?.[0]?.LastModified;
-          } catch (e) {
-            console.error(`Failed to fetch last modified for prefix ${f.path}:`, e);
+          } catch {
+            /* ignore date fetch failure */
           }
-        }),
-      );
+        }
+      };
+
+      const concurrency = Math.min(15, missing.length);
+      await Promise.race([
+        Promise.all(Array.from({ length: concurrency }, worker)),
+        new Promise((resolve) => setTimeout(resolve, 8000)),
+      ]);
     }
+
+    // Для изображений генерируем presigned URL в памяти через HMAC (на 24 часа)
+    await Promise.all(
+      files.map(async (file) => {
+        if (isImageName(file.name)) {
+          try {
+            file.url = await getSignedUrl(
+              s3Client,
+              new GetObjectCommand({
+                Bucket: BUCKET_NAME,
+                Key: file.path,
+              }),
+              { expiresIn: 86400 },
+            );
+          } catch {
+            /* ignore presigning error */
+          }
+        }
+      }),
+    );
 
     return NextResponse.json({
       items: [...folders, ...files],

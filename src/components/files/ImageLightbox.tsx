@@ -15,7 +15,7 @@ interface ImageLightboxProps {
   onClose: () => void;
   onJump: (index: number) => void;
   onDownload: (path: string) => void;
-  getPublicUrl: (path: string) => string;
+  getPublicUrl: (path: string, itemUrl?: string) => string;
   formatSize: (bytes?: number) => string;
 }
 
@@ -48,7 +48,7 @@ export function ImageLightbox({
   const wheelLock = useRef(0);
   const stripRef = useRef<HTMLDivElement>(null);
   const current = images[currentIndex];
-  const url = current ? getPublicUrl(current.path) : "";
+  const url = current ? getPublicUrl(current.path, current.url) : "";
   const imgLoaded = loadedPath === current?.path;
   const imgFailed = failedPath === current?.path;
 
@@ -293,7 +293,7 @@ export function ImageLightbox({
             onWheel={(e) => e.stopPropagation()}
           >
             {images.map((img, i) => {
-              const thumb = getPublicUrl(img.path);
+              const thumb = getPublicUrl(img.path, img.url);
               const active = i === currentIndex;
               return (
                 <button

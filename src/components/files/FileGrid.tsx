@@ -25,7 +25,7 @@ interface FileGridProps {
   onRename: (item: S3Object) => void;
   onDelete: (item: S3Object) => void;
   onEnterSelectMode: (item: S3Object) => void;
-  getPublicUrl: (path: string) => string;
+  getPublicUrl: (path: string, itemUrl?: string) => string;
   formatSize: (bytes?: number) => string;
 }
 
@@ -115,13 +115,13 @@ export function FileGrid(props: FileGridProps) {
                     onSelect={(e) => props.onToggleSelect(item.path, e)}
                     onOpen={() => props.onOpenFile(item)}
                     onDownload={() => props.onDownload(item.path)}
-                    onCopyUrl={() => props.onCopyUrl(props.getPublicUrl(item.path))}
+                    onCopyUrl={() => props.onCopyUrl(props.getPublicUrl(item.path, item.url))}
                     onRename={() => props.onRename(item)}
                     onDelete={() => props.onDelete(item)}
                     onEnterSelectMode={() => props.onEnterSelectMode(item)}
-                    publicUrl={props.getPublicUrl(item.path)}
+                    publicUrl={props.getPublicUrl(item.path, item.url)}
                     formatSize={props.formatSize}
-                    canCopyUrl={Boolean(props.getPublicUrl(item.path))}
+                    canCopyUrl={Boolean(props.getPublicUrl(item.path, item.url))}
                   />
                 ),
               )}
@@ -135,7 +135,7 @@ export function FileGrid(props: FileGridProps) {
 
 function RowItem({ item, props }: { item: S3Object; props: FileGridProps }) {
   const [sheet, setSheet] = useState(false);
-  const url = props.getPublicUrl(item.path);
+  const url = props.getPublicUrl(item.path, item.url);
   const img = item.type === "file" && isImageName(item.name) && url;
   const { Icon, color } = getFileIcon(item.name);
   const when = item.lastModified

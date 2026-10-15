@@ -1,9 +1,50 @@
 import { NextResponse } from "next/server";
-import { HeadObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  GetBucketCorsCommand,
+  HeadObjectCommand,
+  PutBucketCorsCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { s3Client, BUCKET_NAME } from "@/lib/s3";
 import { verifyFirebaseIdToken } from "@/lib/verifyToken";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { safeFileName } from "@/lib/files/displayName";
+
+const ORIGINS = [
+  "https://belautocenter.by",
+  "https://www.belautocenter.by",
+  "https://crm.belautocenter.by",
+  "http://localhost:3000",
+  "http://localhost:3001",
+];
+
+async function ensureCors() {
+  const origins = new Set(ORIGINS);
+  try {
+    const current = await s3Client.send(new GetBucketCorsCommand({ Bucket: BUCKET_NAME }));
+    for (const rule of current.CORSRules || []) {
+      for (const origin of rule.AllowedOrigins || []) origins.add(origin);
+    }
+  } catch {
+    /* empty */
+  }
+  await s3Client.send(
+    new PutBucketCorsCommand({
+      Bucket: BUCKET_NAME,
+      CORSConfiguration: {
+        CORSRules: [
+          {
+            AllowedOrigins: [...origins],
+            AllowedMethods: ["GET", "PUT", "HEAD", "POST"],
+            AllowedHeaders: ["*"],
+            ExposeHeaders: ["ETag", "Content-Length"],
+            MaxAgeSeconds: 86400,
+          },
+        ],
+      },
+    }),
+  );
+}
 
 async function keyExists(key: string) {
   try {
@@ -58,16 +99,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No fileName provided" }, { status: 400 });
     }
 
-    const prefixStr = prefix || "";
+    let prefixStr = (prefix || "").replace(/^\/+/, "").replace(/\\/g, "/");
+    if (prefixStr && !prefixStr.endsWith("/")) prefixStr += "/";
+
+    await ensureCors().catch(() => undefined);
+
     const name = await uniqueName(prefixStr, fileName);
     const key = `${prefixStr}${name}`;
+    const ct = contentType || "application/octet-stream";
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
       Key: key,
-      ContentType: contentType || "application/octet-stream",
+      ContentType: ct,
     });
 
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+    const url = await getSignedUrl(s3Client, command, {
+      expiresIn: 3600,
+      signableHeaders: new Set(["host", "content-type"]),
+    });
     return NextResponse.json({ success: true, url, key, fileName: name });
   } catch (error) {
     console.error("Error generating presigned URL:", error);
